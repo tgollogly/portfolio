@@ -1,1 +1,6 @@
-_worker.js
+server.js
+wrangler.toml
+.assetsignore
+README.md
+AI-SETUP.md
+
