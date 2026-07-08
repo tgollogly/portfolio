@@ -3,7 +3,7 @@
 // Deploy this folder to Cloudflare Pages; set GEMINI_API_KEY as a secret.
 // Nothing else to paste. The site works; /api powers the chatbot + ATS.
 // =====================================================================
-const MODEL = "gemini-2.0-flash"; // if this errors, use the current free "flash" model from ai.google.dev
+const MODEL = "gemini-3.5-flash"; // current free model (2.0 was retired June 2026); fallback: "gemini-flash-latest"
 
 const THOMAS_CONTEXT = `You are the friendly AI assistant on Thomas Gollogly's developer portfolio site. Answer visitor questions about Thomas concisely, warmly and honestly, using ONLY the facts below. If you don't know, say so and suggest emailing him.
 
@@ -75,7 +75,8 @@ ${jd}`;
     }
     return json({ error: "Unknown mode" }, 400);
   } catch (e) {
-    return json({ error: "AI request failed", detail: String(e) }, 502);
+    // DEBUG: surface the real error so we can see what Gemini objects to
+    return json({ reply: "DEBUG: " + String((e && e.message) || e) }, 200);
   }
 }
 
