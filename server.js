@@ -75,8 +75,7 @@ ${jd}`;
     }
     return json({ error: "Unknown mode" }, 400);
   } catch (e) {
-    // DEBUG: surface the real error so we can see what Gemini objects to
-    return json({ reply: "DEBUG: " + String((e && e.message) || e) }, 200);
+    return json({ error: "AI request failed" }, 502);
   }
 }
 
