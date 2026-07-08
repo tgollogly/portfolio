@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light">
+<title>AI ATS Resume Matcher — live demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:light;--bg:#f4f6f9;--card:#fff;--ink:#1a2028;--strong:#0b0f14;--muted:#3f4954;--faint:#5c6672;--line:#e4e8ec;--accent:#2f39c9;--accent2:#4750e6;--ok:#0c7a5e;--warn:#b06d12;--bad:#c62828;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
+  a{color:var(--accent);text-decoration:none;}
+  .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
+  .top .in{max-width:1000px;margin:0 auto;padding:13px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .back{font-size:14px;color:var(--muted);font-weight:500;}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:#eef0fe;padding:5px 11px;border-radius:999px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 22px 60px;}
+  h1{font-family:"Fraunces",Georgia,serif;font-weight:700;font-size:clamp(28px,5vw,42px);margin:0;color:var(--strong);letter-spacing:-.015em;}
+  .sub{color:var(--muted);margin:8px 0 24px;max-width:66ch;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .field label{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin:0 0 7px;}
+  textarea{width:100%;min-height:230px;font-family:inherit;font-size:14px;line-height:1.5;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);resize:vertical;}
+  textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .go{margin-top:18px;font-family:inherit;font-weight:600;font-size:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:15px 26px;cursor:pointer;transition:background .2s;}
+  .go:hover{background:var(--accent2);}
+  .go:disabled{opacity:.6;cursor:default;}
+  .result{margin-top:26px;display:none;}
+  .scorecard{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(15,20,23,.06);padding:26px;display:flex;gap:26px;align-items:center;flex-wrap:wrap;}
+  .gauge{--v:0;width:120px;height:120px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--gcol) calc(var(--v)*1%),#eef1f4 0);}
+  .gauge .inner{width:92px;height:92px;border-radius:50%;background:#fff;display:grid;place-items:center;flex-direction:column;}
+  .gauge .num{font-family:"Fraunces",serif;font-weight:700;font-size:32px;color:var(--strong);line-height:1;}
+  .gauge .lab{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .verdict h2{font-family:"Fraunces",serif;font-size:22px;margin:0 0 4px;color:var(--strong);}
+  .verdict p{margin:0;color:var(--muted);font-size:15px;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;}
+  .box h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:0 0 12px;}
+  .box.match h3{color:var(--ok);} .box.miss h3{color:var(--bad);}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-size:13px;font-weight:500;border-radius:7px;padding:5px 11px;}
+  .chip.m{color:var(--ok);background:#e6f5f0;} .chip.x{color:var(--bad);background:#fdeaea;}
+  .sugg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px;}
+  .sugg h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin:0 0 12px;}
+  .sugg ul{margin:0;padding-left:20px;} .sugg li{margin:7px 0;color:var(--muted);font-size:15px;}
+  .msg{margin-top:20px;font-size:14px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .msg.err{color:var(--bad);border-color:#f3c9c9;background:#fdeeee;}
+  .loader{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .about{margin-top:34px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;}
+  .about h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;}
+  .about p{margin:0 0 8px;color:var(--muted);font-size:14.5px;}
+  @media(max-width:720px){.grid,.cols{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live AI tool</span></div></div>
+<div class="wrap">
+  <h1>AI ATS Resume Matcher</h1>
+  <p class="sub">Nearly 60% of job seekers say their biggest worry is never knowing if a human saw their CV — because software screens most applications first. Paste your CV and a job description below: the AI scores the match, shows the keywords the job wants that your CV is missing, and suggests fixes. Built by Thomas Gollogly.</p>
+
+  <div class="grid">
+    <div class="field"><label>Your CV</label><textarea id="cv"></textarea></div>
+    <div class="field"><label>Job description</label><textarea id="jd" placeholder="Paste the full job advert here..."></textarea></div>
+  </div>
+  <button class="go" id="go">Analyse match</button>
+
+  <div class="msg" id="msg" style="display:none;"></div>
+
+  <div class="result" id="result">
+    <div class="scorecard">
+      <div class="gauge" id="gauge"><div class="inner"><div class="num" id="scoreNum">0</div><div class="lab">match</div></div></div>
+      <div class="verdict"><h2 id="verdictH">—</h2><p id="verdictP"></p></div>
+    </div>
+    <div class="cols">
+      <div class="box match"><h3>✓ Keywords you already have</h3><div class="chips" id="matched"></div></div>
+      <div class="box miss"><h3>✕ Missing — add these if true</h3><div class="chips" id="missing"></div></div>
+    </div>
+    <div class="sugg"><h3>Suggestions to improve your match</h3><ul id="suggestions"></ul></div>
+  </div>
+
+  <div class="about">
+    <h3>How it works</h3>
+    <p>The front end runs on this static site; the CV and job description are sent to a small serverless function (a Cloudflare Worker) that holds the AI key securely and calls Google's Gemini model. Keeping the key server-side is the correct, safe pattern — it's never exposed in the browser.</p>
+    <p>Stack: vanilla JavaScript front end · Cloudflare Worker backend · Google Gemini API · deployed free.</p>
+    <p style="margin-top:10px;color:var(--faint);font-size:13px;"><b>Privacy &amp; AI notice:</b> This tool uses AI. Text you enter is sent to Google&rsquo;s Gemini API to generate a response and is not stored by this site. Please don&rsquo;t paste confidential or personal information. For demonstration purposes only — not career, legal or professional advice.</p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Pre-fill Thomas's CV so the tool is usable immediately
+document.getElementById("cv").value = `Thomas Gollogly — Developer, Newry, Northern Ireland. tgollogly@outlook.com
+Self-taught developer who builds and ships real, working web applications end to end, fluent with AI-assisted development. Background in customer service, administration and research.
+Skills: JavaScript, React, HTML, CSS, Node.js, Express, Python, PostgreSQL, REST APIs, MapLibre, Leaflet, SVG, Canvas, Stripe, JWT, Netlify, Cloudflare, WordPress, AI-assisted development, Git.
+Projects: Heat Dome Detector (live weather-risk dashboard, 3D map, radar); Beneish M-Score Screener (in-browser forensic-accounting model); Thermal Compare (multi-location live weather); BundleBuilder (court-bundle generator); AI ATS Resume Matcher.
+Experience: Customer Service Advisor (Teleperformance); Inbound Telesales (HCL BPO); Trainee Accounts Assistant; Production Operator (Heinz); HGV Driver.
+Education: 6 GCSEs incl. Maths & English.`;
+
+const $=id=>document.getElementById(id);
+function bandColour(s){ return s>=75?"var(--ok)":s>=50?"var(--warn)":"var(--bad)"; }
+function verdict(s){
+  if(s>=75) return ["Strong match","Your CV lines up well with this job. Tighten the few missing keywords and apply."];
+  if(s>=50) return ["Partial match","Worth applying, but add the missing keywords (where true) to get past the ATS filter."];
+  return ["Weak match","This CV would likely be filtered out. Add the missing keywords if you have them, or target a closer role."];
+}
+
+$("go").addEventListener("click", async ()=>{
+  const cv=$("cv").value.trim(), jd=$("jd").value.trim();
+  const msg=$("msg");
+  if(!jd){ msg.style.display="block"; msg.className="msg err"; msg.textContent="Paste a job description first."; return; }
+  if(!window.AI_BACKEND_URL){
+    msg.style.display="block"; msg.className="msg";
+    msg.innerHTML="This tool isn't switched on yet — the AI backend URL hasn't been set. See <b>AI-SETUP.md</b> to deploy the free Worker, then paste its URL into <b>config.js</b>.";
+    return;
+  }
+  msg.style.display="block"; msg.className="msg"; msg.innerHTML='<span class="loader"></span>Analysing your CV against the job description…';
+  $("result").style.display="none"; $("go").disabled=true;
+  try{
+    const r=await fetch(window.AI_BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"ats",cv,jd})});
+    const d=await r.json();
+    if(d.error){ msg.className="msg err"; msg.textContent="Error: "+d.error+(d.raw?(" — "+d.raw.slice(0,200)):""); return; }
+    const score=Math.max(0,Math.min(100,parseInt(d.score)||0));
+    msg.style.display="none";
+    const col=bandColour(score);
+    const g=$("gauge"); g.style.setProperty("--v",score); g.style.setProperty("--gcol",col);
+    $("scoreNum").textContent=score; $("scoreNum").style.color=col;
+    const [h,p]=verdict(score); $("verdictH").textContent=h; $("verdictP").textContent=p;
+    $("matched").innerHTML=(d.matched||[]).map(k=>`<span class="chip m">${k}</span>`).join("")||'<span style="color:var(--faint);font-size:14px;">—</span>';
+    $("missing").innerHTML=(d.missing||[]).map(k=>`<span class="chip x">${k}</span>`).join("")||'<span style="color:var(--faint);font-size:14px;">Nothing major — nice.</span>';
+    $("suggestions").innerHTML=(d.suggestions||[]).map(s=>`<li>${s}</li>`).join("")||"<li>No suggestions returned.</li>";
+    $("result").style.display="block";
+  }catch(e){ msg.className="msg err"; msg.textContent="Couldn't reach the AI backend. Check the Worker is deployed and the URL in config.js is correct."; }
+  finally{ $("go").disabled=false; }
+});
+</script>
+</body>
+</html>

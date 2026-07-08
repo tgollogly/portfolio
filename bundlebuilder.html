@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light">
+<title>BundleBuilder — live demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:light;--bg:#f3f5f1;--surface:#fff;--ink:#15201e;--muted:#586865;--line:#e2e6e1;--teal:#2f39c9;--teal-d:#232cad;--red:#b3271e;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
+  a{color:var(--teal);}
+  .top{background:var(--surface);border-bottom:1px solid var(--line);}
+  .top .in{max-width:940px;margin:0 auto;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .back{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);}
+  .tag{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:#e4f1ef;padding:5px 11px;border-radius:999px;}
+  .wrap{max-width:940px;margin:0 auto;padding:30px 22px 60px;}
+  h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,5vw,44px);margin:0;}
+  .sub{color:var(--muted);margin:8px 0 22px;max-width:64ch;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 26px rgba(21,32,30,.05);padding:20px;margin-bottom:20px;}
+  .panel h2{font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600;}
+  label{display:block;font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 5px;}
+  input,textarea{width:100%;font-family:"Inter";font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:#fff;}
+  input:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+  textarea{resize:vertical;min-height:52px;}
+  .frm{display:grid;grid-template-columns:1fr 160px;gap:12px;}
+  .frm .full{grid-column:1/-1;}
+  button{font-family:"IBM Plex Mono";font-weight:600;cursor:pointer;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 15px;font-size:13px;transition:.2s;}
+  button:hover{border-color:var(--teal);}
+  button.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
+  button.primary:hover{background:var(--teal-d);}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .meta-in{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+  .item{border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;background:#fff;}
+  .num{font-family:"Bricolage Grotesque";font-weight:800;font-size:20px;color:var(--teal);min-width:34px;}
+  .it-body{flex:1;}
+  .it-body .t{font-weight:600;font-size:16px;}
+  .it-body .d{font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);margin-top:2px;}
+  .it-body .desc{color:var(--muted);font-size:14px;margin-top:6px;}
+  .it-ctrl{display:flex;flex-direction:column;gap:4px;}
+  .it-ctrl button{padding:5px 9px;font-size:13px;line-height:1;}
+  .it-ctrl .del:hover{border-color:var(--red);color:var(--red);}
+  .empty{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);padding:14px 0;}
+  .pages{font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);text-align:right;margin-top:4px;}
+  /* print bundle */
+  #printArea{display:none;}
+  @media print{
+    @page{ margin:14mm; }
+    body > *:not(#printArea){ display:none !important; }
+    #printArea{ display:block !important; position:static !important; width:auto; padding:0; }
+    .pb-title{font-family:'Bricolage Grotesque';font-weight:800;font-size:22pt;margin-bottom:2mm;}
+    .pb-meta{font-family:'IBM Plex Mono';font-size:10pt;color:#333;margin-bottom:6mm;border-bottom:1px solid #000;padding-bottom:3mm;}
+    .pb-idx-h{font-size:12pt;font-weight:700;margin:5mm 0 3mm;}
+    table{width:100%;border-collapse:collapse;font-size:10.5pt;}
+    th,td{border:1px solid #000;padding:3mm;text-align:left;vertical-align:top;}
+    th{background:#eee;}
+    .pb-tab{break-before:page;page-break-before:always;break-inside:avoid;page-break-inside:avoid;border:1px solid #000;padding:8mm;margin:0;text-align:center;}
+    .pb-tab .tabn{font-size:34pt;font-weight:800;font-family:'Bricolage Grotesque';}
+  }
+</style>
+</head>
+<body>
+<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="tag">Live demo · runs in your browser</span></div></div>
+<div class="wrap">
+  <h1>BundleBuilder</h1>
+  <p class="sub">Turn a pile of evidence into a clean, numbered court bundle. Add each document, reorder into the sequence you want, then export a paginated bundle with an index and exhibit dividers — ready to print. Nothing leaves your browser.</p>
+  <p class="sub" style="margin-top:-14px;font-size:13px;color:#5c6672;"><b>For demonstration only — not legal advice.</b> This tool helps organise documents; it does not provide legal guidance. Check your court&rsquo;s bundle rules.</p>
+
+  <div class="panel">
+    <h2>Bundle details</h2>
+    <div class="meta-in">
+      <div><label>Case / bundle title</label><input id="caseTitle" value="Example Ltd v Sample Trading Co — Trial Bundle"></div>
+      <div><label>Case number</label><input id="caseNo" value="DEMO-0000"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Add a document</h2>
+    <div class="frm">
+      <div><label>Document title</label><input id="dTitle" placeholder="e.g. Contract or invoice"></div>
+      <div><label>Date</label><input id="dDate" type="date"></div>
+      <div class="full"><label>Description (optional)</label><textarea id="dDesc" placeholder="Short note on what this document shows"></textarea></div>
+      <div class="full"><button class="primary" onclick="addItem()">Add to bundle</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="bar"><h2 style="margin:0;">Bundle contents</h2>
+      <div><button onclick="loadSample()">Load sample</button> <button class="primary" onclick="window.print()">Export bundle (PDF)</button></div>
+    </div>
+    <div id="list"><div class="empty">No documents yet. Add one above, or load a sample.</div></div>
+    <div class="pages" id="pages"></div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+let items=[];
+function addItem(){
+  const t=document.getElementById("dTitle").value.trim();
+  if(!t){document.getElementById("dTitle").focus();return;}
+  items.push({t,date:document.getElementById("dDate").value,desc:document.getElementById("dDesc").value.trim()});
+  document.getElementById("dTitle").value="";document.getElementById("dDesc").value="";document.getElementById("dDate").value="";
+  render();
+}
+function move(i,dir){const j=i+dir;if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];render();}
+function del(i){items.splice(i,1);render();}
+function loadSample(){
+  items=[
+    {t:"Sample contract",date:"2024-01-10",desc:"Example supply agreement between two fictional companies."},
+    {t:"Sample invoice #1042",date:"2024-04-02",desc:"Example unpaid invoice used to demonstrate the tool."},
+    {t:"Sample email thread",date:"2024-05-18",desc:"Placeholder correspondence about the disputed invoice."},
+    {t:"Sample delivery note",date:"2024-05-20",desc:"Dummy proof-of-delivery document."},
+    {t:"Sample letter before claim",date:"2024-07-01",desc:"Example formal notice — fictional demo data only."}
+  ];
+  render();
+}
+function fmtDate(d){if(!d)return"—";const dt=new Date(d);return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
+function render(){
+  const list=document.getElementById("list");
+  if(!items.length){list.innerHTML='<div class="empty">No documents yet. Add one above, or load a sample.</div>';document.getElementById("pages").textContent="";buildPrint();return;}
+  list.innerHTML=items.map((it,i)=>`<div class="item">
+    <div class="num">${i+1}</div>
+    <div class="it-body"><div class="t">${esc(it.t)}</div><div class="d">Exhibit ${i+1} · ${fmtDate(it.date)}</div>${it.desc?`<div class="desc">${esc(it.desc)}</div>`:""}</div>
+    <div class="it-ctrl">
+      <button onclick="move(${i},-1)" title="Move up">↑</button>
+      <button onclick="move(${i},1)" title="Move down">↓</button>
+      <button class="del" onclick="del(${i})" title="Remove">×</button>
+    </div></div>`).join("");
+  document.getElementById("pages").textContent=`${items.length} document${items.length>1?"s":""} · ${items.length} exhibit dividers`;
+  buildPrint();
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function buildPrint(){
+  const title=esc(document.getElementById("caseTitle").value), no=esc(document.getElementById("caseNo").value);
+  const rows=items.map((it,i)=>`<tr><td style="text-align:center;">${i+1}</td><td>${esc(it.t)}</td><td>${fmtDate(it.date)}</td><td>${esc(it.desc||"")}</td></tr>`).join("");
+  const tabs=items.map((it,i)=>`<div class="pb-tab"><div class="tabn">Exhibit ${i+1}</div><div style="font-size:14pt;font-weight:700;margin-top:3mm;">${esc(it.t)}</div><div style="font-family:monospace;font-size:10pt;color:#333;">${fmtDate(it.date)}</div></div>`).join("");
+  document.getElementById("printArea").innerHTML=
+    `<div class="pb-title">${title}</div><div class="pb-meta">Case No: ${no} &nbsp;·&nbsp; ${items.length} documents &nbsp;·&nbsp; Prepared ${new Date().toLocaleDateString("en-GB")}</div>
+     <div class="pb-idx-h">Index</div>
+     <table><thead><tr><th style="width:14%;">Exhibit</th><th>Document</th><th style="width:22%;">Date</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>${tabs}`;
+}
+["caseTitle","caseNo"].forEach(id=>document.getElementById(id).addEventListener("input",buildPrint));
+document.getElementById("dTitle").addEventListener("keydown",e=>{if(e.key==="Enter")addItem();});
+loadSample();
+</script>
+
+<style>
+.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:"Inter",system-ui,sans-serif;}
+.cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
+.cs-eyebrow{font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#2f39c9;}
+.cs-h{font-size:26px;color:#0b0f14;margin:6px 0 22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;}
+.cs-block{margin:0 0 20px;}
+.cs-block:last-child{margin-bottom:0;}
+.cs-block h3{font-size:14px;color:#2f39c9;margin:0 0 6px;font-weight:700;letter-spacing:.02em;}
+.cs-block p{font-size:15.5px;line-height:1.62;color:#3f4954;margin:0;}
+.cs-block code{background:#f4f6f9;border:1px solid #e4e8ec;border-radius:5px;padding:1px 6px;font-size:13px;color:#0b0f14;}
+</style>
+
+<section class="cs"><div class="cs-card">
+  <div class="cs-eyebrow">Case study</div>
+  <h2 class="cs-h">How it's built — and why</h2>
+  <div class="cs-block"><h3>The problem</h3><p>People representing themselves in court struggle to assemble a proper, paginated evidence bundle with an index and exhibit dividers. I wanted to make that a five-minute job.</p></div>
+  <div class="cs-block"><h3>Stack &amp; why I chose it</h3><p>Vanilla JavaScript plus the browser's own print engine (<code>window.print()</code> with a dedicated print stylesheet) to produce the PDF &mdash; no PDF library needed, which keeps it lightweight, and the documents stay entirely on the user's device, which matters for legal material.</p></div>
+  <div class="cs-block"><h3>Key decisions</h3><p>Reordering works by swapping array items and re-rendering; a separate print layout builds the index table and one tab-divider page per document with proper page breaks. I intentionally avoided <code>localStorage</code> so it behaves consistently everywhere and stays session-only.</p></div>
+  <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>It organises and indexes the documents rather than merging the actual PDF files. Next: drag-and-drop reordering and true PDF merging.</p></div>
+</div></section>
+
+</body>
+</html>

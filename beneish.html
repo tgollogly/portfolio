@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light">
+<title>Beneish M-Score Screener — live demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:light;--bg:#f3f5f1;--surface:#fff;--ink:#15201e;--muted:#586865;--line:#e2e6e1;--teal:#2f39c9;--teal-d:#232cad;--red:#b3271e;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
+  a{color:var(--teal);}
+  .top{background:var(--surface);border-bottom:1px solid var(--line);}
+  .top .in{max-width:960px;margin:0 auto;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .back{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);}
+  .tag{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:#e4f1ef;padding:5px 11px;border-radius:999px;}
+  .wrap{max-width:960px;margin:0 auto;padding:30px 22px 60px;}
+  h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,5vw,44px);margin:0;}
+  .sub{color:var(--muted);margin:8px 0 22px;max-width:64ch;}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;}
+  button{font-family:"IBM Plex Mono";font-weight:600;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 16px;font-size:13px;transition:.2s;}
+  button.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
+  button.primary:hover{background:var(--teal-d);}
+  button:hover{border-color:var(--teal);}
+  .layout{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:start;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 26px rgba(21,32,30,.05);overflow:hidden;}
+  .panel .hd{padding:12px 18px;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:#fafbf9;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th,td{text-align:right;padding:7px 10px;font-family:"IBM Plex Mono";font-size:13px;overflow:hidden;}
+  th:first-child,td:first-child{width:44%;}
+  th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){width:28%;}
+  th{color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);letter-spacing:.03em;}
+  td:first-child,th:first-child{text-align:left;color:var(--ink);word-break:break-word;}
+  tbody tr:nth-child(even){background:#fafbf9;}
+  input{width:100%;font-family:"IBM Plex Mono";font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;text-align:right;color:var(--ink);background:#fff;}
+  input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+  .scorebox{padding:24px;text-align:center;}
+  .mscore{font-family:"Bricolage Grotesque";font-weight:800;font-size:60px;line-height:1;margin:6px 0;}
+  .verdict{display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border-radius:10px;font-family:"IBM Plex Mono";font-size:13px;font-weight:600;color:#fff;margin-top:6px;}
+  .thresh{font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);margin-top:16px;line-height:1.7;}
+  .idx{margin-top:2px;}
+  .idx td{font-size:12.5px;padding:6px 12px;}
+  .idx .flag{color:var(--red);font-weight:600;}
+  .note{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;}
+  @media(max-width:760px){
+    .layout{grid-template-columns:1fr;}
+    .wrap{padding-left:16px;padding-right:16px;}
+    th,td{padding:6px 6px;font-size:12px;}
+    input{font-size:14px;padding:7px 6px;}
+    th:first-child,td:first-child{width:40%;}
+    th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){width:30%;}
+    .mscore{font-size:48px;}
+  }
+</style>
+</head>
+<body>
+<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="tag">Live demo · runs in your browser</span></div></div>
+<div class="wrap">
+  <h1>Beneish M-Score Screener</h1>
+  <p class="sub">Enter two years of a company's figures. This computes all eight Beneish indices and the combined M-Score, which flags a statistically elevated probability of earnings manipulation. It's pre-loaded with a worked example — edit any number and the score updates instantly.</p>
+  <div class="controls">
+    <button class="primary" onclick="compute()">Recalculate</button>
+    <button onclick="loadExample('clean')">Load: healthy company</button>
+    <button onclick="loadExample('flag')">Load: red-flag company</button>
+  </div>
+  <div class="layout">
+    <div class="panel">
+      <div class="hd">Financial inputs</div>
+      <table>
+        <thead><tr><th>Line item</th><th>Prior year</th><th>Latest year</th></tr></thead>
+        <tbody id="inputs"></tbody>
+      </table>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="hd">Result</div>
+        <div class="scorebox">
+          <div style="font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Beneish M-Score</div>
+          <div class="mscore" id="mscore">—</div>
+          <div class="verdict" id="verdict" style="background:var(--teal)">—</div>
+          <div class="thresh">Threshold: <b>&minus;1.78</b><br>Above &rarr; higher manipulation risk<br>Below &rarr; unlikely manipulator</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <div class="hd">Eight indices</div>
+        <table class="idx"><tbody id="indices"></tbody></table>
+      </div>
+    </div>
+  </div>
+  <p class="note">For demonstration only — not financial, investment or accounting advice. A high M-Score is a screening signal, not proof of fraud — it flags where a closer look is warranted. Model: Messod Beneish (1999).</p>
+</div>
+<script>
+const FIELDS=[
+  ["receivables","Net receivables"],["sales","Sales / revenue"],["cogs","Cost of goods sold"],
+  ["currentAssets","Current assets"],["ppe","Net PP&E"],["totalAssets","Total assets"],
+  ["depreciation","Depreciation"],["sga","SG&A expense"],["netIncome","Net income"],
+  ["cfo","Cash flow from operations"],["currentLiab","Current liabilities"],["ltd","Long-term debt"]
+];
+const EXAMPLES={
+  clean:{prior:{receivables:180,sales:2000,cogs:1200,currentAssets:600,ppe:900,totalAssets:1800,depreciation:90,sga:300,netIncome:160,cfo:210,currentLiab:340,ltd:400},
+         latest:{receivables:196,sales:2180,cogs:1300,currentAssets:650,ppe:940,totalAssets:1930,depreciation:95,sga:326,netIncome:172,cfo:225,currentLiab:360,ltd:410}},
+  flag: {prior:{receivables:150,sales:1800,cogs:1150,currentAssets:520,ppe:820,totalAssets:1650,depreciation:110,sga:290,netIncome:120,cfo:180,currentLiab:300,ltd:380},
+         latest:{receivables:340,sales:2600,cogs:1500,currentAssets:760,ppe:760,totalAssets:2050,depreciation:70,sga:300,netIncome:290,cfo:120,currentLiab:360,ltd:520}}
+};
+const tbody=document.getElementById("inputs");
+FIELDS.forEach(([k,label])=>{
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td>${label}</td>
+    <td><input id="p_${k}" type="number" step="any"></td>
+    <td><input id="l_${k}" type="number" step="any"></td>`;
+  tbody.appendChild(tr);
+});
+function loadExample(which){
+  const e=EXAMPLES[which];
+  FIELDS.forEach(([k])=>{document.getElementById("p_"+k).value=e.prior[k];document.getElementById("l_"+k).value=e.latest[k];});
+  compute();
+}
+function g(pfx,k){return parseFloat(document.getElementById(pfx+"_"+k).value)||0;}
+function compute(){
+  const p={},l={};
+  FIELDS.forEach(([k])=>{p[k]=g("p",k);l[k]=g("l",k);});
+  const safe=(n,d)=>d===0?0:n/d;
+  const DSRI=safe(safe(l.receivables,l.sales),safe(p.receivables,p.sales));
+  const gmP=safe(p.sales-p.cogs,p.sales), gmL=safe(l.sales-l.cogs,l.sales);
+  const GMI=safe(gmP,gmL);
+  const aqL=1-safe(l.currentAssets+l.ppe,l.totalAssets), aqP=1-safe(p.currentAssets+p.ppe,p.totalAssets);
+  const AQI=safe(aqL,aqP);
+  const SGI=safe(l.sales,p.sales);
+  const depP=safe(p.depreciation,p.depreciation+p.ppe), depL=safe(l.depreciation,l.depreciation+l.ppe);
+  const DEPI=safe(depP,depL);
+  const SGAI=safe(safe(l.sga,l.sales),safe(p.sga,p.sales));
+  const LVGI=safe(safe(l.ltd+l.currentLiab,l.totalAssets),safe(p.ltd+p.currentLiab,p.totalAssets));
+  const TATA=safe(l.netIncome-l.cfo,l.totalAssets);
+  const M=-4.84+0.920*DSRI+0.528*GMI+0.404*AQI+0.892*SGI+0.115*DEPI-0.172*SGAI+4.679*TATA-0.327*LVGI;
+  const idx=[["DSRI",DSRI,1.031],["GMI",GMI,1.014],["AQI",AQI,1.04],["SGI",SGI,1.134],
+    ["DEPI",DEPI,1.077],["SGAI",SGAI,1.041],["LVGI",LVGI,1.037],["TATA",TATA,0.018]];
+  document.getElementById("indices").innerHTML=idx.map(([n,v,ref])=>{
+    const flag=v>ref?' class="flag"':'';
+    return `<tr><td>${n}</td><td${flag}>${v.toFixed(3)}</td></tr>`;
+  }).join("");
+  const el=document.getElementById("mscore"), vd=document.getElementById("verdict");
+  el.textContent=M.toFixed(2);
+  if(M>-1.78){el.style.color="var(--red)";vd.style.background="var(--red)";vd.textContent="Elevated risk — investigate";}
+  else{el.style.color="var(--teal)";vd.style.background="var(--teal)";vd.textContent="Unlikely manipulator";}
+}
+loadExample('clean');
+</script>
+
+<style>
+.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:"Inter",system-ui,sans-serif;}
+.cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
+.cs-eyebrow{font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#2f39c9;}
+.cs-h{font-size:26px;color:#0b0f14;margin:6px 0 22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;}
+.cs-block{margin:0 0 20px;}
+.cs-block:last-child{margin-bottom:0;}
+.cs-block h3{font-size:14px;color:#2f39c9;margin:0 0 6px;font-weight:700;letter-spacing:.02em;}
+.cs-block p{font-size:15.5px;line-height:1.62;color:#3f4954;margin:0;}
+.cs-block code{background:#f4f6f9;border:1px solid #e4e8ec;border-radius:5px;padding:1px 6px;font-size:13px;color:#0b0f14;}
+</style>
+
+<section class="cs"><div class="cs-card">
+  <div class="cs-eyebrow">Case study</div>
+  <h2 class="cs-h">How it's built — and why</h2>
+  <div class="cs-block"><h3>The problem</h3><p>Screening a company for possible earnings manipulation usually needs a forensic analyst. I wanted anyone to be able to run the recognised model in seconds.</p></div>
+  <div class="cs-block"><h3>Stack &amp; why I chose it</h3><p>This is pure client-side JavaScript with no backend, because the Beneish model is deterministic maths &mdash; so it runs instantly and, importantly, the financial figures never leave the browser, which is a real privacy advantage.</p></div>
+  <div class="cs-block"><h3>Key decisions</h3><p>Rather than ask for pre-calculated ratios (which most people don't have), it takes raw figures for two years and computes all eight indices and the final M-score itself. The &minus;1.78 threshold flags elevated risk. Two worked examples &mdash; a healthy and a red-flag company &mdash; are pre-loaded so it's usable and verifiable immediately.</p></div>
+  <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>Figures are entered by hand rather than pulled from filings, to keep it dependency-free. Next: auto-fetching company data from the SEC EDGAR API.</p></div>
+</div></section>
+
+</body>
+</html>
