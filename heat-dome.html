@@ -34,11 +34,13 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(
 .chip:hover{border-color:var(--accent);color:var(--accent);}
 .layout{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
+/* WARNING BANNER */
 .warn{padding:20px 22px;color:#fff;}
 .warn .lvl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;}
 .warn .cat{font-family:"Fraunces",serif;font-weight:700;font-size:27px;margin:3px 0 6px;line-height:1.1;}
 .warn .advice{font-size:14px;opacity:.95;line-height:1.5;}
 .warn .place{font-size:13px;font-weight:600;margin-bottom:10px;opacity:.95;display:flex;align-items:center;gap:7px;}
+/* DOME VERDICT */
 .dome{margin:0;padding:16px 22px;border-top:1px solid rgba(255,255,255,.25);}
 .dome .dh{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-bottom:5px;}
 .dome .dv{font-family:"Fraunces",serif;font-weight:700;font-size:19px;line-height:1.15;display:flex;align-items:center;gap:9px;}
@@ -58,6 +60,7 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(
 .anomrow .av{font-family:"Fraunces",serif;font-weight:700;font-size:17px;}
 .chart{padding:6px 16px 18px;}
 .chart .ct{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:8px 4px 6px;}
+/* map */
 .mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
 #map{position:absolute;inset:0;}
 .mapctrl{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:8px;}
@@ -130,13 +133,14 @@ footer{max-width:1180px;margin:0 auto;padding:0 22px 40px;color:var(--faint);fon
 <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>The climatology call adds one extra request and a short wait, so the live readout renders first and the dome verdict fills in when the history returns. It's fully client-side with no persistence, and radar shows the latest frame rather than a loop. Next: frame-by-frame radar playback and official severe-weather alert feeds.</p></div>
 </div></section>
 
-<footer>Portfolio demo by Thomas Gollogly. Weather &amp; climate history: open-meteo.com (ERA5) · Radar: RainViewer · Terrain: AWS elevation tiles · Map: MapLibre GL. Heat-risk bands and heat-dome flags are indicative, based on apparent-temperature (NWS-style) categories and historical percentiles — not an official public-health or meteorological warning.</footer>
+<footer>Portfolio demo by Thomas Gollogly. Weather &amp; climate history: open-meteo.com (ERA5) · Radar: RainViewer · Terrain: AWS elevation tiles · Map: MapLibre GL. This is a portfolio demonstration, not a safety tool. Heat-risk bands and heat-dome flags are indicative only, based on apparent-temperature (NWS-style) categories and historical percentiles — they are not validated against health outcomes and must not be relied on for decisions during real heat events. For official heat-health alerts check your national meteorological service — Met Office (UK), Met Éireann (Ireland), your local met office elsewhere, or WHO heat-health guidance.</footer>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const samples=["Seville","Phoenix","Athens","Dubai","Delhi","Death Valley"];
 const chips=document.getElementById("chips");
 samples.forEach(s=>{const c=document.createElement("span");c.className="chip";c.textContent=s;c.onclick=()=>{document.getElementById("q").value=s;run();};chips.appendChild(c);});
 
+// ---- heat categories (apparent temp °C) ----
 function category(t){
 if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"#7b1fa2",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
 if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"#c62828",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
@@ -145,6 +149,8 @@ if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"#c79008",
 return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"#0c7a5e",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
 }
 
+// ---- heat dome / anomaly detection ----
+// Pulls ~30yr ERA5 daily max temps for the same calendar window and scores today against it.
 function percentileOf(sorted,v){
 if(!sorted.length)return null;
 let lo=0;for(let i=0;i<sorted.length;i++){if(sorted[i]<=v)lo=i+1;else break;}
@@ -159,7 +165,7 @@ const u=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude
 const a=await fetch(u).then(r=>r.json());
 if(!a.daily||!a.daily.time)return null;
 const now=new Date(), doy=(dt)=>{const s=new Date(dt.getFullYear(),0,0);return Math.floor((dt-s)/86400000);};
-const targetDoy=doy(now), win=7;
+const targetDoy=doy(now), win=7; // +/- 7 days around today's date-of-year
 const vals=[];
 a.daily.time.forEach((t,i)=>{
 const d=new Date(t), diff=Math.abs(doy(d)-targetDoy);
@@ -172,8 +178,9 @@ const mean=vals.reduce((s,v)=>s+v,0)/vals.length;
 const sorted=vals.slice().sort((x,y)=>x-y);
 const pct=percentileOf(sorted,todayMax);
 const anom=todayMax-mean;
-const isDome = pct>=90 && anom>=4;
-return{mean,anom,pct,isDome};
+const isDome = pct>=90 && anom>=4 && todayMax>=30; // anomaly AND genuinely hot
+const isWarm = !isDome && pct>=90 && anom>=4; // rare for here, but not dangerous heat
+return{mean,anom,pct,isDome,isWarm};
 }catch(e){return null;}
 }
 function renderDome(dome){
@@ -183,6 +190,11 @@ if(dome.isDome){
 return `<div class="dome"><div class="dh">Heat dome check</div>
 <div class="dv"><span class="dtag" style="background:rgba(255,255,255,.32)">⚠ Dome detected</span></div>
 <div class="dnote">Today's peak is <b>${sign}${dome.anom.toFixed(1)}&deg;C</b> above the 30-year norm — hotter than <b>${dome.pct}%</b> of the last three decades for this week. A genuine heat anomaly, not just a hot climate.</div></div>`;
+}
+if(dome.isWarm){
+return `<div class="dome"><div class="dh">Heat dome check</div>
+<div class="dv"><span class="dtag">Unusually warm · not a dome</span></div>
+<div class="dnote">Today's peak is <b>${sign}${dome.anom.toFixed(1)}&deg;C</b> above the 30-year norm (${dome.pct}th percentile) — rare for this location, but not dangerous-heat territory. No heat dome.</div></div>`;
 }
 return `<div class="dome"><div class="dh">Heat dome check</div>
 <div class="dv"><span class="dtag">No dome</span></div>
@@ -200,6 +212,7 @@ return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRa
 <path d="${d}" fill="none" stroke="#d1622e" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
 }
 
+// ---- map (3D terrain) ----
 let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false;
 try{
 map=new maplibregl.Map({
@@ -245,6 +258,7 @@ radarOn=!radarOn; this.classList.toggle("on",radarOn);
 if(mapReady&&map.getLayer("radar"))map.setPaintProperty("radar","raster-opacity",radarOn?0.65:0);
 };
 
+// ---- auto-watch ----
 let watchTimer=null, lastQuery="Seville";
 const watchToggle=document.getElementById("watchToggle"), watchLabel=document.getElementById("watchLabel");
 watchToggle.onclick=function(){
@@ -257,6 +271,7 @@ watchLabel.textContent="Auto-watch"; clearInterval(watchTimer); watchTimer=null;
 }
 };
 
+// ---- main ----
 async function run(q,silent){
 q=(q||document.getElementById("q").value).trim(); if(!q)return; lastQuery=q;
 const wp=document.getElementById("warnPanel"), ro=document.getElementById("readout");
@@ -298,6 +313,7 @@ marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude
 .addTo(map);
 }
 
+// dome check runs after live readout is already visible
 detectDome(loc.latitude,loc.longitude,todayMax).then(dome=>{
 const box=document.getElementById("domeBox");
 if(box) box.outerHTML=renderDome(dome);
