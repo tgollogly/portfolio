@@ -34,13 +34,11 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(
 .chip:hover{border-color:var(--accent);color:var(--accent);}
 .layout{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
-/* WARNING BANNER */
 .warn{padding:20px 22px;color:#fff;}
 .warn .lvl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;}
 .warn .cat{font-family:"Fraunces",serif;font-weight:700;font-size:27px;margin:3px 0 6px;line-height:1.1;}
 .warn .advice{font-size:14px;opacity:.95;line-height:1.5;}
 .warn .place{font-size:13px;font-weight:600;margin-bottom:10px;opacity:.95;display:flex;align-items:center;gap:7px;}
-/* DOME VERDICT */
 .dome{margin:0;padding:16px 22px;border-top:1px solid rgba(255,255,255,.25);}
 .dome .dh{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-bottom:5px;}
 .dome .dv{font-family:"Fraunces",serif;font-weight:700;font-size:19px;line-height:1.15;display:flex;align-items:center;gap:9px;}
@@ -60,7 +58,6 @@ input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(
 .anomrow .av{font-family:"Fraunces",serif;font-weight:700;font-size:17px;}
 .chart{padding:6px 16px 18px;}
 .chart .ct{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:8px 4px 6px;}
-/* map */
 .mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
 #map{position:absolute;inset:0;}
 .mapctrl{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:8px;}
@@ -140,7 +137,6 @@ const samples=["Seville","Phoenix","Athens","Dubai","Delhi","Death Valley"];
 const chips=document.getElementById("chips");
 samples.forEach(s=>{const c=document.createElement("span");c.className="chip";c.textContent=s;c.onclick=()=>{document.getElementById("q").value=s;run();};chips.appendChild(c);});
 
-// ---- heat categories (apparent temp °C) ----
 function category(t){
 if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"#7b1fa2",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
 if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"#c62828",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
@@ -149,8 +145,6 @@ if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"#c79008",
 return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"#0c7a5e",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
 }
 
-// ---- heat dome / anomaly detection ----
-// Pulls ~30yr ERA5 daily max temps for the same calendar window and scores today against it.
 function percentileOf(sorted,v){
 if(!sorted.length)return null;
 let lo=0;for(let i=0;i<sorted.length;i++){if(sorted[i]<=v)lo=i+1;else break;}
@@ -165,7 +159,7 @@ const u=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude
 const a=await fetch(u).then(r=>r.json());
 if(!a.daily||!a.daily.time)return null;
 const now=new Date(), doy=(dt)=>{const s=new Date(dt.getFullYear(),0,0);return Math.floor((dt-s)/86400000);};
-const targetDoy=doy(now), win=7; // +/- 7 days around today's date-of-year
+const targetDoy=doy(now), win=7;
 const vals=[];
 a.daily.time.forEach((t,i)=>{
 const d=new Date(t), diff=Math.abs(doy(d)-targetDoy);
@@ -178,7 +172,7 @@ const mean=vals.reduce((s,v)=>s+v,0)/vals.length;
 const sorted=vals.slice().sort((x,y)=>x-y);
 const pct=percentileOf(sorted,todayMax);
 const anom=todayMax-mean;
-const isDome = pct>=90 && anom>=4; // both conditions
+const isDome = pct>=90 && anom>=4;
 return{mean,anom,pct,isDome};
 }catch(e){return null;}
 }
@@ -206,7 +200,6 @@ return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRa
 <path d="${d}" fill="none" stroke="#d1622e" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
 }
 
-// ---- map (3D terrain) ----
 let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false;
 try{
 map=new maplibregl.Map({
@@ -252,7 +245,6 @@ radarOn=!radarOn; this.classList.toggle("on",radarOn);
 if(mapReady&&map.getLayer("radar"))map.setPaintProperty("radar","raster-opacity",radarOn?0.65:0);
 };
 
-// ---- auto-watch ----
 let watchTimer=null, lastQuery="Seville";
 const watchToggle=document.getElementById("watchToggle"), watchLabel=document.getElementById("watchLabel");
 watchToggle.onclick=function(){
@@ -265,7 +257,6 @@ watchLabel.textContent="Auto-watch"; clearInterval(watchTimer); watchTimer=null;
 }
 };
 
-// ---- main ----
 async function run(q,silent){
 q=(q||document.getElementById("q").value).trim(); if(!q)return; lastQuery=q;
 const wp=document.getElementById("warnPanel"), ro=document.getElementById("readout");
@@ -288,8 +279,8 @@ wp.innerHTML=`<div class="warn" style="background:${cat.c}">
 <div class="dome" id="domeBox"><div class="dh">Heat dome check</div><div class="dv"><span class="dtag"><span class="loader" style="width:11px;height:11px;border-width:2px;margin-right:6px"></span>Checking 30-yr history…</span></div></div>
 </div>`;
 
-ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;</div>
-<div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(todayMax)}&deg;</b></div></div>
+ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;C</div>
+<div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(todayMax)}&deg;C</b></div></div>
 <div class="metrics">
 <div class="metric"><div class="mk">Humidity</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
 <div class="metric"><div class="mk">Wind</div><div class="mv">${Math.round(cur.wind_speed_10m)}<span class="mu"> km/h</span></div></div>
@@ -307,7 +298,6 @@ marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude
 .addTo(map);
 }
 
-// dome check runs after live readout is already visible
 detectDome(loc.latitude,loc.longitude,todayMax).then(dome=>{
 const box=document.getElementById("domeBox");
 if(box) box.outerHTML=renderDome(dome);
