@@ -8,7 +8,7 @@ const MODEL = "gemini-3.5-flash"; // current free model (2.0 was retired June 20
 const THOMAS_CONTEXT = `You are the friendly, professional AI assistant on Thomas Gollogly's developer portfolio site. Your job is to help visitors (often recruiters or hiring managers) understand Thomas's skills and projects, and to encourage them to get in touch. Answer using ONLY the facts below. Keep answers concise (2-5 sentences) but specific and confident. If asked to actually run a demo, explain you can't operate the page but point them to the live demo right there. If you don't know something, say so and suggest emailing Thomas.
 
 WHO HE IS:
-Thomas Gollogly is a self-taught developer based in Newry, Northern Ireland, available to work remotely. He designs, builds and deploys real, working web applications end to end — front end, back end, data and hosting — and is fluent with AI-assisted development. He is genuinely strong at shipping working software and at problem-solving and persistence (he built and debugged this whole site, including a live serverless backend, himself). He is looking for a developer role: trainee, apprentice, junior, contract or freelance. Contact: tgollogly@outlook.com.
+Thomas Gollogly is a self-taught developer based in Northern Ireland, available to work remotely. He designs, builds and deploys real, working web applications end to end — front end, back end, data and hosting — and is fluent with AI-assisted development. He is genuinely strong at shipping working software and at problem-solving and persistence (he built and debugged this whole site, including a live serverless backend, himself). He is looking for a developer role: trainee, apprentice, junior, contract or freelance. Contact: thomas@tgollogly.dev.
 
 TECH: JavaScript, HTML/CSS, responsive/mobile-first design, MapLibre/Leaflet, SVG/Canvas; serverless back end (Cloudflare Workers), REST/JSON APIs; Google Gemini API integration; secure secret handling; Git/GitHub with continuous deployment. Also working with React, Node.js, Python and PostgreSQL.
 
@@ -26,7 +26,7 @@ PROJECTS (all live on this site — invite people to try them):
 
 He also has an AI chatbot (that's me) on the site, and a printable CV page.
 
-WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships working products (not just tutorials), owns projects end to end, is fluent with modern AI-assisted workflows, and has shown real determination in self-teaching and debugging in production. Encourage the visitor to email him at tgollogly@outlook.com about any opportunity.`;
+WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships working products (not just tutorials), owns projects end to end, is fluent with modern AI-assisted workflows, and has shown real determination in self-teaching and debugging in production. Encourage the visitor to email him at thomas@tgollogly.dev about any opportunity.`;
 
 export default {
   async fetch(request, env) {
@@ -69,4 +69,46 @@ async function handleAI(request, env) {
       const cv = (body.cv || "").slice(0, 9000);
       const jd = (body.jd || "").slice(0, 9000);
       const prompt = `You are an applicant-tracking-system (ATS) analyzer. Compare the CV to the JOB DESCRIPTION. Respond with ONLY valid JSON (no markdown fences), exactly this shape:
-{"score": <integer 0-100 overall match>, "matched": [<up to 12 skills/keywords present in both>], "missing": [<up to 12 important keywords in the job description missing from the CV>], "suggestions": [
+{"score": <integer 0-100 overall match>, "matched": [<up to 12 skills/keywords present in both>], "missing": [<up to 12 important keywords in the job description missing from the CV>], "suggestions": [<3 to 5 short, specific edits to improve the CV for THIS job>]}
+
+CV:
+${cv}
+
+JOB DESCRIPTION:
+${jd}`;
+      const raw = await gemini(prompt, key);
+      const clean = raw.replace(/```json|```/g, "").trim();
+      let data; try { data = JSON.parse(clean); } catch { data = { error: "Could not parse", raw: clean }; }
+      return json(data);
+    }
+    return json({ error: "Unknown mode" }, 400);
+  } catch (e) {
+    const busy = e && e.rate;
+    const chatMsg = busy
+      ? "I'm getting a lot of questions right now and have hit a short free-tier limit — please wait about a minute, then ask again. For anything urgent, email Thomas at thomas@tgollogly.dev."
+      : "I hit a brief snag answering that — please try again in a moment. (If it keeps happening, email Thomas at thomas@tgollogly.dev.)";
+    if (body && body.mode === "chat") return json({ reply: chatMsg }, 200);
+    return json({ error: busy ? "AI is at its free-tier limit — please wait a minute and try again." : "The AI hit a brief snag — please try again." }, 200);
+  }
+}
+
+async function gemini(prompt, key) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+  const payload = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+  // One gentle retry only, so we never pile onto a rate limit and make it worse.
+  let r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+  if (!r.ok && r.status === 503) {                 // transient overload: one retry after a pause
+    await new Promise(res => setTimeout(res, 1200));
+    r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+  }
+  if (r.status === 429) { const e = new Error("rate_limited"); e.rate = true; throw e; }  // don't retry rate limits
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error(d.error?.message || ("Gemini error " + r.status));
+  }
+  const d = await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || "(no response)";
+}
+
+function cors() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
+function json(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...cors(), "Content-Type": "application/json" } }); }
