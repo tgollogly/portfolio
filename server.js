@@ -75,17 +75,34 @@ ${jd}`;
     }
     return json({ error: "Unknown mode" }, 400);
   } catch (e) {
-    return json({ error: "AI request failed" }, 502);
+    // Friendly message so visitors never see a scary error (usually a brief rate limit)
+    if (body && body.mode === "chat") {
+      return json({ reply: "I'm just catching my breath for a second — please send that again in a moment. (If it keeps happening, email Thomas at tgollogly@outlook.com.)" }, 200);
+    }
+    return json({ error: "The AI is busy right now — please try again in a few seconds." }, 200);
   }
 }
 
 async function gemini(prompt, key) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
-  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error?.message || "Gemini error");
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || "(no response)";
+  const payload = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+  let last;
+  // Up to 3 attempts: transient rate-limit (429) / overloaded (503) get a short backoff and retry
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload });
+    if (r.ok) {
+      const d = await r.json();
+      return d.candidates?.[0]?.content?.parts?.[0]?.text || "(no response)";
+    }
+    last = r.status;
+    if (r.status === 429 || r.status === 503) {
+      await new Promise(res => setTimeout(res, 700 * (attempt + 1))); // 0.7s, 1.4s
+      continue;
+    }
+    const d = await r.json().catch(() => ({}));
+    throw new Error(d.error?.message || ("Gemini error " + r.status));
+  }
+  throw new Error("Gemini busy (" + last + ")");
 }
 
 function cors() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
