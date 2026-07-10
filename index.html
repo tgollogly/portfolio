@@ -250,14 +250,14 @@
   </section>
 </main>
 
-<footer><div class="wrap foot"><span>&copy; <span id="yr"></span> Thomas Gollogly — designed &amp; built by me.</span><span>Newry, Northern Ireland</span></div><div class="wrap" style="margin-top:14px;color:var(--faint);font-size:12px;line-height:1.5;">The demos on this site are for demonstration only and do not constitute legal, financial or professional advice. AI features send the text you enter to Google&rsquo;s Gemini API to generate a response; that text is not stored by this site — please don&rsquo;t enter confidential information. This site uses no tracking cookies.</div></footer>
+<footer><div class="wrap foot"><span>&copy; <span id="yr"></span> Thomas Gollogly — designed &amp; built by me.</span><span>Northern Ireland</span></div><div class="wrap" style="margin-top:14px;color:var(--faint);font-size:12px;line-height:1.5;">The demos on this site are for demonstration only and do not constitute legal, financial or professional advice. AI features send the text you enter to Google&rsquo;s Gemini API to generate a response; that text is not stored by this site — please don&rsquo;t enter confidential information. This site uses no tracking cookies.</div></footer>
 
 <script src="config.js"></script>
 <script>
 /* ===== EDIT ZONE ===== */
-const CONTACT_EMAIL = "tgollogly@outlook.com";       // your email
-const PHONE         = "07513 468009";            // shown on the site; clear this to "" to hide it
-const LOCATION      = "Newry, Northern Ireland";
+const CONTACT_EMAIL = "thomas@tgollogly.dev";       // your email
+const PHONE         = "";            // hidden
+const LOCATION      = "Northern Ireland";
 const GITHUB_URL    = "";                         // EDIT: paste your GitHub profile URL (recruiters look for this)
 const LINKEDIN_URL  = "";                         // EDIT: paste your LinkedIn URL
 
@@ -392,14 +392,14 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   async function sendMsg(){
     const msg=input.value.trim(); if(!msg)return;
     add(msg,"user"); history.push({role:"user",text:msg}); input.value="";
-    if(!window.AI_BACKEND_URL){ add("Chat isn't switched on yet — the AI backend hasn't been connected. (See AI-SETUP.md.) In the meantime, email Thomas at tgollogly@outlook.com.","bot"); return; }
+    if(!window.AI_BACKEND_URL){ add("Chat isn't switched on just now — please email Thomas at thomas@tgollogly.dev.","bot"); return; }
     const t=document.createElement("div");t.className="typing";t.textContent="typing…";body.appendChild(t);body.scrollTop=body.scrollHeight;
     try{
       const r=await fetch(window.AI_BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"chat",message:msg,history})});
       const d=await r.json(); t.remove();
       const reply=d.reply||d.error||"Sorry, I couldn't answer that.";
       add(reply,"bot"); history.push({role:"assistant",text:reply});
-    }catch(e){ t.remove(); add("I couldn't reach the assistant just now. Email Thomas at tgollogly@outlook.com.","bot"); }
+    }catch(e){ t.remove(); add("I couldn't reach the assistant just now. Email Thomas at thomas@tgollogly.dev.","bot"); }
   }
   send.onclick=sendMsg;
   input.addEventListener("keydown",e=>{if(e.key==="Enter")sendMsg();});
