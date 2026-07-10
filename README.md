@@ -26,11 +26,11 @@ site explain the technical choices behind each one.
 
 ## Tech
 
-**Frontend:** JavaScript · React · HTML/CSS · MapLibre / Leaflet · SVG / Canvas
-**Backend:** Node.js · Express · serverless (Cloudflare Workers) · REST APIs
-**Data / AI:** Python · public APIs · Google Gemini API · AI-assisted development
-**Payments & auth:** Stripe · JWT
-**Deploy:** Cloudflare · Netlify · GitHub
+**Frontend:** JavaScript · HTML/CSS · MapLibre / Leaflet · SVG / Canvas · responsive/mobile-first
+**Backend:** Serverless (Cloudflare Workers) · REST / JSON APIs
+**Data / AI:** Google Gemini API · public APIs · AI-assisted development
+**DevOps:** Git / GitHub · continuous deployment · encrypted secrets · wrangler
+**Also working with:** React · Node.js · Python · PostgreSQL
 
 ---
 
@@ -44,16 +44,19 @@ heat-dome.html        Live demo + case study
 thermal-compare.html  Live demo + case study
 beneish.html          Live demo + case study
 bundlebuilder.html    Live demo + case study
-_worker.js            Serverless backend serving the site + AI endpoint (/api)
-config.js             Points the frontend at the AI backend
+server.js             Serverless backend: serves the site + AI endpoint (/api)
+config.js             Points the frontend at the AI backend (/api)
+wrangler.toml         Cloudflare deployment config (runs server.js as the Worker)
+.assetsignore         Keeps backend/config files from being served as public assets
 AI-SETUP.md           How to switch on the AI features
+LICENSE               MIT licence
 ```
 
 ## Running the AI features
 
-The chatbot and ATS Matcher call a small serverless backend that holds a Google Gemini
-API key. The key is **never** committed to this repo — it's stored as an encrypted
-secret in the hosting platform. See `AI-SETUP.md` for setup.
+The chatbot and ATS Matcher call a small serverless backend (`server.js`) that holds a
+Google Gemini API key. The key is **never** committed to this repo — it's stored as an
+encrypted secret in the hosting platform (Cloudflare). See `AI-SETUP.md` for setup.
 
 ## Notes
 
@@ -63,4 +66,4 @@ a response; that text is not stored by the site. The site uses no tracking cooki
 
 ---
 
-*Designed and built by Thomas Gollogly.*
+*Designed and built by Thomas Gollogly. Licensed under the MIT License.*
