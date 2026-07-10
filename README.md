@@ -36,27 +36,28 @@ site explain the technical choices behind each one.
 
 ## Structure
 
-```
-index.html            Homepage (projects, terminal intro, AI chatbot)
-cv.html               CV / résumé page (printable to PDF)
-ats-matcher.html      AI ATS Resume Matcher tool
-heat-dome.html        Live demo + case study
-thermal-compare.html  Live demo + case study
-beneish.html          Live demo + case study
-bundlebuilder.html    Live demo + case study
-server.js             Serverless backend: serves the site + AI endpoint (/api)
-config.js             Points the frontend at the AI backend (/api)
-wrangler.toml         Cloudflare deployment config (runs server.js as the Worker)
-.assetsignore         Keeps backend/config files from being served as public assets
-AI-SETUP.md           How to switch on the AI features
-LICENSE               MIT licence
-```
+    index.html            Homepage (projects, terminal intro, AI chatbot)
+    cv.html               CV / resume page (printable to PDF)
+    ats-matcher.html      AI ATS Resume Matcher tool
+    heat-dome.html        Live demo + case study
+    thermal-compare.html  Live demo + case study
+    beneish.html          Live demo + case study
+    bundlebuilder.html    Live demo + case study
+    server.js             Serverless backend: serves the site + AI endpoint (/api)
+    config.js             Points the frontend at the AI backend (/api)
+    wrangler.toml         Cloudflare deployment config (runs server.js as the Worker)
+    .assetsignore         Keeps backend/config files from being served as public assets
+    LICENSE               MIT licence
+
+---
 
 ## Running the AI features
 
-The chatbot and ATS Matcher call a small serverless backend (`server.js`) that holds a
-Google Gemini API key. The key is **never** committed to this repo — it's stored as an
-encrypted secret in the hosting platform (Cloudflare). See `AI-SETUP.md` for setup.
+The chatbot and ATS Matcher call a small serverless backend (`server.js`) that reads a
+Google Gemini API key from an encrypted secret (`GEMINI_API_KEY`) set in Cloudflare.
+The key is **never** committed to this repo.
+
+---
 
 ## Notes
 
