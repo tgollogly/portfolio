@@ -8,109 +8,101 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
 <style>
-:root{color-scheme:light;
---bg:#ffffff;--alt:#f4f6f9;--ink:#1a2028;--strong:#0b0f14;--muted:#3f4954;--faint:#5c6672;
---line:#e4e8ec;--line2:#d6dbe1;--accent:#2f39c9;--accent2:#4750e6;
---c-comfort:#0c7a5e;--c-caution:#c79008;--c-xcaution:#d1622e;--c-danger:#c62828;--c-extreme:#7b1fa2;
---shadow:0 10px 30px rgba(15,20,23,.10),0 2px 8px rgba(15,20,23,.05);}
-*{box-sizing:border-box;}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
-a{color:var(--accent);text-decoration:none;}
-.top{background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
-.top .in{max-width:1180px;margin:0 auto;padding:13px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-.back{font-size:14px;color:var(--muted);font-weight:500;}
-.pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:#eef0fe;padding:5px 11px;border-radius:999px;}
-.wrap{max-width:1180px;margin:0 auto;padding:26px 22px 60px;}
-h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(28px,5vw,44px);margin:0;color:var(--strong);letter-spacing:-.015em;}
-.sub{color:var(--muted);margin:8px 0 22px;max-width:64ch;}
-.search{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
-input{font-family:inherit;font-size:16px;padding:13px 16px;border:1px solid var(--line2);border-radius:11px;background:#fff;flex:1;min-width:220px;color:var(--ink);}
-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
-.btn{font-weight:600;cursor:pointer;border:none;border-radius:11px;font-family:inherit;}
-.go{font-size:15px;background:var(--accent);color:#fff;padding:0 24px;}
-.go:hover{background:var(--accent2);}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
-.chip{font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line2);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:500;}
-.chip:hover{border-color:var(--accent);color:var(--accent);}
-.layout{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
-.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
-/* WARNING BANNER */
-.warn{padding:20px 22px;color:#fff;}
-.warn .lvl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;}
-.warn .cat{font-family:"Fraunces",serif;font-weight:700;font-size:27px;margin:3px 0 6px;line-height:1.1;}
-.warn .advice{font-size:14px;opacity:.95;line-height:1.5;}
-.warn .place{font-size:13px;font-weight:600;margin-bottom:10px;opacity:.95;display:flex;align-items:center;gap:7px;}
-/* DOME VERDICT */
-.dome{margin:0;padding:16px 22px;border-top:1px solid rgba(255,255,255,.25);}
-.dome .dh{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-bottom:5px;}
-.dome .dv{font-family:"Fraunces",serif;font-weight:700;font-size:19px;line-height:1.15;display:flex;align-items:center;gap:9px;}
-.dome .dtag{display:inline-block;font-family:"Inter",sans-serif;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.22);}
-.dome .dnote{font-size:12.5px;opacity:.9;margin-top:6px;line-height:1.45;}
-.readbox{padding:20px 22px;}
-.bigrow{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;}
-.bigtemp{font-family:"Fraunces",serif;font-weight:700;font-size:56px;line-height:.9;color:var(--strong);}
-.feels{font-size:14px;color:var(--muted);padding-bottom:6px;}
-.feels b{color:var(--strong);}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid var(--line);padding-top:16px;}
-.metric .mk{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;}
-.metric .mv{font-family:"Fraunces",serif;font-weight:700;font-size:20px;color:var(--strong);}
-.metric .mu{font-size:11px;color:var(--faint);font-weight:600;}
-.anomrow{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
-.anomrow .al{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;}
-.anomrow .av{font-family:"Fraunces",serif;font-weight:700;font-size:17px;}
-.chart{padding:6px 16px 18px;}
-.chart .ct{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:8px 4px 6px;}
-/* map */
-.mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
-#map{position:absolute;inset:0;}
-.mapctrl{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:8px;}
-.toggle{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.toggle .sw{width:34px;height:20px;border-radius:999px;background:#cfd5dc;position:relative;transition:.2s;flex:none;}
-.toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3);}
-.toggle.on .sw{background:var(--accent);}
-.toggle.on .sw::after{left:16px;}
-.watchdot{width:8px;height:8px;border-radius:50%;background:var(--c-comfort);display:inline-block;}
-.watchdot.live{animation:pulse 1.6s infinite;}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(12,122,94,.5);}70%{box-shadow:0 0 0 7px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
-.radarlabel{position:absolute;bottom:12px;left:12px;z-index:5;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:12px;color:var(--muted);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.hint{position:absolute;bottom:12px;right:12px;z-index:5;background:rgba(255,255,255,.92);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:11.5px;color:var(--faint);}
-.msg{font-size:13.5px;color:var(--muted);padding:18px 22px;}
-.msg.err{color:var(--c-danger);}
-.loader{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:8px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-footer{max-width:1180px;margin:0 auto;padding:0 22px 40px;color:var(--faint);font-size:12px;}
-@media(max-width:860px){.layout{grid-template-columns:1fr;}.mapwrap{height:420px;}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;}}
+  :root{color-scheme:light;
+    --bg:#ffffff;--alt:#f4f6f9;--ink:#1a2028;--strong:#0b0f14;--muted:#3f4954;--faint:#5c6672;
+    --line:#e4e8ec;--line2:#d6dbe1;--accent:#2f39c9;--accent2:#4750e6;
+    --c-comfort:#0c7a5e;--c-caution:#c79008;--c-xcaution:#d1622e;--c-danger:#c62828;--c-extreme:#7b1fa2;
+    --shadow:0 10px 30px rgba(15,20,23,.10),0 2px 8px rgba(15,20,23,.05);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
+  a{color:var(--accent);text-decoration:none;}
+  .top{background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .top .in{max-width:1180px;margin:0 auto;padding:13px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .back{font-size:14px;color:var(--muted);font-weight:500;}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:#eef0fe;padding:5px 11px;border-radius:999px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 22px 60px;}
+  h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(28px,5vw,44px);margin:0;color:var(--strong);letter-spacing:-.015em;}
+  .sub{color:var(--muted);margin:8px 0 22px;max-width:64ch;}
+  .search{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  input{font-family:inherit;font-size:16px;padding:13px 16px;border:1px solid var(--line2);border-radius:11px;background:#fff;flex:1;min-width:220px;color:var(--ink);}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .btn{font-weight:600;cursor:pointer;border:none;border-radius:11px;font-family:inherit;}
+  .go{font-size:15px;background:var(--accent);color:#fff;padding:0 24px;}
+  .go:hover{background:var(--accent2);}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
+  .chip{font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line2);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:500;}
+  .chip:hover{border-color:var(--accent);color:var(--accent);}
+  .layout{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
+  /* WARNING BANNER */
+  .warn{padding:20px 22px;color:#fff;}
+  .warn .lvl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;}
+  .warn .cat{font-family:"Fraunces",serif;font-weight:700;font-size:27px;margin:3px 0 6px;line-height:1.1;}
+  .warn .advice{font-size:14px;opacity:.95;line-height:1.5;}
+  .warn .place{font-size:13px;font-weight:600;margin-bottom:10px;opacity:.95;display:flex;align-items:center;gap:7px;}
+  .readbox{padding:20px 22px;}
+  .bigrow{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;}
+  .bigtemp{font-family:"Fraunces",serif;font-weight:700;font-size:56px;line-height:.9;color:var(--strong);}
+  .feels{font-size:14px;color:var(--muted);padding-bottom:6px;}
+  .feels b{color:var(--strong);}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid var(--line);padding-top:16px;}
+  .metric .mk{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+  .metric .mv{font-family:"Fraunces",serif;font-weight:700;font-size:20px;color:var(--strong);}
+  .chart{padding:6px 16px 18px;}
+  .chart .ct{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:8px 4px 6px;}
+  /* map */
+  .mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
+  #map{position:absolute;inset:0;}
+  .mapctrl{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:8px;}
+  .toggle{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .toggle .sw{width:34px;height:20px;border-radius:999px;background:#cfd5dc;position:relative;transition:.2s;flex:none;}
+  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3);}
+  .toggle.on .sw{background:var(--accent);}
+  .toggle.on .sw::after{left:16px;}
+  .watchdot{width:8px;height:8px;border-radius:50%;background:var(--c-comfort);display:inline-block;}
+  .watchdot.live{animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(12,122,94,.5);}70%{box-shadow:0 0 0 7px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
+  .radarlabel{position:absolute;bottom:12px;left:12px;z-index:5;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:12px;color:var(--muted);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .hint{position:absolute;bottom:12px;right:12px;z-index:5;background:rgba(255,255,255,.92);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:11.5px;color:var(--faint);}
+  .msg{font-size:13.5px;color:var(--muted);padding:18px 22px;}
+  .msg.err{color:var(--c-danger);}
+  .loader{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  footer{max-width:1180px;margin:0 auto;padding:0 22px 40px;color:var(--faint);font-size:12px;}
+  @media(max-width:860px){.layout{grid-template-columns:1fr;}.mapwrap{height:420px;}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
 </style>
 </head>
 <body>
 <div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live 3D · real radar &amp; weather data</span></div></div>
 <div class="wrap">
-<h1>Heat Dome Detector</h1>
-<p class="sub">Search anywhere on earth for a live heat-risk read — plus a real anomaly check that compares today against 30 years of climate history to flag a genuine heat dome, not just a hot place. Tilt-and-zoom 3D terrain, live radar, auto-watch. No API key, no sign-up.</p>
-<div class="search">
-<input id="q" type="text" placeholder="Search a city — e.g. Seville, Phoenix, Athens" autocomplete="off"/>
-<button class="btn go" id="goBtn">Detect</button>
-</div>
-<div class="chips" id="chips"></div>
-<div class="layout">
-<div style="display:flex;flex-direction:column;gap:20px;">
-<div class="panel" id="warnPanel"><div class="msg">Search a location to begin.</div></div>
-<div class="panel">
-<div class="readbox" id="readout"><div class="msg">Live readout will appear here.</div></div>
-<div class="chart"><div class="ct">Next 24 hours — feels-like (&deg;C)</div><div id="spark"></div></div>
-</div>
-</div>
-<div class="mapwrap">
-<div id="map"></div>
-<div class="mapctrl">
-<div class="toggle on" id="radarToggle"><span class="sw"></span>Radar</div>
-<div class="toggle" id="watchToggle"><span class="sw"></span><span id="watchLabel">Auto-watch</span></div>
-</div>
-<div class="radarlabel" id="radarLabel">Loading radar…</div>
-<div class="hint">Drag to rotate · two-finger / right-drag to tilt</div>
-</div>
-</div>
+  <h1>Heat Dome Detector</h1>
+  <p class="sub">Search anywhere on earth for a live heat-risk read — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded heat warnings, and an auto-watch mode that keeps refreshing. No API key, no sign-up.</p>
+  <div class="search">
+    <input id="q" type="text" placeholder="Search a city — e.g. Seville, Phoenix, Athens" autocomplete="off"/>
+    <button class="btn go" id="goBtn">Detect</button>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <div class="layout">
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="panel" id="warnPanel"><div class="msg">Search a location to begin.</div></div>
+      <div class="panel">
+        <div class="readbox" id="readout"><div class="msg">Live readout will appear here.</div></div>
+        <div class="chart"><div class="ct">Next 24 hours — feels-like (&deg;C)</div><div id="spark"></div></div>
+      </div>
+    </div>
+
+    <div class="mapwrap">
+      <div id="map"></div>
+      <div class="mapctrl">
+        <div class="toggle on" id="radarToggle"><span class="sw"></span>Radar</div>
+        <div class="toggle" id="watchToggle"><span class="sw"></span><span id="watchLabel">Auto-watch</span></div>
+      </div>
+      <div class="radarlabel" id="radarLabel">Loading radar…</div>
+      <div class="hint">Drag to rotate · two-finger / right-drag to tilt</div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -124,16 +116,18 @@ footer{max-width:1180px;margin:0 auto;padding:0 22px 40px;color:var(--faint);fon
 .cs-block p{font-size:15.5px;line-height:1.62;color:#3f4954;margin:0;}
 .cs-block code{background:#f4f6f9;border:1px solid #e4e8ec;border-radius:5px;padding:1px 6px;font-size:13px;color:#0b0f14;}
 </style>
+
 <section class="cs"><div class="cs-card">
-<div class="cs-eyebrow">Case study</div>
-<h2 class="cs-h">How it's built — and why</h2>
-<div class="cs-block"><h3>The problem</h3><p>Extreme heat is the deadliest weather hazard, but a raw temperature alone can't tell you whether a place is in a genuine <em>heat dome</em> — a persistent high-pressure anomaly well above the local norm — or just a normally hot climate. This tool answers both: how dangerous is the heat right now, and how far above this location's own historical baseline is it?</p></div>
-<div class="cs-block"><h3>Detecting the dome</h3><p>The anomaly check pulls a 30-year daily climatology for the exact location and calendar week from the <code>Open-Meteo</code> archive (ERA5 reanalysis). It builds a distribution of historical max temperatures for that time of year, then scores today's forecast max against it — reporting the degrees above normal and the historical percentile. A heat dome is flagged when today sits at or above roughly the 90th percentile <em>and</em> a set margin above the long-term mean, so a hot desert in summer isn't falsely flagged while a true anomaly is.</p></div>
-<div class="cs-block"><h3>Stack &amp; why I chose it</h3><p>I used <code>Open-Meteo</code> for both live and archive data because it's free, key-free, CORS-friendly and returns apparent ('feels-like') temperature directly — so the whole thing deploys as a static file. The map is <code>MapLibre GL JS</code> (open-source, no token, unlike Mapbox) with free AWS elevation tiles for real 3D terrain, and <code>RainViewer</code> for live radar. The 24-hour chart is hand-drawn SVG rather than a charting library, to avoid a dependency and stay fast.</p></div>
-<div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>The climatology call adds one extra request and a short wait, so the live readout renders first and the dome verdict fills in when the history returns. It's fully client-side with no persistence, and radar shows the latest frame rather than a loop. Next: frame-by-frame radar playback and official severe-weather alert feeds.</p></div>
+  <div class="cs-eyebrow">Case study</div>
+  <h2 class="cs-h">How it's built — and why</h2>
+  <div class="cs-block"><h3>The problem</h3><p>Extreme heat is the deadliest weather hazard, yet judging the real risk for a place means stitching together temperature, humidity and radar from different sources. I wanted one screen that answers &lsquo;how dangerous is the heat here right now?&rsquo; for anywhere on earth.</p></div>
+  <div class="cs-block"><h3>Stack &amp; why I chose it</h3><p>I used the <code>Open-Meteo</code> API because it's free, needs no API key, is CORS-friendly and returns apparent (&lsquo;feels-like&rsquo;) temperature directly &mdash; so the whole thing deploys as a static file with no cost or sign-up. The map is <code>MapLibre GL JS</code> (open-source, no access token, unlike Mapbox) with free AWS elevation tiles for real 3D terrain, and <code>RainViewer</code> for live radar &mdash; both also key-free. The 24-hour chart is hand-drawn SVG rather than a charting library, to avoid a dependency and keep it fast and self-contained.</p></div>
+  <div class="cs-block"><h3>Key decisions</h3><p>Warnings are driven by apparent temperature, not raw temperature, because &lsquo;feels-like&rsquo; reflects actual human heat risk; those values map onto NWS-style categories from Comfortable to Extreme Danger. &lsquo;Auto-watch&rsquo; re-fetches every five minutes with <code>setInterval</code>. Every external call is wrapped in <code>try/catch</code>, so if the map or radar fails the readout and warning still work.</p></div>
+  <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>It's fully client-side with no persistence, and radar shows the latest frame rather than a full animation loop, to stay simple and reliable. Next: frame-by-frame radar playback and official severe-weather alert feeds.</p></div>
 </div></section>
 
-<footer>Portfolio demo by Thomas Gollogly. Weather &amp; climate history: open-meteo.com (ERA5) · Radar: RainViewer · Terrain: AWS elevation tiles · Map: MapLibre GL. This is a portfolio demonstration, not a safety tool. Heat-risk bands and heat-dome flags are indicative only, based on apparent-temperature (NWS-style) categories and historical percentiles — they are not validated against health outcomes and must not be relied on for decisions during real heat events. For official heat-health alerts check your national meteorological service — Met Office (UK), Met Éireann (Ireland), your local met office elsewhere, or WHO heat-health guidance.</footer>
+<footer>Portfolio demo by Thomas Gollogly. Weather: open-meteo.com · Radar: RainViewer · Terrain: AWS elevation tiles · Map: MapLibre GL. Heat-risk bands are indicative, based on apparent-temperature (NWS-style) categories — not an official public-health warning.</footer>
+
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const samples=["Seville","Phoenix","Athens","Dubai","Delhi","Death Valley"];
@@ -142,188 +136,134 @@ samples.forEach(s=>{const c=document.createElement("span");c.className="chip";c.
 
 // ---- heat categories (apparent temp °C) ----
 function category(t){
-if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"#7b1fa2",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
-if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"#c62828",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
-if(t>=32) return{lvl:"Level 3",cat:"Extreme Caution",c:"var(--c-xcaution)",hex:"#d1622e",advice:"Heat exhaustion possible with prolonged exposure or activity. Take frequent breaks and hydrate."};
-if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"#c79008",advice:"Fatigue possible with prolonged exposure. Stay hydrated and take it easy in the sun."};
-return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"#0c7a5e",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
+  if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"#7b1fa2",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
+  if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"#c62828",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
+  if(t>=32) return{lvl:"Level 3",cat:"Extreme Caution",c:"var(--c-xcaution)",hex:"#d1622e",advice:"Heat exhaustion possible with prolonged exposure or activity. Take frequent breaks and hydrate."};
+  if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"#c79008",advice:"Fatigue possible with prolonged exposure. Stay hydrated and take it easy in the sun."};
+  return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"#0c7a5e",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
 }
-
-// ---- heat dome / anomaly detection ----
-// Pulls ~30yr ERA5 daily max temps for the same calendar window and scores today against it.
-function percentileOf(sorted,v){
-if(!sorted.length)return null;
-let lo=0;for(let i=0;i<sorted.length;i++){if(sorted[i]<=v)lo=i+1;else break;}
-return Math.round((lo/sorted.length)*100);
-}
-async function detectDome(lat,lon,todayMax){
-try{
-const end=new Date(); end.setFullYear(end.getFullYear()-1);
-const start=new Date(end); start.setFullYear(start.getFullYear()-29);
-const iso=d=>d.toISOString().slice(0,10);
-const u=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${iso(start)}&end_date=${iso(end)}&daily=temperature_2m_max&timezone=auto`;
-const a=await fetch(u).then(r=>r.json());
-if(!a.daily||!a.daily.time)return null;
-const now=new Date(), doy=(dt)=>{const s=new Date(dt.getFullYear(),0,0);return Math.floor((dt-s)/86400000);};
-const targetDoy=doy(now), win=7; // +/- 7 days around today's date-of-year
-const vals=[];
-a.daily.time.forEach((t,i)=>{
-const d=new Date(t), diff=Math.abs(doy(d)-targetDoy);
-const wrapped=Math.min(diff,365-diff);
-const v=a.daily.temperature_2m_max[i];
-if(wrapped<=win && v!=null) vals.push(v);
-});
-if(vals.length<30)return null;
-const mean=vals.reduce((s,v)=>s+v,0)/vals.length;
-const sorted=vals.slice().sort((x,y)=>x-y);
-const pct=percentileOf(sorted,todayMax);
-const anom=todayMax-mean;
-const isDome = pct>=90 && anom>=4 && todayMax>=30; // anomaly AND genuinely hot
-const isWarm = !isDome && pct>=90 && anom>=4; // rare for here, but not dangerous heat
-return{mean,anom,pct,isDome,isWarm};
-}catch(e){return null;}
-}
-function renderDome(dome){
-if(!dome) return `<div class="dome"><div class="dh">Heat dome check</div><div class="dv"><span class="dtag">No history</span></div><div class="dnote">Climate baseline unavailable for this location.</div></div>`;
-const sign=dome.anom>=0?"+":"";
-if(dome.isDome){
-return `<div class="dome"><div class="dh">Heat dome check</div>
-<div class="dv"><span class="dtag" style="background:rgba(255,255,255,.32)">⚠ Dome detected</span></div>
-<div class="dnote">Today's peak is <b>${sign}${dome.anom.toFixed(1)}&deg;C</b> above the 30-year norm — hotter than <b>${dome.pct}%</b> of the last three decades for this week. A genuine heat anomaly, not just a hot climate.</div></div>`;
-}
-if(dome.isWarm){
-return `<div class="dome"><div class="dh">Heat dome check</div>
-<div class="dv"><span class="dtag">Unusually warm · not a dome</span></div>
-<div class="dnote">Today's peak is <b>${sign}${dome.anom.toFixed(1)}&deg;C</b> above the 30-year norm (${dome.pct}th percentile) — rare for this location, but not dangerous-heat territory. No heat dome.</div></div>`;
-}
-return `<div class="dome"><div class="dh">Heat dome check</div>
-<div class="dv"><span class="dtag">No dome</span></div>
-<div class="dnote">Today's peak is <b>${sign}${dome.anom.toFixed(1)}&deg;C</b> vs the 30-year norm (${dome.pct}th percentile). Within normal range for this location and season.</div></div>`;
-}
-
 function spark(vals){
-if(!vals||!vals.length)return"";
-const w=360,h=90,pad=6,min=Math.min(...vals)-1,max=Math.max(...vals)+1,rng=(max-min)||1;
-const pts=vals.map((v,i)=>[pad+i/(vals.length-1)*(w-2*pad),h-pad-((v-min)/rng)*(h-2*pad)]);
-const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
-return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
-<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(209,98,46,.28)"/><stop offset="100%" stop-color="rgba(209,98,46,0)"/></linearGradient></defs>
-<path d="${d} L ${w-pad} ${h-pad} L ${pad} ${h-pad} Z" fill="url(#sg)"/>
-<path d="${d}" fill="none" stroke="#d1622e" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
+  if(!vals||!vals.length)return"";
+  const w=360,h=90,pad=6,min=Math.min(...vals)-1,max=Math.max(...vals)+1,rng=(max-min)||1;
+  const pts=vals.map((v,i)=>[pad+i/(vals.length-1)*(w-2*pad),h-pad-((v-min)/rng)*(h-2*pad)]);
+  const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(209,98,46,.28)"/><stop offset="100%" stop-color="rgba(209,98,46,0)"/></linearGradient></defs>
+    <path d="${d} L ${w-pad} ${h-pad} L ${pad} ${h-pad} Z" fill="url(#sg)"/>
+    <path d="${d}" fill="none" stroke="#d1622e" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
 }
 
 // ---- map (3D terrain) ----
 let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false;
 try{
-map=new maplibregl.Map({
-container:"map",
-style:{version:8,
-sources:{
-carto:{type:"raster",tiles:["https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png","https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"],tileSize:256,attribution:"© CARTO © OpenStreetMap"},
-dem:{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:13}
-},
-layers:[{id:"bg",type:"background",paint:{"background-color":"#dfe7ee"}},{id:"carto",type:"raster",source:"carto"}]
-},
-center:[-5.99,37.39],zoom:4.5,minZoom:2,maxZoom:11,pitch:55,bearing:-18,maxPitch:80,attributionControl:false
-});
-map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
-map.on("load",()=>{
-try{map.setTerrain({source:"dem",exaggeration:1.4});}catch(e){}
-mapReady=true; loadRadar(); run("Seville");
-});
-map.on("error",()=>{});
+  map=new maplibregl.Map({
+    container:"map",
+    style:{version:8,
+      sources:{
+        carto:{type:"raster",tiles:["https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png","https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"],tileSize:256,attribution:"© CARTO © OpenStreetMap"},
+        dem:{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:13}
+      },
+      layers:[{id:"bg",type:"background",paint:{"background-color":"#dfe7ee"}},{id:"carto",type:"raster",source:"carto"}]
+    },
+    center:[-5.99,37.39],zoom:4.5,minZoom:2,maxZoom:11,pitch:55,bearing:-18,maxPitch:80,attributionControl:false
+  });
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+  map.on("load",()=>{
+    try{map.setTerrain({source:"dem",exaggeration:1.4});}catch(e){}
+    mapReady=true; loadRadar(); run("Seville");
+  });
+  map.on("error",()=>{}); // swallow tile errors
 }catch(e){ mapReady=false; }
 
 async function loadRadar(){
-try{
-const j=await fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json());
-radarHost=j.host; radarFrames=(j.radar.past||[]).concat(j.radar.nowcast||[]);
-radarIdx=(j.radar.past||[]).length-1; if(radarIdx<0)radarIdx=0;
-showRadarFrame();
-}catch(e){ document.getElementById("radarLabel").textContent="Radar unavailable"; }
+  try{
+    const j=await fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json());
+    radarHost=j.host; radarFrames=(j.radar.past||[]).concat(j.radar.nowcast||[]);
+    radarIdx=(j.radar.past||[]).length-1; if(radarIdx<0)radarIdx=0;
+    showRadarFrame();
+  }catch(e){ document.getElementById("radarLabel").textContent="Radar unavailable"; }
 }
 function showRadarFrame(){
-if(!mapReady||!radarFrames.length)return;
-const f=radarFrames[radarIdx];
-const url=`${radarHost}${f.path}/256/{z}/{x}/{y}/2/1_1.png`;
-if(map.getLayer("radar"))map.removeLayer("radar");
-if(map.getSource("radar"))map.removeSource("radar");
-map.addSource("radar",{type:"raster",tiles:[url],tileSize:256,minzoom:0,maxzoom:7});
-map.addLayer({id:"radar",type:"raster",source:"radar",paint:{"raster-opacity":radarOn?0.65:0}});
-const dt=new Date(f.time*1000);
-document.getElementById("radarLabel").textContent="Radar · "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  if(!mapReady||!radarFrames.length)return;
+  const f=radarFrames[radarIdx];
+  const url=`${radarHost}${f.path}/256/{z}/{x}/{y}/2/1_1.png`;
+  if(map.getLayer("radar"))map.removeLayer("radar");
+  if(map.getSource("radar"))map.removeSource("radar");
+  map.addSource("radar",{type:"raster",tiles:[url],tileSize:256,minzoom:0,maxzoom:7});
+  map.addLayer({id:"radar",type:"raster",source:"radar",paint:{"raster-opacity":radarOn?0.65:0}});
+  const dt=new Date(f.time*1000);
+  document.getElementById("radarLabel").textContent="Radar · "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
 }
 document.getElementById("radarToggle").onclick=function(){
-radarOn=!radarOn; this.classList.toggle("on",radarOn);
-if(mapReady&&map.getLayer("radar"))map.setPaintProperty("radar","raster-opacity",radarOn?0.65:0);
+  radarOn=!radarOn; this.classList.toggle("on",radarOn);
+  if(mapReady&&map.getLayer("radar"))map.setPaintProperty("radar","raster-opacity",radarOn?0.65:0);
 };
 
 // ---- auto-watch ----
 let watchTimer=null, lastQuery="Seville";
 const watchToggle=document.getElementById("watchToggle"), watchLabel=document.getElementById("watchLabel");
 watchToggle.onclick=function(){
-const on=!this.classList.contains("on"); this.classList.toggle("on",on);
-if(on){
-watchLabel.innerHTML='<span class="watchdot live"></span> Watching';
-watchTimer=setInterval(()=>{ run(lastQuery,true); loadRadar(); },300000);
-}else{
-watchLabel.textContent="Auto-watch"; clearInterval(watchTimer); watchTimer=null;
-}
+  const on=!this.classList.contains("on"); this.classList.toggle("on",on);
+  if(on){
+    watchLabel.innerHTML='<span class="watchdot live"></span> Watching';
+    watchTimer=setInterval(()=>{ run(lastQuery,true); loadRadar(); },300000); // 5 min
+  }else{
+    watchLabel.textContent="Auto-watch"; clearInterval(watchTimer); watchTimer=null;
+  }
 };
 
 // ---- main ----
 async function run(q,silent){
-q=(q||document.getElementById("q").value).trim(); if(!q)return; lastQuery=q;
-const wp=document.getElementById("warnPanel"), ro=document.getElementById("readout");
-if(!silent){wp.innerHTML='<div class="msg"><span class="loader"></span>Locating and fetching live data…</div>';document.getElementById("spark").innerHTML="";}
-try{
-const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`).then(r=>r.json());
-if(!g.results||!g.results.length){wp.innerHTML='<div class="msg err">Couldn\u2019t find that place — try a nearby city name.</div>';return;}
-const loc=g.results[0];
-const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_gusts_10m&hourly=apparent_temperature&daily=temperature_2m_max&forecast_days=1&timezone=auto&wind_speed_unit=kmh`).then(r=>r.json());
-const cur=f.current, cat=category(cur.apparent_temperature);
-const todayMax=(f.daily&&f.daily.temperature_2m_max)?f.daily.temperature_2m_max[0]:Math.max(...f.hourly.apparent_temperature);
-const place=`${loc.name}${loc.admin1?', '+loc.admin1:''} ${loc.country_code||''}`;
-const gust=(cur.wind_gusts_10m!=null)?Math.round(cur.wind_gusts_10m):null;
-
-wp.innerHTML=`<div class="warn" style="background:${cat.c}">
-<div class="place">📍 ${place}</div>
-<div class="lvl">Heat warning · ${cat.lvl}</div>
-<div class="cat">${cat.cat}</div>
-<div class="advice">${cat.advice}</div>
-<div class="dome" id="domeBox"><div class="dh">Heat dome check</div><div class="dv"><span class="dtag"><span class="loader" style="width:11px;height:11px;border-width:2px;margin-right:6px"></span>Checking 30-yr history…</span></div></div>
-</div>`;
-
-ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;C</div>
-<div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(todayMax)}&deg;C</b></div></div>
-<div class="metrics">
-<div class="metric"><div class="mk">Humidity</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
-<div class="metric"><div class="mk">Wind</div><div class="mv">${Math.round(cur.wind_speed_10m)}<span class="mu"> km/h</span></div></div>
-<div class="metric"><div class="mk">Gusts</div><div class="mv">${gust!=null?gust:'—'}<span class="mu"> km/h</span></div></div>
-</div>`;
-document.getElementById("spark").innerHTML=spark(f.hourly.apparent_temperature.slice(0,24));
-
-if(mapReady){
-map.flyTo({center:[loc.longitude,loc.latitude],zoom:7.5,pitch:60,bearing:-15,duration:2600,essential:true});
-if(marker)marker.remove();
-const el=document.createElement("div");
-el.style.cssText=`width:22px;height:22px;border-radius:50%;background:${cat.hex};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);`;
-marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude])
-.setPopup(new maplibregl.Popup({offset:16}).setHTML(`<b>${loc.name}</b><br>${cat.cat} · feels ${Math.round(cur.apparent_temperature)}°C`))
-.addTo(map);
-}
-
-// dome check runs after live readout is already visible
-detectDome(loc.latitude,loc.longitude,todayMax).then(dome=>{
-const box=document.getElementById("domeBox");
-if(box) box.outerHTML=renderDome(dome);
-});
-
-}catch(e){ wp.innerHTML='<div class="msg err">Couldn\u2019t reach the weather service. Check your connection and try again.</div>'; }
+  q=(q||document.getElementById("q").value).trim(); if(!q)return; lastQuery=q;
+  const wp=document.getElementById("warnPanel"), ro=document.getElementById("readout");
+  if(!silent){wp.innerHTML='<div class="msg"><span class="loader"></span>Locating and fetching live data…</div>';document.getElementById("spark").innerHTML="";}
+  try{
+    const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`).then(r=>r.json());
+    if(!g.results||!g.results.length){wp.innerHTML='<div class="msg err">Couldn\u2019t find that place — try a nearby city name.</div>';return;}
+    const loc=g.results[0];
+    const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&hourly=apparent_temperature&forecast_days=1&timezone=auto`).then(r=>r.json());
+    const cur=f.current, cat=category(cur.apparent_temperature);
+    const place=`${loc.name}${loc.admin1?', '+loc.admin1:''} ${loc.country_code||''}`;
+    wp.innerHTML=`<div class="warn" style="background:${cat.c}">
+      <div class="place">📍 ${place}</div>
+      <div class="lvl">Heat warning · ${cat.lvl}</div>
+      <div class="cat">${cat.cat}</div>
+      <div class="advice">${cat.advice}</div></div>`;
+    ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;</div>
+      <div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(Math.max(...f.hourly.apparent_temperature))}&deg;</b></div></div>
+      <div class="metrics">
+        <div class="metric"><div class="mk">Humidity</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
+        <div class="metric"><div class="mk">Wind</div><div class="mv">${Math.round(cur.wind_speed_10m)}</div></div>
+        <div class="metric"><div class="mk">Feels-like</div><div class="mv">${Math.round(cur.apparent_temperature)}&deg;</div></div>
+      </div>`;
+    document.getElementById("spark").innerHTML=spark(f.hourly.apparent_temperature.slice(0,24));
+    if(mapReady){
+      map.flyTo({center:[loc.longitude,loc.latitude],zoom:7.5,pitch:60,bearing:-15,duration:2600,essential:true});
+      if(marker)marker.remove();
+      const el=document.createElement("div");
+      el.style.cssText=`width:22px;height:22px;border-radius:50%;background:${cat.hex};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);`;
+      marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude])
+        .setPopup(new maplibregl.Popup({offset:16}).setHTML(`<b>${loc.name}</b><br>${cat.cat} · feels ${Math.round(cur.apparent_temperature)}°C`))
+        .addTo(map);
+    }
+  }catch(e){ wp.innerHTML='<div class="msg err">Couldn\u2019t reach the weather service. Check your connection and try again.</div>'; }
 }
 document.getElementById("goBtn").onclick=()=>run();
 document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
 if(!mapReady){ document.getElementById("radarLabel").style.display="none"; run("Seville"); }
 </script>
+
+<footer style="border-top:1px solid #e4e8ec;margin-top:44px;background:#fff;">
+  <div style="max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:#5c6672;font-family:system-ui,sans-serif;">
+    <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland · <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
+    <span style="display:flex;gap:16px;align-items:center;">
+      <a href="mailto:thomas@tgollogly.dev" style="color:#2f39c9;text-decoration:none;">Email</a>
+      <a href="https://github.com/tgollogly" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
+      <a href="https://www.linkedin.com/in/thomas-g-2a08143aa" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
+    </span>
+  </div>
+</footer>
+<script>document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());</script>
+
 </body>
 </html>
