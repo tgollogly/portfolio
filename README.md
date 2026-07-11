@@ -1,11 +1,12 @@
 # Thomas Gollogly — Developer Portfolio
 
 A live portfolio of web applications I've designed, built and deployed end to end.
-Self-taught developer based in Newry, Northern Ireland — fluent with modern web tech
+Self-taught developer based in Northern Ireland — fluent with modern web tech
 and AI-assisted development. Open to developer roles: trainee, apprentice, junior or contract.
 
 **Live site:** https://tgollogly.dev
-**Contact:** tgollogly@outlook.com
+**Contact:** thomas@tgollogly.dev
+**GitHub:** https://github.com/tgollogly
 
 ---
 
@@ -26,7 +27,7 @@ site explain the technical choices behind each one.
 
 ## Tech
 
-**Frontend:** JavaScript · HTML/CSS · MapLibre / Leaflet · SVG / Canvas · responsive/mobile-first
+**Frontend:** JavaScript · HTML5 / CSS · MapLibre / Leaflet · SVG / Canvas · responsive/mobile-first
 **Backend:** Serverless (Cloudflare Workers) · REST / JSON APIs
 **Data / AI:** Google Gemini API · public APIs · AI-assisted development
 **DevOps:** Git / GitHub · continuous deployment · encrypted secrets · wrangler
@@ -37,7 +38,7 @@ site explain the technical choices behind each one.
 ## Structure
 
     index.html            Homepage (projects, terminal intro, AI chatbot)
-    cv.html               CV / resume page (printable to PDF)
+    cv.html               Developer profile page
     ats-matcher.html      AI ATS Resume Matcher tool
     heat-dome.html        Live demo + case study
     thermal-compare.html  Live demo + case study
