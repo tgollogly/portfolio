@@ -160,7 +160,7 @@
 
 <header>
   <div class="wrap bar">
-    <a class="brand" href="#top">Thomas Gollogly<span class="dot">.</span></a>
+    <a class="brand" href="#top" style="display:flex;align-items:center;gap:10px;text-decoration:none;"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#2f39c9"/><text x="15" y="20" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">TG</text></svg><span>Thomas Gollogly</span></a>
     <nav class="top">
       <a class="navlink" href="#work">Work</a>
       <a class="navlink" href="#skills">Skills</a>
@@ -250,7 +250,17 @@
   </section>
 </main>
 
-<footer><div class="wrap foot"><span>&copy; <span id="yr"></span> Thomas Gollogly — designed &amp; built by me.</span><span>Northern Ireland</span></div><div class="wrap" style="margin-top:14px;color:var(--faint);font-size:12px;line-height:1.5;">The demos on this site are for demonstration only and do not constitute legal, financial or professional advice. AI features send the text you enter to Google&rsquo;s Gemini API to generate a response; that text is not stored by this site — please don&rsquo;t enter confidential information. This site uses no tracking cookies.</div></footer>
+<footer style="border-top:1px solid var(--line);margin-top:20px;background:#fff;">
+  <div style="max-width:1080px;margin:0 auto;padding:24px 24px 6px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:var(--faint);">
+    <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland</span>
+    <span style="display:flex;gap:16px;align-items:center;">
+      <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:var(--accent);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
+      <a href="https://github.com/tgollogly" target="_blank" rel="noopener" aria-label="GitHub" style="color:var(--strong);"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
+      <a href="https://www.linkedin.com/in/thomas-g-2a08143aa" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:var(--strong);"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
+    </span>
+  </div>
+  <div style="max-width:1080px;margin:0 auto;padding:0 24px 22px;color:#8a929c;font-size:11.5px;line-height:1.5;">Demos are for demonstration only and are not legal, financial or professional advice. AI features send entered text to Google&rsquo;s Gemini API; it isn&rsquo;t stored by this site. No tracking cookies.</div>
+</footer>
 
 <script src="config.js"></script>
 <script>
@@ -264,7 +274,7 @@ const LINKEDIN_URL  = "https://www.linkedin.com/in/thomas-g-2a08143aa";
 const PROJECTS = [
   { n:"01", title:"AI ATS Resume Matcher", live:true,
     problem:"~60% of job seekers never know if a human saw their CV.",
-    desc:"An AI tool that scores your CV against any job description, shows the keywords the job wants that your CV is missing, and suggests fixes — with the AI key held safely on a serverless backend.",
+    desc:"A full-stack AI tool: it scores your CV against any job description, flags the missing keywords, then generates a tailored cover letter and an improved CV you can download — all powered by a secure serverless backend that keeps the API key hidden.",
     tags:["AI","Gemini API","Cloudflare Worker","Full-stack"], demo:"ats-matcher.html" },
   { n:"02", title:"Heat Dome Detector",
     problem:"Heatwaves are turning deadly and more frequent.",
@@ -297,12 +307,8 @@ const gh=document.getElementById("githubBtn");
 if(GITHUB_URL){gh.href=GITHUB_URL;gh.target="_blank";gh.rel="noopener";}else{gh.style.display="none";}
 const li=document.getElementById("linkedinBtn");
 if(LINKEDIN_URL){li.href=LINKEDIN_URL;li.target="_blank";li.rel="noopener";}else{li.style.display="none";}
-const parts=[];
-if(CONTACT_EMAIL)parts.push(CONTACT_EMAIL);
-if(PHONE)parts.push(PHONE);
-if(LOCATION)parts.push(LOCATION);
-document.getElementById("contactLine").textContent=parts.join("  ·  ");
-document.getElementById("yr").textContent=new Date().getFullYear();
+document.getElementById("contactLine").style.display="none";
+document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());
 
 const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12});
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
