@@ -57,7 +57,7 @@
 <div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live AI tool</span></div></div>
 <div class="wrap">
   <h1>AI ATS Resume Matcher</h1>
-  <p class="sub">Nearly 60% of job seekers say their biggest worry is never knowing if a human saw their CV — because software screens most applications first. Paste your CV and a job description below: the AI scores the match, shows the keywords the job wants that your CV is missing, and suggests fixes. Built by Thomas Gollogly.</p>
+  <p class="sub">Nearly 60% of job seekers say their biggest worry is never knowing if a human saw their CV — because software screens most applications first. Paste your CV and a job description: the AI scores the match, shows the missing keywords, and — with one click — generates a tailored cover letter and an improved CV you can download. Built by Thomas Gollogly.</p>
 
   <div class="grid">
     <div class="field"><label>Your CV</label><textarea id="cv"></textarea></div>
@@ -77,6 +77,25 @@
       <div class="box miss"><h3>✕ Missing — add these if true</h3><div class="chips" id="missing"></div></div>
     </div>
     <div class="sugg"><h3>Suggestions to improve your match</h3><ul id="suggestions"></ul></div>
+
+    <div class="gen">
+      <h3>Generate application documents</h3>
+      <p class="genhint">Tailored to this job, drawn only from your CV. AI writes the draft — you review and edit before sending.</p>
+      <div class="genbtns">
+        <button id="genCover" class="genbtn">✍️ Generate cover letter</button>
+        <button id="genCv" class="genbtn">📄 Generate improved CV</button>
+      </div>
+      <div id="genMsg" class="msg" style="display:none;"></div>
+      <div id="genOut" class="genout" style="display:none;">
+        <div class="genout-head"><span id="genTitle"></span>
+          <span class="genout-actions">
+            <button id="copyBtn" class="minibtn">Copy</button>
+            <button id="dlBtn" class="minibtn">Download Word</button>
+          </span>
+        </div>
+        <div id="genText" class="gentext"></div>
+      </div>
+    </div>
   </div>
 
   <div class="about">
@@ -87,6 +106,22 @@
   </div>
 </div>
 
+<style>
+  .gen{margin-top:26px;border-top:1px solid var(--line);padding-top:22px;}
+  .gen h3{font-size:15px;color:var(--strong);margin:0 0 4px;}
+  .genhint{color:var(--faint);font-size:13.5px;margin:0 0 14px;}
+  .genbtns{display:flex;flex-wrap:wrap;gap:12px;}
+  .genbtn{font-family:inherit;font-weight:600;font-size:15px;background:#fff;color:var(--accent);border:1.5px solid var(--accent);border-radius:11px;padding:12px 18px;cursor:pointer;transition:.15s;}
+  .genbtn:hover{background:var(--accent);color:#fff;}
+  .genbtn:disabled{opacity:.55;cursor:default;}
+  .genout{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;}
+  .genout-head{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f4f6f9;padding:10px 14px;border-bottom:1px solid var(--line);}
+  .genout-head span:first-child{font-weight:700;font-size:13px;color:var(--strong);}
+  .genout-actions{display:flex;gap:8px;}
+  .minibtn{font-family:inherit;font-size:12.5px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;}
+  .minibtn:hover{background:var(--accent2);}
+  .gentext{padding:18px;white-space:pre-wrap;font-size:14.5px;line-height:1.6;color:var(--ink);max-height:520px;overflow:auto;}
+</style>
 <script src="config.js"></script>
 <script>
 // Pre-fill Thomas's CV so the tool is usable immediately
@@ -133,13 +168,79 @@ $("go").addEventListener("click", async ()=>{
   }catch(e){ msg.className="msg err"; msg.textContent="Couldn't reach the AI backend. Check the Worker is deployed and the URL in config.js is correct."; }
   finally{ $("go").disabled=false; }
 });
+
+
+// ---------- Generate cover letter / improved CV ----------
+let lastDocKind = "";
+async function generate(mode, title, kind, btn){
+  const cv=$("cv").value.trim(), jd=$("jd").value.trim();
+  const gm=$("genMsg");
+  if(!jd){ gm.style.display="block"; gm.className="msg err"; gm.textContent="Paste a job description first."; return; }
+  if(!window.AI_BACKEND_URL){ gm.style.display="block"; gm.className="msg"; gm.textContent="AI backend isn't connected yet."; return; }
+  gm.style.display="block"; gm.className="msg"; gm.innerHTML='<span class="loader"></span>Writing your '+title.toLowerCase()+'… this can take a few seconds.';
+  $("genOut").style.display="none";
+  document.querySelectorAll(".genbtn").forEach(b=>b.disabled=true);
+  try{
+    const r=await fetch(window.AI_BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode,cv,jd})});
+    const d=await r.json();
+    if(d.error && !d.text){ gm.className="msg err"; gm.textContent="Error: "+d.error; return; }
+    gm.style.display="none";
+    $("genTitle").textContent=title;
+    $("genText").textContent=(d.text||"").trim();
+    lastDocKind=kind;
+    $("genOut").style.display="block";
+    $("genOut").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){ gm.className="msg err"; gm.textContent="Couldn't reach the AI backend just now — please try again in a moment."; }
+  finally{ document.querySelectorAll(".genbtn").forEach(b=>b.disabled=false); }
+}
+$("genCover").addEventListener("click",()=>generate("cover","Cover letter","cover"));
+$("genCv").addEventListener("click",()=>generate("cvimprove","Improved CV","cv"));
+
+$("copyBtn").addEventListener("click",()=>{
+  navigator.clipboard.writeText($("genText").textContent).then(()=>{
+    const b=$("copyBtn"); const t=b.textContent; b.textContent="Copied ✓"; setTimeout(()=>b.textContent=t,1500);
+  });
+});
+
+// Build a clean Word (.doc) file from the generated text
+function textToDocHtml(text, isCV){
+  const lines=text.split(/\r?\n/); let html=""; let inList=false;
+  const closeList=()=>{ if(inList){ html+="</ul>"; inList=false; } };
+  for(let raw of lines){
+    const line=raw.trim();
+    if(line===""){ closeList(); continue; }
+    if(isCV && /^[A-Z][A-Z \/&]{2,}$/.test(line)){ closeList(); html+="<h2>"+line+"</h2>"; continue; }
+    if(/^[-•]\s+/.test(line)){ if(!inList){ html+="<ul>"; inList=true; } html+="<li>"+line.replace(/^[-•]\s+/,"")+"</li>"; continue; }
+    closeList(); html+="<p>"+line+"</p>";
+  }
+  closeList(); return html;
+}
+function downloadDoc(filename, title, text, isCV){
+  const body=textToDocHtml(text,isCV);
+  const doc="<!DOCTYPE html><html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>"+
+    "<head><meta charset='utf-8'><title>"+title+"</title><style>"+
+    "@page{size:A4;margin:2cm;} body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.45;color:#222;} "+
+    "h1{font-size:20pt;margin:0 0 2pt;} h2{font-size:12.5pt;color:#1a2440;border-bottom:1px solid #bbb;padding-bottom:2pt;margin:14pt 0 6pt;text-transform:uppercase;letter-spacing:.5pt;} "+
+    "p{margin:0 0 8pt;} ul{margin:2pt 0 8pt;padding-left:18pt;} li{margin:2pt 0;} .pagebreak{page-break-before:always;}"+
+    "</style></head><body>"+body+"</body></html>";
+  const blob=new Blob(['\ufeff',doc],{type:"application/msword"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+$("dlBtn").addEventListener("click",()=>{
+  const isCV=lastDocKind==="cv";
+  const fname=isCV?"Tailored_CV.doc":"Cover_Letter.doc";
+  const title=isCV?"Thomas Gollogly — CV":"Thomas Gollogly — Cover Letter";
+  downloadDoc(fname,title,$("genText").textContent,isCV);
+});
+
 </script>
 
 <footer style="border-top:1px solid #e4e8ec;margin-top:44px;background:#fff;">
   <div style="max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:#5c6672;font-family:system-ui,sans-serif;">
     <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland · <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
     <span style="display:flex;gap:16px;align-items:center;">
-      <a href="mailto:thomas@tgollogly.dev" style="color:#2f39c9;text-decoration:none;">Email</a>
+      <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:#2f39c9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
       <a href="https://github.com/tgollogly" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
       <a href="https://www.linkedin.com/in/thomas-g-2a08143aa" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
     </span>
