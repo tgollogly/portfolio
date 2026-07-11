@@ -165,7 +165,7 @@
       <a class="navlink" href="#work">Work</a>
       <a class="navlink" href="#skills">Skills</a>
       <a class="navlink" href="#about">About</a>
-      <a class="navlink" href="cv.html">CV</a>
+      <a class="navlink" href="cv.html">Profile</a>
       <a class="btn btn-primary btn-sm" href="#contact">Hire me</a>
     </nav>
   </div>
@@ -181,7 +181,7 @@
           <p class="lede">Live web apps, dashboards and integrations, taken end to end and handed over deployed — not mockups. Fluent with <b>AI-assisted development</b>, focused on turning real problems into real, working tools.</p>
           <div class="cta-row">
             <a class="btn btn-primary" href="#work">Try the live demos <span class="arw">&darr;</span></a>
-            <a class="btn btn-ghost" href="cv.html">View / download CV</a>
+            <a class="btn btn-ghost" href="cv.html">View developer profile</a>
           </div>
         </div>
         <div class="term" id="term" aria-label="Terminal showing a summary about Thomas">
@@ -242,8 +242,8 @@
       <p>I'm actively looking for a role where I can build. Happy to talk through what you need and how I'd approach it.</p>
       <div class="cta-row">
         <a class="btn btn-primary" id="emailBtn" href="#">Email me <span class="arw">&rarr;</span></a>
-        <a class="btn btn-ghost" id="githubBtn" href="#">GitHub</a>
-        <a class="btn btn-ghost" id="linkedinBtn" href="#">LinkedIn</a>
+        <a class="btn btn-ghost" id="githubBtn" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-3px;margin-right:6px;"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</a>
+        <a class="btn btn-ghost" id="linkedinBtn" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-3px;margin-right:6px;"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>LinkedIn</a>
       </div>
       <p id="contactLine" style="margin-top:22px;font-size:15px;color:var(--faint);"></p>
     </div>
@@ -258,8 +258,8 @@
 const CONTACT_EMAIL = "thomas@tgollogly.dev";       // your email
 const PHONE         = "";            // hidden
 const LOCATION      = "Northern Ireland";
-const GITHUB_URL    = "";                         // EDIT: paste your GitHub profile URL (recruiters look for this)
-const LINKEDIN_URL  = "";                         // EDIT: paste your LinkedIn URL
+const GITHUB_URL    = "https://github.com/tgollogly";
+const LINKEDIN_URL  = "https://www.linkedin.com/in/thomas-g-2a08143aa";
 
 const PROJECTS = [
   { n:"01", title:"AI ATS Resume Matcher", live:true,
@@ -292,7 +292,7 @@ document.getElementById("workGrid").innerHTML = PROJECTS.map(p=>{
     <div class="tags">${tags}</div><div class="foot"><a class="openbtn" href="${p.demo}" target="_blank" rel="noopener">Open live demo ↗</a></div></article>`;
 }).join("");
 
-document.getElementById("emailBtn").href="mailto:"+CONTACT_EMAIL+"?subject=Developer%20role%20enquiry";
+document.getElementById("emailBtn").href="mailto:"+CONTACT_EMAIL+"?subject="+encodeURIComponent("Developer opportunity — enquiry for Thomas Gollogly")+"&body="+encodeURIComponent("Hi Thomas,\n\nI came across your portfolio (tgollogly.dev) and would like to get in touch about a developer opportunity.\n\nA little about the role / company:\n- \n- \n\nBest regards,\n");
 const gh=document.getElementById("githubBtn");
 if(GITHUB_URL){gh.href=GITHUB_URL;gh.target="_blank";gh.rel="noopener";}else{gh.style.display="none";}
 const li=document.getElementById("linkedinBtn");
