@@ -81,6 +81,40 @@ ${jd}`;
       let data; try { data = JSON.parse(clean); } catch { data = { error: "Could not parse", raw: clean }; }
       return json(data);
     }
+    if (body.mode === "cover") {
+      const cv = (body.cv || "").slice(0, 9000);
+      const jd = (body.jd || "").slice(0, 9000);
+      const prompt = `Write a professional, tailored cover letter for this job, based ONLY on the candidate's real CV below. 
+STRICT RULES: Do not invent jobs, employers, dates, qualifications or skills. Only use what is in the CV. You may rephrase, emphasise relevant strengths, and connect them to the job. The candidate is a self-taught, early-career developer — be confident but honest about that; never claim senior experience. 
+STYLE: UK English, warm but professional, about 250-320 words, 3-4 short paragraphs. Start with "Dear Hiring Manager," and end with "Kind regards,\nThomas Gollogly". Do not use markdown, asterisks or headings — plain paragraphs only.
+
+CANDIDATE CV:
+${cv}
+
+JOB DESCRIPTION:
+${jd}`;
+      return json({ text: await gemini(prompt, key) });
+    }
+    if (body.mode === "cvimprove") {
+      const cv = (body.cv || "").slice(0, 9000);
+      const jd = (body.jd || "").slice(0, 9000);
+      const prompt = `Rewrite and lightly improve this candidate's CV so it is tailored to the job below and reads professionally.
+STRICT RULES: Use ONLY information present in the original CV. Do NOT invent employers, job titles, dates, qualifications, or skills the CV doesn't contain. You may reorder, rephrase, sharpen wording, and emphasise the experience/skills most relevant to this job — but every claim must be true to the original. The candidate is a self-taught, early-career developer; keep that honest.
+FORMAT: Return clean plain text (no markdown symbols, no asterisks). Use these section headings in CAPITALS on their own line, in this order, each followed by its content:
+NAME AND CONTACT
+PROFILE
+KEY SKILLS
+PROJECTS
+EDUCATION
+Under PROJECTS and KEY SKILLS you may use simple hyphen bullet lines. Keep it concise (fits about one page).
+
+ORIGINAL CV:
+${cv}
+
+JOB DESCRIPTION (tailor towards this):
+${jd}`;
+      return json({ text: await gemini(prompt, key) });
+    }
     return json({ error: "Unknown mode" }, 400);
   } catch (e) {
     const busy = e && e.rate;
