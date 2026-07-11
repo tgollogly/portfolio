@@ -1,41 +1,47 @@
 # Thomas Gollogly — Developer Portfolio
 
-A live portfolio of web applications I've designed, built and deployed end to end.
-Self-taught developer based in Northern Ireland — fluent with modern web tech
-and AI-assisted development. Open to developer roles: trainee, apprentice, junior or contract.
+> A live portfolio of web applications I've designed, built and deployed end to end.
+> Self-taught developer based in Northern Ireland — fluent with modern web tech and
+> AI-assisted development. **Open to developer roles: trainee, apprentice, junior or contract.**
 
-**Live site:** https://tgollogly.dev
-**Contact:** thomas@tgollogly.dev
-**GitHub:** https://github.com/tgollogly
+[![Live site](https://img.shields.io/badge/Live_site-tgollogly.dev-2f39c9?style=for-the-badge)](https://tgollogly.dev)
+[![Email](https://img.shields.io/badge/Email-thomas@tgollogly.dev-c14438?style=for-the-badge&logo=maildotru&logoColor=white)](mailto:thomas@tgollogly.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-tgollogly-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tgollogly)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomas-g-2a08143aa)
 
 ---
 
-## Projects
+## 🚀 Projects
 
-Each project is a real, deployed application — not a mockup. Case studies on the live
-site explain the technical choices behind each one.
+Each project is a **real, deployed application** — not a mockup. Case studies on the live site explain the technical choices behind each one.
 
 | Project | What it does | Built with |
 |---|---|---|
-| **AI ATS Resume Matcher** | Scores a CV against a job description, flags missing keywords and suggests fixes. Full-stack, with a secure serverless backend holding the API key. | JavaScript · Cloudflare Worker · Google Gemini API |
-| **Heat Dome Detector** | Live heat-risk dashboard: real-time weather, a 3D terrain map, live precipitation radar and colour-coded warnings. | JavaScript · Open-Meteo API · MapLibre GL · RainViewer |
-| **Beneish M-Score Screener** | Runs the full eight-factor forensic-accounting model in the browser to flag earnings-manipulation risk. Data never leaves the device. | JavaScript (client-side) |
-| **Thermal Compare** | Compares live "feels-like" conditions across multiple locations, ranked. | JavaScript · Open-Meteo API |
-| **BundleBuilder** | Turns documents into a numbered, paginated court bundle with an index and exhibit dividers, exported to PDF. | JavaScript (client-side) |
+| 🧭 **[AI ATS Resume Matcher](https://tgollogly.dev/ats-matcher.html)** | Scores a CV against a job description, flags missing keywords, and generates a tailored cover letter + improved CV. Full-stack, with a secure serverless backend holding the API key. | JavaScript · Cloudflare Worker · Google Gemini API |
+| 🌡️ **[Heat Dome Detector](https://tgollogly.dev/heat-dome.html)** | Live heat-risk dashboard: real-time weather, a 3D terrain map, live precipitation radar and colour-coded warnings. | JavaScript · Open-Meteo API · MapLibre GL · RainViewer |
+| 📊 **[Beneish M-Score Screener](https://tgollogly.dev/beneish.html)** | Runs the full eight-factor forensic-accounting model in the browser to flag earnings-manipulation risk. Data never leaves the device. | JavaScript (client-side) |
+| 🔥 **[Thermal Compare](https://tgollogly.dev/thermal-compare.html)** | Compares live "feels-like" conditions across multiple locations, ranked. | JavaScript · Open-Meteo API |
+| 📁 **[BundleBuilder](https://tgollogly.dev/bundlebuilder.html)** | Turns documents into a numbered, paginated court bundle with an index and exhibit dividers, exported to PDF. | JavaScript (client-side) |
 
 ---
 
-## Tech
+## 🛠️ Tech
 
-**Frontend:** JavaScript · HTML5 / CSS · MapLibre / Leaflet · SVG / Canvas · responsive/mobile-first
-**Backend:** Serverless (Cloudflare Workers) · REST / JSON APIs
-**Data / AI:** Google Gemini API · public APIs · AI-assisted development
-**DevOps:** Git / GitHub · continuous deployment · encrypted secrets · wrangler
-**Also working with:** React · Node.js · Python · PostgreSQL
+**Frontend** — JavaScript · HTML5 / CSS · MapLibre / Leaflet · SVG / Canvas · responsive / mobile-first
+**Backend** — Serverless (Cloudflare Workers) · REST / JSON APIs
+**Data / AI** — Google Gemini API · public APIs · AI-assisted development
+**DevOps** — Git / GitHub · continuous deployment · encrypted secrets · wrangler
+**Also working with** — React · Node.js · Python · PostgreSQL
 
 ---
 
-## Structure
+## 🔒 Running the AI features
+
+The chatbot and ATS Matcher call a small serverless backend (`server.js`) that reads a Google Gemini API key from an **encrypted secret** (`GEMINI_API_KEY`) set in Cloudflare. The key is **never** committed to this repo.
+
+---
+
+## 📂 Structure
 
     index.html            Homepage (projects, terminal intro, AI chatbot)
     cv.html               Developer profile page
@@ -46,26 +52,16 @@ site explain the technical choices behind each one.
     bundlebuilder.html    Live demo + case study
     server.js             Serverless backend: serves the site + AI endpoint (/api)
     config.js             Points the frontend at the AI backend (/api)
-    wrangler.toml         Cloudflare deployment config (runs server.js as the Worker)
-    .assetsignore         Keeps backend/config files from being served as public assets
+    wrangler.toml         Cloudflare deployment config
+    .assetsignore         Keeps backend/config files out of public assets
     LICENSE               MIT licence
 
 ---
 
-## Running the AI features
+## 📝 Notes
 
-The chatbot and ATS Matcher call a small serverless backend (`server.js`) that reads a
-Google Gemini API key from an encrypted secret (`GEMINI_API_KEY`) set in Cloudflare.
-The key is **never** committed to this repo.
+Demos are for demonstration only and are not legal, financial or professional advice. AI features send entered text to Google's Gemini API to generate a response; that text is not stored by the site. The site uses no tracking cookies.
 
 ---
 
-## Notes
-
-The demos are for demonstration only and do not constitute legal, financial or
-professional advice. AI features send entered text to Google's Gemini API to generate
-a response; that text is not stored by the site. The site uses no tracking cookies.
-
----
-
-*Designed and built by Thomas Gollogly. Licensed under the MIT License.*
+*Designed and built by Thomas Gollogly · Licensed under the [MIT License](LICENSE).*
