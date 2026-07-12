@@ -55,8 +55,13 @@
     table{width:100%;border-collapse:collapse;font-size:10.5pt;}
     th,td{border:1px solid #000;padding:3mm;text-align:left;vertical-align:top;}
     th{background:#eee;}
-    .pb-tab{break-before:page;page-break-before:always;break-inside:avoid;page-break-inside:avoid;border:1px solid #000;padding:8mm;margin:0;text-align:center;}
-    .pb-tab .tabn{font-size:34pt;font-weight:800;font-family:'Bricolage Grotesque';}
+    .pb-tab{break-before:page;page-break-before:always;break-inside:avoid;page-break-inside:avoid;
+      min-height:205mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0;margin:0;}
+    .pb-tab .lab{font-family:'IBM Plex Mono',monospace;font-size:11pt;letter-spacing:.45em;text-transform:uppercase;color:#666;margin:0 0 5mm 10px;}
+    .pb-tab .tabn{font-family:'Bricolage Grotesque';font-weight:800;font-size:64pt;line-height:1;color:#111;margin:0;}
+    .pb-tab .rule{width:34mm;border-top:2px solid #111;margin:8mm 0;}
+    .pb-tab .ttl{font-size:16pt;font-weight:700;color:#111;margin:0 0 2mm;}
+    .pb-tab .dt{font-family:'IBM Plex Mono',monospace;font-size:10.5pt;color:#444;margin:0;}
   }
 </style>
 </head>
@@ -136,7 +141,7 @@ function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;
 function buildPrint(){
   const title=esc(document.getElementById("caseTitle").value), no=esc(document.getElementById("caseNo").value);
   const rows=items.map((it,i)=>`<tr><td style="text-align:center;">${i+1}</td><td>${esc(it.t)}</td><td>${fmtDate(it.date)}</td><td>${esc(it.desc||"")}</td></tr>`).join("");
-  const tabs=items.map((it,i)=>`<div class="pb-tab"><div class="tabn">Exhibit ${i+1}</div><div style="font-size:14pt;font-weight:700;margin-top:3mm;">${esc(it.t)}</div><div style="font-family:monospace;font-size:10pt;color:#333;">${fmtDate(it.date)}</div></div>`).join("");
+  const tabs=items.map((it,i)=>`<div class="pb-tab"><div class="lab">Exhibit</div><div class="tabn">${i+1}</div><div class="rule"></div><div class="ttl">${esc(it.t)}</div><div class="dt">${fmtDate(it.date)}</div></div>`).join("");
   document.getElementById("printArea").innerHTML=
     `<div class="pb-title">${title}</div><div class="pb-meta">Case No: ${no} &nbsp;·&nbsp; ${items.length} documents &nbsp;·&nbsp; Prepared ${new Date().toLocaleDateString("en-GB")}</div>
      <div class="pb-idx-h">Index</div>
