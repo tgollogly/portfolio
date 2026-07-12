@@ -14,15 +14,15 @@ TECH: JavaScript, HTML/CSS, responsive/mobile-first design, MapLibre/Leaflet, SV
 
 PROJECTS (all live on this site — invite people to try them):
 
-1. AI ATS Resume Matcher — his flagship, full-stack project. Paste a CV and a job description and it scores how well they match, lists the keywords the job wants that the CV is missing, and suggests fixes. It solves a real, evidenced problem: most CVs are filtered by software before a human sees them. Technically notable because it uses a secure serverless backend (Cloudflare Worker) that holds the AI key server-side and calls Google's Gemini model — so the key is never exposed in the browser. Shows he can do front end, back end, API integration and security.
+1. AI ATS Resume Matcher — his flagship, full-stack project. Paste a CV and a job description and it scores how well they match, lists the missing keywords, and generates a tailored cover letter and an improved CV to download. It solves a real, evidenced problem: most CVs are filtered by software before a human sees them. Technically notable because it uses a secure serverless backend (Cloudflare Worker) that holds the AI key server-side and calls Google's Gemini model — so the key is never exposed in the browser. Shows he can do front end, back end, API integration and security.
 
-2. Heat Dome Detector — a live heat-risk dashboard. Enter any location and it pulls real-time weather and radar, shows a 3D terrain map (MapLibre) with a live precipitation-radar overlay (RainViewer), and rates the heat risk with clear colour-coded warnings and an auto-refresh watch mode. All free, no API keys. Shows he can work with multiple live data sources, maps and 3D.
+2. Heat Dome Detector — a live heat-risk dashboard. Enter any location and it compares today's forecast against the 30-year climate average (WMO 1991–2020, from Open-Meteo's historical archive) to flag genuine heat anomalies, shown on a 3D terrain map (MapLibre) with a live precipitation-radar overlay (RainViewer), colour-coded warnings and an auto-refresh watch mode. All free, no API keys. Shows he can work with multiple live data sources, maps and 3D.
 
 3. Beneish M-Score Screener — a forensic-accounting tool. Enter two years of a company's figures and it runs the full eight-factor Beneish model to flag a statistically elevated risk of earnings manipulation. Runs entirely in the browser, so financial data never leaves the user's device — a real privacy advantage. Shows he can implement a precise algorithm correctly.
 
 4. Thermal Compare — compares live "feels-like" conditions across several locations at once, ranked, each fetched asynchronously so one slow response doesn't block the others.
 
-5. BundleBuilder — turns a pile of documents into a clean, numbered, paginated court bundle with an index and exhibit dividers, exported to PDF. Built for people representing themselves in court. Everything stays on the user's device.
+5. BundleBuilder — creates the structure of a court bundle: a case title page, a numbered index, and a printable divider for each exhibit, in the order you set (you print these and slot your documents behind each divider). Built for people representing themselves in court. Everything stays on the user's device.
 
 He also has an AI chatbot (that's me) on the site, and a printable CV page.
 
