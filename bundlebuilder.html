@@ -69,7 +69,7 @@
 <div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="tag">Live demo · runs in your browser</span></div></div>
 <div class="wrap">
   <h1>BundleBuilder</h1>
-  <p class="sub">Turn a pile of evidence into a clean, numbered court bundle. Add each document, reorder into the sequence you want, then export a paginated bundle with an index and exhibit dividers — ready to print. Nothing leaves your browser.</p>
+  <p class="sub">Build the structure of a court bundle. Add each document, reorder into the sequence you want, then print a case title page, a numbered index, and an exhibit divider for each document — ready to slot your papers behind. Nothing leaves your browser.</p>
   <p class="sub" style="margin-top:-14px;font-size:13px;color:#5c6672;"><b>For demonstration only — not legal advice.</b> This tool helps organise documents; it does not provide legal guidance. Check your court&rsquo;s bundle rules.</p>
 
   <div class="panel">
@@ -167,7 +167,7 @@ loadSample();
 <section class="cs"><div class="cs-card">
   <div class="cs-eyebrow">Case study</div>
   <h2 class="cs-h">How it's built — and why</h2>
-  <div class="cs-block"><h3>The problem</h3><p>People representing themselves in court struggle to assemble a proper, paginated evidence bundle with an index and exhibit dividers. I wanted to make that a five-minute job.</p></div>
+  <div class="cs-block"><h3>The problem</h3><p>People representing themselves in court struggle to assemble a proper evidence bundle — a title page, a clear index, and a labelled divider for every document. I wanted to make building that structure a five-minute job.</p></div>
   <div class="cs-block"><h3>Stack &amp; why I chose it</h3><p>Vanilla JavaScript plus the browser's own print engine (<code>window.print()</code> with a dedicated print stylesheet) to produce the PDF &mdash; no PDF library needed, which keeps it lightweight, and the documents stay entirely on the user's device, which matters for legal material.</p></div>
   <div class="cs-block"><h3>Key decisions</h3><p>Reordering works by swapping array items and re-rendering; a separate print layout builds the index table and one tab-divider page per document with proper page breaks. I intentionally avoided <code>localStorage</code> so it behaves consistently everywhere and stays session-only.</p></div>
   <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>It organises and indexes the documents rather than merging the actual PDF files. Next: drag-and-drop reordering and true PDF merging.</p></div>
