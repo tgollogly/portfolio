@@ -62,7 +62,7 @@
   .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
   .btn .arw{transition:transform .2s;}.btn:hover .arw{transform:translateX(3px);}
 
-  .hero{padding:96px 0 78px;}
+  .hero{padding:96px 0 78px;position:relative;background:radial-gradient(1200px 520px at 50% -8%, #eef0fe 0%, rgba(238,240,254,.45) 38%, rgba(255,255,255,0) 72%);}
   .avail{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ok);background:#e6f5f0;border-radius:999px;padding:6px 14px;margin-bottom:26px;}
   .avail .d{width:8px;height:8px;border-radius:50%;background:var(--ok);}
   .hero h1{font-size:clamp(38px,6.4vw,68px);max-width:17ch;}
@@ -219,7 +219,7 @@
         <div class="skillcard"><h4>Frontend</h4><div class="list"><span>React</span><span>JavaScript</span><span>HTML/CSS</span><span>Leaflet</span><span>SVG / Canvas</span></div></div>
         <div class="skillcard"><h4>Backend</h4><div class="list"><span>Node.js</span><span>Express</span><span>PostgreSQL</span><span>REST APIs</span></div></div>
         <div class="skillcard"><h4>Payments &amp; auth</h4><div class="list"><span>Stripe</span><span>JWT</span><span>Serverless</span></div></div>
-        <div class="skillcard"><h4>Data &amp; APIs</h4><div class="list"><span>Public APIs</span><span>REST / JSON</span><span>Python <span style="opacity:.6;">(familiar)</span></span></div></div>
+        <div class="skillcard"><h4>Data &amp; APIs</h4><div class="list"><span>Public APIs</span><span>REST / JSON</span><span>Python</span></div></div>
         <div class="skillcard"><h4>Deploy</h4><div class="list"><span>Cloudflare</span><span>GitHub</span><span>CI / CD</span></div></div>
         <div class="skillcard"><h4>Approach</h4><div class="list"><span>AI-assisted development</span><span>Rapid prototyping</span><span>Shipping to production</span></div></div>
       </div>
@@ -290,14 +290,14 @@ const PROJECTS = [
     tags:["JavaScript","Open-Meteo API","Data viz"], demo:"thermal-compare.html" },
   { n:"05", title:"BundleBuilder",
     problem:"People representing themselves in court can't prepare evidence properly.",
-    desc:"Turns a pile of documents into a clean, numbered, paginated court bundle with an index and tab dividers — add, reorder, label, export to PDF.",
+    desc:"Creates the structure of a court bundle — a case title page, a numbered index, and a printable divider for each exhibit, in the order you set. Print them and slot your documents behind. Everything runs in the browser.",
     tags:["Legal-tech","PDF export","Runs in-browser"], demo:"bundlebuilder.html" }
 ];
 /* ===== end edit zone ===== */
 
 document.getElementById("workGrid").innerHTML = PROJECTS.map(p=>{
   const tags=p.tags.map(t=>`<span class="tag">${t}</span>`).join("");
-  return `<article class="card reveal"><div class="top"><span class="livechip"><span class="d"></span>Live</span><span class="cnum">${p.n}</span></div>
+  return `<article class="card reveal"><div class="top"><span class="livechip"><span class="d"></span>Live</span></div>
     <h3>${p.title}</h3><p class="problem">${p.problem}</p><p class="desc">${p.desc}</p>
     <div class="tags">${tags}</div><div class="foot"><a class="openbtn" href="${p.demo}" target="_blank" rel="noopener">Open live demo ↗</a></div></article>`;
 }).join("");
