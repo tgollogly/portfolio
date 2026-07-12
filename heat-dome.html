@@ -77,7 +77,7 @@
 <div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live 3D · real radar &amp; weather data</span></div></div>
 <div class="wrap">
   <h1>Heat Dome Detector</h1>
-  <p class="sub">Search anywhere on earth for a live heat-risk read — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded heat warnings, and an auto-watch mode that keeps refreshing. No API key, no sign-up.</p>
+  <p class="sub">Search anywhere on earth for a live heat-risk read that compares today against the 30-year climate average (WMO 1991–2020) to flag genuine heat anomalies — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded warnings and an auto-watch mode. No API key, no sign-up.</p>
   <div class="search">
     <input id="q" type="text" placeholder="Search a city — e.g. Seville, Phoenix, Athens" autocomplete="off"/>
     <button class="btn go" id="goBtn">Detect</button>
@@ -107,7 +107,14 @@
 
 <style>
 .cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:"Inter",system-ui,sans-serif;}
-.cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
+.anomaly{margin-top:14px;font-size:13px;color:var(--muted,#3f4954);}
+  .anom-in{background:#fff;border:1px solid #e4e8ec;border-radius:12px;padding:12px 14px;}
+  .anom-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#5c6672;font-weight:700;margin-bottom:4px;}
+  .anom-h span{font-weight:500;opacity:.7;letter-spacing:0;text-transform:none;}
+  .anom-row{font-size:14.5px;color:#1a2028;line-height:1.4;}
+  .anom-row b{font-size:17px;}
+  .anom-lab{font-size:12.5px;color:#5c6672;margin-top:3px;text-transform:capitalize;}
+  .cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
 .cs-eyebrow{font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#2f39c9;}
 .cs-h{font-size:26px;color:#0b0f14;margin:6px 0 22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;}
 .cs-block{margin:0 0 20px;}
@@ -221,7 +228,7 @@ async function run(q,silent){
     const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`).then(r=>r.json());
     if(!g.results||!g.results.length){wp.innerHTML='<div class="msg err">Couldn\u2019t find that place — try a nearby city name.</div>';return;}
     const loc=g.results[0];
-    const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&hourly=apparent_temperature&forecast_days=1&timezone=auto`).then(r=>r.json());
+    const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&hourly=apparent_temperature,temperature_2m&forecast_days=1&timezone=auto`).then(r=>r.json());
     const cur=f.current, cat=category(cur.apparent_temperature);
     const place=`${loc.name}${loc.admin1?', '+loc.admin1:''} ${loc.country_code||''}`;
     wp.innerHTML=`<div class="warn" style="background:${cat.c}">
@@ -233,10 +240,43 @@ async function run(q,silent){
       <div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(Math.max(...f.hourly.apparent_temperature))}&deg;</b></div></div>
       <div class="metrics">
         <div class="metric"><div class="mk">Humidity</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
-        <div class="metric"><div class="mk">Wind</div><div class="mv">${Math.round(cur.wind_speed_10m)}</div></div>
+        <div class="metric"><div class="mk">Wind</div><div class="mv">${Number.isFinite(cur.wind_speed_10m)?Math.round(cur.wind_speed_10m)+" km/h":"&mdash;"}</div></div>
         <div class="metric"><div class="mk">Feels-like</div><div class="mv">${Math.round(cur.apparent_temperature)}&deg;</div></div>
-      </div>`;
+      </div>
+      <div id="anomaly" class="anomaly"><span class="loader"></span> Comparing with the 30-year average for this date&hellip;</div>`;
     document.getElementById("spark").innerHTML=spark(f.hourly.apparent_temperature.slice(0,24));
+
+    // ---- Real 30-year anomaly analysis (WMO 1991–2020 baseline, Open-Meteo archive) ----
+    (async ()=>{
+      const box=document.getElementById("anomaly"); if(!box) return;
+      try{
+        const todayMax = Math.max(...f.hourly.temperature_2m);           // today's forecast high (air temp)
+        const a=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${loc.latitude}&longitude=${loc.longitude}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max&timezone=auto`).then(r=>r.json());
+        const times=a.daily.time, maxes=a.daily.temperature_2m_max;
+        const doy=d=>{const s=new Date(Date.UTC(d.getUTCFullYear(),0,0));return Math.floor((d-s)/86400000);};
+        const t=doy(new Date());
+        const vals=[];
+        for(let i=0;i<times.length;i++){
+          const d=new Date(times[i]+"T00:00:00Z");
+          let diff=Math.abs(doy(d)-t); diff=Math.min(diff,365-diff);   // ±7 days around today's date-of-year
+          if(diff<=7 && maxes[i]!=null) vals.push(maxes[i]);
+        }
+        if(!vals.length){ box.style.display="none"; return; }
+        const normal=vals.reduce((x,y)=>x+y,0)/vals.length;
+        const anom=todayMax-normal;
+        const sign=anom>=0?"+":"";
+        let tone="#0c7a5e", label="around the seasonal norm";
+        if(anom>=8){tone="#b3271e"; label="an extreme heat anomaly — heat-dome territory";}
+        else if(anom>=5){tone="#c05621"; label="a strong heat anomaly";}
+        else if(anom>=2){tone="#b06d12"; label="warmer than normal";}
+        else if(anom<=-2){tone="#2f6fb0"; label="cooler than normal";}
+        box.innerHTML=`<div class="anom-in" style="border-left:4px solid ${tone}">`+
+          `<div class="anom-h">30-year comparison <span>WMO 1991–2020 baseline</span></div>`+
+          `<div class="anom-row"><b style="color:${tone}">${sign}${anom.toFixed(1)}°C</b> vs the 30-year average for this date `+
+          `(today ~${Math.round(todayMax)}°C · normal ~${Math.round(normal)}°C)</div>`+
+          `<div class="anom-lab">${label}</div></div>`;
+      }catch(e){ document.getElementById("anomaly").style.display="none"; }
+    })();
     if(mapReady){
       map.flyTo({center:[loc.longitude,loc.latitude],zoom:7.5,pitch:60,bearing:-15,duration:2600,essential:true});
       if(marker)marker.remove();
@@ -258,7 +298,7 @@ if(!mapReady){ document.getElementById("radarLabel").style.display="none"; run("
     <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland · <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
     <span style="display:flex;gap:16px;align-items:center;">
       <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:#2f39c9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
-      <a href="https://github.com/tgollogly" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
+      <a href="https://github.com/tgollogly/portfolio" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
       <a href="https://www.linkedin.com/in/thomas-g-2a08143aa" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
     </span>
   </div>
