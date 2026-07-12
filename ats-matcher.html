@@ -156,6 +156,7 @@ $("go").addEventListener("click", async ()=>{
     const d=await r.json();
     if(d.error){ msg.className="msg err"; msg.textContent="Error: "+d.error+(d.raw?(" — "+d.raw.slice(0,200)):""); return; }
     const score=Math.max(0,Math.min(100,parseInt(d.score)||0));
+    lastMatchScore=score;
     msg.style.display="none";
     const col=bandColour(score);
     const g=$("gauge"); g.style.setProperty("--v",score); g.style.setProperty("--gcol",col);
@@ -172,11 +173,16 @@ $("go").addEventListener("click", async ()=>{
 
 // ---------- Generate cover letter / improved CV ----------
 let lastDocKind = "";
+let lastMatchScore = null;
 async function generate(mode, title, kind, btn){
   const cv=$("cv").value.trim(), jd=$("jd").value.trim();
   const gm=$("genMsg");
   if(!jd){ gm.style.display="block"; gm.className="msg err"; gm.textContent="Paste a job description first."; return; }
   if(!window.AI_BACKEND_URL){ gm.style.display="block"; gm.className="msg"; gm.textContent="AI backend isn't connected yet."; return; }
+  if(lastMatchScore!==null && lastMatchScore<50){
+    const ok=confirm("This looks like a weak match ("+lastMatchScore+"%).\n\nApplying to a poorly-matched role rarely succeeds, and the generated documents can't invent experience you don't have. Consider whether this job really fits.\n\nGenerate anyway?");
+    if(!ok){ return; }
+  }
   gm.style.display="block"; gm.className="msg"; gm.innerHTML='<span class="loader"></span>Writing your '+title.toLowerCase()+'… this can take a few seconds.';
   $("genOut").style.display="none";
   document.querySelectorAll(".genbtn").forEach(b=>b.disabled=true);
