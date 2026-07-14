@@ -4,7 +4,10 @@
 
 A live portfolio of web applications I've designed, built and deployed end to end. Self-taught developer based in Northern Ireland — fluent with modern web tech and AI-assisted development. Open to developer roles: junior, trainee, apprentice or contract.
 
-[Live site](https://tgollogly.dev) · [Email](mailto:you@tgollogly.dev) · [GitHub](https://github.com/tgollogly) · [LinkedIn](https://www.linkedin.com/in/tgollogly)
+[![Live site](https://img.shields.io/badge/Live_site-tgollogly.dev-4B3FE4?style=for-the-badge&logo=cloudflare&logoColor=white)](https://tgollogly.dev)
+[![Email](https://img.shields.io/badge/Email-Contact-2563EB?style=for-the-badge&logo=gmail&logoColor=white)](mailto:thomas@tgollogly.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-tgollogly-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tgollogly)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomasgollogly)
 
 ## 🚀 Projects
 
