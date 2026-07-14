@@ -236,12 +236,12 @@ async function run(q,silent){
       <div class="lvl">Heat warning · ${cat.lvl}</div>
       <div class="cat">${cat.cat}</div>
       <div class="advice">${cat.advice}</div></div>`;
-    ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;</div>
+    ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;C</div>
       <div class="feels">Feels like <b>${Math.round(cur.apparent_temperature)}&deg;C</b><br>Peak today <b>${Math.round(Math.max(...f.hourly.apparent_temperature))}&deg;</b></div></div>
       <div class="metrics">
         <div class="metric"><div class="mk">Humidity</div><div class="mv">${cur.relative_humidity_2m}%</div></div>
         <div class="metric"><div class="mk">Wind</div><div class="mv">${Number.isFinite(cur.wind_speed_10m)?Math.round(cur.wind_speed_10m)+" km/h":"&mdash;"}</div></div>
-        <div class="metric"><div class="mk">Feels-like</div><div class="mv">${Math.round(cur.apparent_temperature)}&deg;</div></div>
+        <div class="metric"><div class="mk">Feels-like</div><div class="mv">${Math.round(cur.apparent_temperature)}&deg;C</div></div>
       </div>
       <div id="anomaly" class="anomaly"><span class="loader"></span> Comparing with the 30-year average for this date&hellip;</div>`;
     document.getElementById("spark").innerHTML=spark(f.hourly.apparent_temperature.slice(0,24));
