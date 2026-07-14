@@ -74,7 +74,7 @@
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live 3D · real radar &amp; weather data</span></div></div>
+<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live 3D &middot; real radar &amp; weather data</span></div></div>
 <div class="wrap">
   <h1>Heat Anomaly Detector</h1>
   <p class="sub">Search anywhere on earth for a live heat-risk read that compares today against the 30-year climate average (WMO 1991–2020) to flag genuine heat anomalies — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded warnings and an auto-watch mode. No API key, no sign-up.</p>
@@ -100,7 +100,7 @@
         <div class="toggle" id="watchToggle"><span class="sw"></span><span id="watchLabel">Auto-watch</span></div>
       </div>
       <div class="radarlabel" id="radarLabel">Loading radar…</div>
-      <div class="hint">Drag to rotate · two-finger / right-drag to tilt</div>
+      <div class="hint">Drag to rotate &middot; two-finger / right-drag to tilt</div>
     </div>
   </div>
 </div>
@@ -133,7 +133,7 @@
   <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>It's fully client-side with no persistence, and radar shows the latest frame rather than a full animation loop, to stay simple and reliable. Next: frame-by-frame radar playback and official severe-weather alert feeds.</p></div>
 </div></section>
 
-<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:#8a929c;line-height:1.5;">Data — Weather: open-meteo.com · Radar: RainViewer · Terrain: AWS elevation tiles · Map: MapLibre GL. Heat-risk bands are indicative (apparent-temperature, NWS-style categories) — not an official public-health warning.</div>
+<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:#8a929c;line-height:1.5;">Data — Weather: open-meteo.com &middot; Radar: RainViewer &middot; Terrain: AWS elevation tiles &middot; Map: MapLibre GL. Heat-risk bands are indicative (apparent-temperature, NWS-style categories) — not an official public-health warning.</div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
@@ -199,7 +199,7 @@ function showRadarFrame(){
   map.addSource("radar",{type:"raster",tiles:[url],tileSize:256,minzoom:0,maxzoom:7});
   map.addLayer({id:"radar",type:"raster",source:"radar",paint:{"raster-opacity":radarOn?0.65:0}});
   const dt=new Date(f.time*1000);
-  document.getElementById("radarLabel").textContent="Radar · "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  document.getElementById("radarLabel").textContent="Radar &middot; "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
 }
 document.getElementById("radarToggle").onclick=function(){
   radarOn=!radarOn; this.classList.toggle("on",radarOn);
@@ -233,7 +233,7 @@ async function run(q,silent){
     const place=`${loc.name}${loc.admin1?', '+loc.admin1:''} ${loc.country_code||''}`;
     wp.innerHTML=`<div class="warn" style="background:${cat.c}">
       <div class="place">📍 ${place}</div>
-      <div class="lvl">Heat warning · ${cat.lvl}</div>
+      <div class="lvl">Heat warning &middot; ${cat.lvl}</div>
       <div class="cat">${cat.cat}</div>
       <div class="advice">${cat.advice}</div></div>`;
     ro.innerHTML=`<div class="bigrow"><div class="bigtemp">${Math.round(cur.temperature_2m)}&deg;C</div>
@@ -272,8 +272,8 @@ async function run(q,silent){
         else if(anom<=-2){tone="#2f6fb0"; label="cooler than normal";}
         box.innerHTML=`<div class="anom-in" style="border-left:4px solid ${tone}">`+
           `<div class="anom-h">30-year comparison <span>WMO 1991–2020 baseline</span></div>`+
-          `<div class="anom-row"><b style="color:${tone}">${sign}${anom.toFixed(1)}°C</b> vs the 30-year average for this date `+
-          `(today ~${Math.round(todayMax)}°C · normal ~${Math.round(normal)}°C)</div>`+
+          `<div class="anom-row"><b style="color:${tone}">${sign}${anom.toFixed(1)}&deg;C</b> vs the 30-year average for this date `+
+          `(today ~${Math.round(todayMax)}&deg;C &middot; normal ~${Math.round(normal)}&deg;C)</div>`+
           `<div class="anom-lab">${label}</div></div>`;
       }catch(e){ document.getElementById("anomaly").style.display="none"; }
     })();
@@ -283,7 +283,7 @@ async function run(q,silent){
       const el=document.createElement("div");
       el.style.cssText=`width:22px;height:22px;border-radius:50%;background:${cat.hex};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);`;
       marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude])
-        .setPopup(new maplibregl.Popup({offset:16}).setHTML(`<b>${loc.name}</b><br>${cat.cat} · feels ${Math.round(cur.apparent_temperature)}°C`))
+        .setPopup(new maplibregl.Popup({offset:16}).setHTML(`<b>${loc.name}</b><br>${cat.cat} &middot; feels ${Math.round(cur.apparent_temperature)}&deg;C`))
         .addTo(map);
     }
   }catch(e){ wp.innerHTML='<div class="msg err">Couldn\u2019t reach the weather service. Check your connection and try again.</div>'; }
@@ -295,7 +295,7 @@ if(!mapReady){ document.getElementById("radarLabel").style.display="none"; run("
 
 <footer style="border-top:1px solid #e4e8ec;margin-top:44px;background:#fff;">
   <div style="max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:#5c6672;font-family:system-ui,sans-serif;">
-    <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland · <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
+    <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland &middot; <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
     <span style="display:flex;gap:16px;align-items:center;">
       <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:#2f39c9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
       <a href="https://github.com/tgollogly/portfolio" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
