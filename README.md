@@ -15,11 +15,11 @@ Each project is a real, deployed application — not a mockup. Case studies on t
 
 | Project | What it does | Built with |
 |---|---|---|
-| 🧭 **AI ATS Resume Matcher** | Scores a CV against a job description, flags missing keywords, and generates a tailored cover letter + improved CV. Full-stack, with a secure serverless backend holding the API key. | JavaScript · Cloudflare Worker · Google Gemini API |
-| 🌡️ **Heat Anomaly Detector** | Live heat-risk dashboard that compares today with the 30-year climate average (WMO 1991–2020) to flag real heat anomalies — 3D terrain map, live precipitation radar, colour-coded warnings. | JavaScript · Open-Meteo API · MapLibre GL · RainViewer |
-| 📊 **Beneish M-Score Screener** | Runs the full eight-factor forensic-accounting model in the browser to flag earnings-manipulation risk. Data never leaves the device. | JavaScript (client-side) |
-| 🔥 **Thermal Compare** | Compares live "feels-like" conditions across multiple locations, ranked. | JavaScript · Open-Meteo API |
-| 📁 **BundleBuilder** | Creates the structure of a court bundle — a case title page, a numbered index, and a printable divider for each exhibit, in the order you set. Print and slot your documents behind each divider. | JavaScript (client-side) |
+| 🧭 **[AI ATS Resume Matcher](https://tgollogly.dev/ats-matcher.html)** | Scores a CV against a job description, flags missing keywords, and generates a tailored cover letter + improved CV. Full-stack, with a secure serverless backend holding the API key. | JavaScript · Cloudflare Worker · Google Gemini API |
+| 🌡️ **[Heat Anomaly Detector](https://tgollogly.dev/heat-dome.html)** | Live heat-risk dashboard that compares today with the 30-year climate average (WMO 1991–2020) to flag real heat anomalies — 3D terrain map, live precipitation radar, colour-coded warnings. | JavaScript · Open-Meteo API · MapLibre GL · RainViewer |
+| 📊 **[Beneish M-Score Screener](https://tgollogly.dev/beneish.html)** | Runs the full eight-factor forensic-accounting model in the browser to flag earnings-manipulation risk. Data never leaves the device. | JavaScript (client-side) |
+| 🔥 **[Thermal Compare](https://tgollogly.dev/thermal-compare.html)** | Compares live "feels-like" conditions across multiple locations, ranked. | JavaScript · Open-Meteo API |
+| 📁 **[BundleBuilder](https://tgollogly.dev/bundlebuilder.html)** | Creates the structure of a court bundle — a case title page, a numbered index, and a printable divider for each exhibit, in the order you set. Print and slot your documents behind each divider. | JavaScript (client-side) |
 
 ## 🛠️ Tech
 
