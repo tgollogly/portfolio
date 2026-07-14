@@ -7,7 +7,7 @@
 [![Live site](https://img.shields.io/badge/Live_site-tgollogly.dev-2f39c9?style=for-the-badge)](https://tgollogly.dev)
 [![Email](https://img.shields.io/badge/Email-thomas@tgollogly.dev-c14438?style=for-the-badge&logo=maildotru&logoColor=white)](mailto:thomas@tgollogly.dev)
 [![GitHub](https://img.shields.io/badge/GitHub-tgollogly%2Fportfolio-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tgollogly/portfolio)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomas-g-2a08143aa)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomasgollogly)
 
 ---
 
