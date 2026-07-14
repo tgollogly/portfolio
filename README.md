@@ -4,10 +4,10 @@
 
 A live portfolio of web applications I've designed, built and deployed end to end. Self-taught developer based in Northern Ireland — fluent with modern web tech and AI-assisted development. Open to developer roles: junior, trainee, apprentice or contract.
 
-[![Live site](https://img.shields.io/badge/Live_site-tgollogly.dev-4B3FE4?style=for-the-badge&logo=cloudflare&logoColor=white)](https://tgollogly.dev)
-[![Email](https://img.shields.io/badge/Email-Contact-2563EB?style=for-the-badge&logo=gmail&logoColor=white)](mailto:thomas@tgollogly.dev)
-[![GitHub](https://img.shields.io/badge/GitHub-tgollogly-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tgollogly)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomasgollogly)
+[![Live site](https://img.shields.io/badge/Live_site-tgollogly.dev-4B3FE4?style=for-the-badge&logo=cloudflare&logoColor=white&labelColor=1E1B4B)](https://tgollogly.dev)
+[![Email](https://img.shields.io/badge/Email-Contact-4B3FE4?style=for-the-badge&logo=gmail&logoColor=white&labelColor=1E1B4B)](mailto:thomas@tgollogly.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-tgollogly-4B3FE4?style=for-the-badge&logo=github&logoColor=white&labelColor=1E1B4B)](https://github.com/tgollogly)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-4B3FE4?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=1E1B4B)](https://www.linkedin.com/in/thomasgollogly)
 
 ## 🚀 Projects
 
