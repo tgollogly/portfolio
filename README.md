@@ -54,7 +54,8 @@ The chatbot and ATS Matcher call a small serverless backend (`server.js`) that r
     config.js             Points the frontend at the AI backend (/api)
     wrangler.toml         Cloudflare deployment config
     .assetsignore         Keeps backend/config files out of public assets
-    LICENSE               MIT licence
+    README.md             This file — project overview
+     LICENSE               MIT licence
 
 ---
 
