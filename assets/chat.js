@@ -1,3 +1,4 @@
+
 /* =====================================================================
    chat.js — the site-wide AI assistant.
    Loaded by EVERY page. Injects its own markup and styles, so the

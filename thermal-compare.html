@@ -34,7 +34,6 @@
   .loader{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:7px;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .empty{font-family:var(--mono);font-size:13.5px;color:var(--muted);padding:20px 0;}
-  footer{max-width:900px;margin:0 auto;padding:0 22px 40px;color:var(--muted);font-family:var(--mono);font-size:12px;}
 </style>
 </head>
 <body>
@@ -57,6 +56,20 @@
 
 <style>
 .cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:var(--sans);}
+
+  @media(max-width:640px){
+    .add{gap:8px;}
+    input{min-width:0;width:100%;flex:1 1 100%;}
+    .addbtn{width:100%;padding:12px 20px;}
+    .row{padding:14px;}
+    .row .rt{flex-wrap:wrap;gap:4px;}
+    .row .name{font-size:17px;}
+    .row .feels{font-size:23px;}
+    .rmeta{gap:12px;flex-wrap:wrap;font-size:11.5px;}
+  }
+  @media(max-width:400px){
+    .row .feels{font-size:21px;}
+  }
 </style>
 
 <section class="cs"><div class="cs-card">

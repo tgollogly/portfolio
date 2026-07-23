@@ -43,7 +43,18 @@
   .about{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;}
   .about h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;}
   .about p{margin:0 0 8px;color:var(--muted);font-size:14.5px;}
-  @media(max-width:720px){.grid,.cols{grid-template-columns:1fr;}}
+  @media(max-width:900px){.grid,.cols{grid-template-columns:1fr;}}
+
+  @media(max-width:640px){
+    .scorecard{padding:18px;gap:16px;justify-content:center;text-align:center;}
+    .gauge{width:100px;height:100px;}
+    .gauge .inner{width:76px;height:76px;}
+    .gauge .num{font-size:27px;}
+    .verdict{flex:1 1 100%;}
+    .box,.sugg{padding:16px;}
+    textarea{min-height:170px;}
+    .go{width:100%;}
+  }
 </style>
 </head>
 <body>
