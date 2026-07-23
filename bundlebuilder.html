@@ -155,6 +155,17 @@ loadSample();
 
 <style>
 .cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:var(--sans);}
+
+  @media(max-width:640px){
+    .frm{grid-template-columns:1fr;}
+    .meta-in{grid-template-columns:1fr;}
+    .panel{padding:16px;}
+    .bar{flex-direction:column;align-items:stretch;}
+    .bar button{width:100%;}
+    .item{gap:10px;padding:12px;}
+    .num{min-width:26px;font-size:17px;}
+    .it-body .t{font-size:15px;}
+  }
 </style>
 
 <section class="cs"><div class="cs-card">

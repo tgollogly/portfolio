@@ -84,3 +84,23 @@ Everything visual lives in `assets/site.css`. It is the single source of truth.
 To add a page: link `assets/site.css`, then `assets/chat.js` and `config.js` before `</body>`, and use `.sitebar` / `.wrap head` / `.sitefoot`. Do not write a new `:root`.
 
 The assistant's knowledge base is `THOMAS_CONTEXT` at the top of `server.js`. **If you add or change a demo, update it there too** — it is the only place the chatbot's facts live.
+
+## Breakpoints
+
+The whole site uses three widths, declared in `assets/site.css`:
+
+| Width | For |
+|---|---|
+| `900px` | tablet / small laptop — main two-column layouts collapse |
+| `640px` | phone — padding tightens, cards flatten, CTAs go full-width |
+| `400px` | small phone — type steps down again |
+
+`site.css` also holds the sitewide safety net: media and tables capped at
+`max-width:100%`, long strings wrapped with `overflow-wrap`, and every
+`input`/`select`/`textarea` forced to 16px under 640px so iOS Safari does not
+zoom the page in when a field is focused.
+
+Wide tables go inside `<div class="scroll-x">` rather than being allowed to
+stretch the page.
+
+If you add a page, use these three widths. Don't invent a fourth.
