@@ -115,13 +115,19 @@ button.chip:hover{border-color:var(--accent);color:var(--accent);}
 
 /* ---------- site foot (every page, identical) ---------- */
 .sitefoot{border-top:1px solid var(--line);background:var(--card);padding:24px;margin-top:44px;}
-.sitefoot .in{max-width:var(--maxw);margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:13px;color:var(--faint);}
+.sitefoot .in{max-width:var(--maxw);margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;font-size:13px;color:var(--faint);}
 .sitefoot a{color:var(--accent);}
+.sitefoot a:hover{text-decoration:underline;}
+.footlinks{display:flex;flex-wrap:wrap;align-items:center;gap:16px;}
+.footlinks .ico{display:inline-flex;align-items:center;gap:6px;}
+.footlinks .ico svg{width:15px;height:15px;flex:none;}
+.sitefoot .footnote{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);display:block;}
+.sitefoot .footnote span{max-width:88ch;display:block;}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
 
 /* ---------- case-study block (used on the four narrative demo pages) ---------- */
-.cs-wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px 60px;}
+.cs{max-width:900px;margin:0 auto;padding:8px 24px 54px;}
 .cs-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px 28px;box-shadow:var(--shadow-sm);}
 .cs-eyebrow{font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
 .cs-h{font-family:var(--serif);font-weight:600;font-size:26px;color:var(--strong);margin:6px 0 22px;letter-spacing:-.015em;line-height:1.1;}
