@@ -1,0 +1,402 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light">
+<title>Test Bench — TypeScript and unit tests, running live | Thomas Gollogly</title>
+<meta name="description" content="A TypeScript validation library with a full unit test suite, both running in the browser. Edit the code, break it on purpose, and watch the tests catch it."/>
+<link rel="canonical" href="https://tgollogly.dev/test-bench.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://tgollogly.dev/test-bench.html"/>
+<meta property="og:title" content="Test Bench — TypeScript and unit tests, running live"/>
+<meta property="og:description" content="A typed validation library and its test suite, executing in the browser. Break the code and watch the tests catch it."/>
+<meta property="og:image" content="https://tgollogly.dev/og-preview.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Test Bench — TypeScript and unit tests, running live"/>
+<meta name="twitter:description" content="A typed validation library and its test suite, executing in the browser."/>
+<meta name="twitter:image" content="https://tgollogly.dev/og-preview.png"/>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css"/>
+<style>
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow-sm);}
+  .lab{display:grid;grid-template-columns:1fr 380px;gap:20px;padding-bottom:60px;align-items:start;}
+  .sec-t{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
+
+  textarea{width:100%;min-height:460px;font-family:var(--mono);font-size:13px;line-height:1.65;padding:16px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg-alt);color:var(--ink);resize:vertical;tab-size:2;}
+  textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;}
+  .btn{font:600 14px/1 var(--sans);padding:12px 18px;border-radius:11px;border:1px solid transparent;cursor:pointer;transition:transform .15s,background .2s;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn-p{background:var(--accent);color:var(--card);}.btn-p:hover{background:var(--accent-2);}
+  .btn-g{background:var(--card);border-color:var(--line-2);color:var(--strong);}
+  .btn-g:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-d{background:var(--card);border-color:var(--line-2);color:var(--err);}
+  .btn-d:hover{border-color:var(--err);}
+  .hint{font-size:12.5px;color:var(--faint);}
+
+  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:12px;font-family:var(--mono);font-size:13px;margin-bottom:14px;}
+  .bar.pass{background:var(--ok-soft);color:var(--ok);}
+  .bar.fail{background:var(--err-soft);color:var(--err);}
+  .bar.idle{background:var(--bg-alt);color:var(--muted);}
+  .dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+
+  .res{border-top:1px solid var(--line);padding:9px 2px;display:flex;gap:9px;align-items:flex-start;font-size:13.5px;}
+  .res:first-of-type{border-top:none;}
+  .mark{font-family:var(--mono);font-size:12px;font-weight:600;flex-shrink:0;width:16px;text-align:center;}
+  .mark.p{color:var(--ok);}.mark.f{color:var(--err);}
+  .res .nm{color:var(--ink);}
+  .res .msg{font-family:var(--mono);font-size:11.5px;color:var(--err);display:block;margin-top:3px;word-break:break-word;}
+  .grp{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:16px 0 6px;}
+
+  .note{font-size:13.5px;color:var(--muted);margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
+  @media(max-width:900px){ .lab{grid-template-columns:1fr;} textarea{min-height:340px;} .head{padding:30px 0 20px;} }
+</style>
+</head>
+<body>
+
+<div class="sitebar"><div class="in">
+  <a class="brand" href="/"><svg class="tg-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7"/><text x="15" y="20" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" text-anchor="middle">TG</text></svg><span>Thomas Gollogly</span></a>
+  <a class="back" href="/#work">&larr; All demos</a>
+</div></div>
+
+<div class="wrap head">
+  <span class="eyebrow">Demo 04 &middot; TypeScript &amp; testing</span>
+  <h1>Test Bench</h1>
+  <p>A small typed validation library &mdash; UK postcodes, sort codes, IBAN checksums, dates, money &mdash; together with the unit tests that prove it works. Both are TypeScript, and both run in this page. Edit the code, or press <em>Introduce a bug</em> and watch the suite go red and tell you exactly which case broke.</p>
+  <div class="chips">
+    <span class="chip">TypeScript</span><span class="chip">Unit testing</span><span class="chip">Edge cases</span><span class="chip">Pure functions</span><span class="chip">Runs client-side</span>
+  </div>
+</div>
+
+<div class="wrap lab">
+  <main class="card">
+    <div class="sec-t">validation.ts &mdash; source and specs</div>
+    <label for="code" style="position:absolute;left:-9999px;">TypeScript source</label>
+    <textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+    <div class="row">
+      <button class="btn btn-p" id="run">Run tests</button>
+      <button class="btn btn-d" id="bug">Introduce a bug</button>
+      <button class="btn btn-g" id="restore">Restore</button>
+      <span class="hint">Ctrl / &#8984; + Enter to run</span>
+    </div>
+    <div class="note">The types are stripped in the browser by Babel so the code can execute here. Full type-checking is a build step (<code style="font-family:var(--mono);font-size:12.5px;">tsc --noEmit</code>) and is not what this page is showing &mdash; what it is showing is the test suite actually running.</div>
+  </main>
+
+  <aside class="card" style="position:sticky;top:84px;">
+    <div class="sec-t">Results</div>
+    <div class="bar idle" id="bar"><span class="dot"></span><span id="barText">Not run yet</span></div>
+    <div id="results"></div>
+  </aside>
+</div>
+
+<div class="sitefoot"><div class="in">
+  <span>&copy; <span id="yr"></span> Thomas Gollogly &middot; Northern Ireland</span>
+  <span><a href="/">tgollogly.dev</a> &middot; <a href="mailto:thomas@tgollogly.dev">thomas@tgollogly.dev</a></span>
+</div></div>
+
+<script type="text/plain" id="seed">
+// ---------------------------------------------------------------
+// A small validation library. Pure functions, no dependencies.
+// Every function below has tests at the bottom of this file.
+// ---------------------------------------------------------------
+
+type Result<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
+
+const ok  = <T>(value: T): Result<T> => ({ ok: true, value });
+const bad = <T>(error: string): Result<T> => ({ ok: false, error });
+
+/** Normalises and validates a UK postcode. Returns it correctly spaced. */
+function parsePostcode(input: string): Result<string> {
+  const raw = input.replace(/\s+/g, "").toUpperCase();
+  if (raw.length < 5 || raw.length > 7) return bad("wrong length");
+  const pattern = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/;
+  if (!pattern.test(raw)) return bad("not a postcode");
+  const outward = raw.slice(0, raw.length - 3);
+  const inward  = raw.slice(raw.length - 3);
+  return ok(outward + " " + inward);
+}
+
+/** UK bank sort code: six digits, conventionally shown as 00-00-00. */
+function parseSortCode(input: string): Result<string> {
+  const digits = input.replace(/[\s-]/g, "");
+  if (!/^\d{6}$/.test(digits)) return bad("must be six digits");
+  return ok(digits.slice(0, 2) + "-" + digits.slice(2, 4) + "-" + digits.slice(4));
+}
+
+/** IBAN check using the ISO 7064 mod-97 algorithm. */
+function isValidIban(input: string): boolean {
+  const s = input.replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(s)) return false;
+  const rearranged = s.slice(4) + s.slice(0, 4);
+  const expanded = rearranged.replace(/[A-Z]/g, ch =>
+    String(ch.charCodeAt(0) - 55)
+  );
+  // 97-proof a long number without hitting float limits
+  let remainder = 0;
+  for (const ch of expanded) {
+    remainder = (remainder * 10 + Number(ch)) % 97;
+  }
+  return remainder === 1;
+}
+
+/** Parses dd/mm/yyyy strictly — rejects impossible dates like 31/02. */
+function parseUkDate(input: string): Result<Date> {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(input.trim());
+  if (!m) return bad("expected dd/mm/yyyy");
+  const day = Number(m[1]), month = Number(m[2]), year = Number(m[3]);
+  if (month < 1 || month > 12) return bad("month out of range");
+  const d = new Date(Date.UTC(year, month - 1, day));
+  if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) {
+    return bad("that day does not exist in that month");
+  }
+  return ok(d);
+}
+
+/** Money in pence, so nothing is ever lost to floating point. */
+function poundsToPence(input: string): Result<number> {
+  const s = input.trim().replace(/^£/, "").replace(/,/g, "");
+  if (!/^-?\d+(\.\d{1,2})?$/.test(s)) return bad("not a money amount");
+  const negative = s.startsWith("-");
+  const [whole, frac = ""] = s.replace("-", "").split(".");
+  const pence = Number(whole) * 100 + Number(frac.padEnd(2, "0"));
+  return ok(negative ? -pence : pence);
+}
+
+function formatPence(pence: number): string {
+  const sign = pence < 0 ? "-" : "";
+  const abs = Math.abs(pence);
+  const whole = Math.floor(abs / 100).toLocaleString("en-GB");
+  return sign + "£" + whole + "." + String(abs % 100).padStart(2, "0");
+}
+
+/** Escapes one CSV field. Quotes it only when it actually needs quoting. */
+function csvField(value: string | number | null): string {
+  if (value === null) return "";
+  const s = String(value);
+  if (!/[",\n\r]/.test(s)) return s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+// ---------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------
+
+test("postcode: spaces and case are normalised", () => {
+  expect(parsePostcode("bt35 8ab")).toEqual({ ok: true, value: "BT35 8AB" });
+});
+test("postcode: already-correct input is unchanged", () => {
+  expect(parsePostcode("BT35 8AB").value).toBe("BT35 8AB");
+});
+test("postcode: single-letter area is accepted", () => {
+  expect(parsePostcode("M11AE").value).toBe("M1 1AE");
+});
+test("postcode: London-style outward code is accepted", () => {
+  expect(parsePostcode("EC1A1BB").value).toBe("EC1A 1BB");
+});
+test("postcode: rubbish is rejected", () => {
+  expect(parsePostcode("NOT A CODE").ok).toBe(false);
+});
+test("postcode: empty string is rejected, not crashed on", () => {
+  expect(parsePostcode("").ok).toBe(false);
+});
+
+test("sort code: digits are grouped", () => {
+  expect(parseSortCode("123456").value).toBe("12-34-56");
+});
+test("sort code: existing separators are tolerated", () => {
+  expect(parseSortCode("12 34 56").value).toBe("12-34-56");
+});
+test("sort code: five digits is rejected", () => {
+  expect(parseSortCode("12345").ok).toBe(false);
+});
+
+test("iban: a valid GB iban passes", () => {
+  expect(isValidIban("GB82 WEST 1234 5698 7654 32")).toBe(true);
+});
+test("iban: one altered digit fails the checksum", () => {
+  expect(isValidIban("GB82 WEST 1234 5698 7654 33")).toBe(false);
+});
+test("iban: a valid German iban passes", () => {
+  expect(isValidIban("DE89370400440532013000")).toBe(true);
+});
+test("iban: too short is rejected", () => {
+  expect(isValidIban("GB82W")).toBe(false);
+});
+
+test("date: a normal date parses", () => {
+  expect(parseUkDate("23/07/2026").value.getUTCFullYear()).toBe(2026);
+});
+test("date: 29 February in a leap year is allowed", () => {
+  expect(parseUkDate("29/02/2024").ok).toBe(true);
+});
+test("date: 29 February in a common year is rejected", () => {
+  expect(parseUkDate("29/02/2023").ok).toBe(false);
+});
+test("date: 31 April is rejected rather than rolling over", () => {
+  expect(parseUkDate("31/04/2026").ok).toBe(false);
+});
+test("date: American order is rejected", () => {
+  expect(parseUkDate("07/23/2026").ok).toBe(false);
+});
+
+test("money: pounds and pence convert exactly", () => {
+  expect(poundsToPence("£1,234.56").value).toBe(123456);
+});
+test("money: the classic 0.1 + 0.2 problem does not arise", () => {
+  const a = poundsToPence("0.10").value;
+  const b = poundsToPence("0.20").value;
+  expect(a + b).toBe(30);
+});
+test("money: a whole number of pounds works", () => {
+  expect(poundsToPence("40").value).toBe(4000);
+});
+test("money: three decimal places are rejected", () => {
+  expect(poundsToPence("1.234").ok).toBe(false);
+});
+test("money: negatives survive the round trip", () => {
+  expect(formatPence(poundsToPence("-12.05").value)).toBe("-£12.05");
+});
+test("money: formatting adds thousands separators", () => {
+  expect(formatPence(123456789)).toBe("£1,234,567.89");
+});
+
+test("csv: a plain field is left alone", () => {
+  expect(csvField("Newry")).toBe("Newry");
+});
+test("csv: a comma forces quoting", () => {
+  expect(csvField("Newry, Co. Down")).toBe('"Newry, Co. Down"');
+});
+test("csv: embedded quotes are doubled", () => {
+  expect(csvField('he said "yes"')).toBe('"he said ""yes"""');
+});
+test("csv: null becomes an empty field", () => {
+  expect(csvField(null)).toBe("");
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script>
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+const SEED = document.getElementById("seed").textContent.trim();
+const $ = id => document.getElementById(id);
+$("code").value = SEED;
+
+const BUG = [
+  // outward/inward split done with a fixed offset instead of from the end
+  ['const outward = raw.slice(0, raw.length - 3);',
+   'const outward = raw.slice(0, 4); // BUG: assumes every outward code is four characters'],
+  // month rollover check removed
+  ['  if (d.getUTCMonth() !== month - 1 || d.getUTCDate() !== day) {\n    return bad("that day does not exist in that month");\n  }\n',
+   '  // BUG: the rollover check has been removed\n'],
+  // pence arithmetic loses the padding
+  ['const pence = Number(whole) * 100 + Number(frac.padEnd(2, "0"));',
+   'const pence = Number(whole) * 100 + Number(frac); // BUG: "5" now means 5p, not 50p'],
+];
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function makeExpect(){
+  const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+  const show = v => typeof v === "string" ? JSON.stringify(v) : JSON.stringify(v) ?? String(v);
+  return actual => ({
+    toBe(exp){
+      if (!Object.is(actual, exp)) throw new Error(`expected ${show(exp)}, got ${show(actual)}`);
+    },
+    toEqual(exp){
+      if (!same(actual, exp)) throw new Error(`expected ${show(exp)}, got ${show(actual)}`);
+    },
+    toThrow(){
+      let threw = false;
+      try { actual(); } catch { threw = true; }
+      if (!threw) throw new Error("expected the call to throw, but it did not");
+    }
+  });
+}
+
+function group(name){
+  const i = name.indexOf(":");
+  return i === -1 ? "general" : name.slice(0, i);
+}
+
+function run(){
+  const results = [];
+  const test = (name, fn) => {
+    try { fn(); results.push({ name, pass: true }); }
+    catch (e) { results.push({ name, pass: false, msg: e.message }); }
+  };
+
+  let js;
+  try {
+    js = Babel.transform($("code").value, {
+      filename: "validation.ts",
+      presets: [["typescript", { allExtensions: true, isTSX: false }]]
+    }).code;
+  } catch (e) {
+    return fatal("Could not compile — " + e.message);
+  }
+
+  const t0 = performance.now();
+  try {
+    new Function("test", "expect", js)(test, makeExpect());
+  } catch (e) {
+    return fatal("Threw while running — " + e.message);
+  }
+  const ms = (performance.now() - t0).toFixed(1);
+
+  const failed = results.filter(r => !r.pass).length;
+  const bar = $("bar");
+  bar.className = "bar " + (failed ? "fail" : "pass");
+  $("barText").textContent = failed
+    ? `${failed} failed · ${results.length - failed} passed · ${ms} ms`
+    : `${results.length} passed · ${ms} ms`;
+
+  let html = "", current = "";
+  for (const r of results) {
+    const g = group(r.name);
+    if (g !== current) { current = g; html += `<div class="grp">${esc(g)}</div>`; }
+    const label = r.name.slice(r.name.indexOf(":") + 1).trim();
+    html += `<div class="res"><span class="mark ${r.pass ? "p" : "f"}">${r.pass ? "✓" : "✕"}</span>` +
+            `<span class="nm">${esc(label)}` +
+            (r.pass ? "" : `<span class="msg">${esc(r.msg)}</span>`) + `</span></div>`;
+  }
+  $("results").innerHTML = html;
+}
+
+function fatal(msg){
+  $("bar").className = "bar fail";
+  $("barText").textContent = "Error";
+  $("results").innerHTML = `<div class="res"><span class="mark f">✕</span><span class="nm">${esc(msg)}</span></div>`;
+}
+
+$("run").onclick = run;
+$("restore").onclick = () => { $("code").value = SEED; run(); };
+$("bug").onclick = () => {
+  const [find, replace] = BUG[Math.floor(Math.random() * BUG.length)];
+  const src = $("code").value;
+  $("code").value = src.includes(find) ? src.replace(find, replace) : SEED.replace(find, replace);
+  run();
+};
+$("code").addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); }
+});
+
+(function boot(tries){
+  if (window.Babel) return run();
+  if (tries > 60) return fatal("Could not load the compiler — check your connection and reload.");
+  setTimeout(() => boot(tries + 1), 100);
+})(0);
+</script>
+<script src="config.js"></script>
+<script src="assets/chat.js" defer></script>
+</body>
+</html>

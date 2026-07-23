@@ -1,3 +1,4 @@
+
 # Thomas Gollogly — Developer Portfolio
 
 > A live portfolio of web applications I've designed, built and deployed end to end.
@@ -19,6 +20,9 @@ Each project is a **real, deployed application** — not a mockup. Case studies 
 |---|---|---|
 | 🧭 **[AI ATS Resume Matcher](https://tgollogly.dev/ats-matcher.html)** | Scores a CV against a job description, flags missing keywords, and generates a tailored cover letter + improved CV. Full-stack, with a secure serverless backend holding the API key. | JavaScript · Cloudflare Worker · Google Gemini API |
 | 🌡️ **[Heat Anomaly Detector](https://tgollogly.dev/heat-dome.html)** | Live heat-risk dashboard that compares today with the 30-year climate average (WMO 1991–2020) to flag real heat anomalies — 3D terrain map, live precipitation radar, colour-coded warnings. | JavaScript · Open-Meteo API · MapLibre GL · RainViewer |
+| 🏗️ **[BOM Desk](https://tgollogly.dev/bom-desk.html)** | Data administration console for manufacturing bills of materials. Eight live validation rules, import screening, CSV reports and a full audit log. Invented demo data. | React (client-side) |
+| 🗄️ **[SQL Lab](https://tgollogly.dev/sql-lab.html)** | A real SQLite engine (WebAssembly) running in the browser over a five-table schema. Free-form query editor, worked examples from joins to window functions, CSV export. | SQL · SQLite · JavaScript |
+| ✅ **[Test Bench](https://tgollogly.dev/test-bench.html)** | A typed validation library and its 28-case unit test suite, both compiled and executed in the browser. Includes a deliberate-regression button. | TypeScript · Testing |
 | 📊 **[Beneish M-Score Screener](https://tgollogly.dev/beneish.html)** | Runs the full eight-factor forensic-accounting model in the browser to flag earnings-manipulation risk. Data never leaves the device. | JavaScript (client-side) |
 | 🔥 **[Thermal Compare](https://tgollogly.dev/thermal-compare.html)** | Compares live "feels-like" conditions across multiple locations, ranked. | JavaScript · Open-Meteo API |
 | 📁 **[BundleBuilder](https://tgollogly.dev/bundlebuilder.html)** | Creates the structure of a court bundle — a case title page, a numbered index, and a printable divider for each exhibit, in the order you set. Print and slot your documents behind each divider. | JavaScript (client-side) |
@@ -66,3 +70,17 @@ Demos are for demonstration only and are not legal, financial or professional ad
 ---
 
 *Designed and built by Thomas Gollogly · Licensed under the [MIT License](LICENSE).*
+
+## Design system
+
+Everything visual lives in `assets/site.css`. It is the single source of truth.
+
+- **Type** — Fraunces (headings), Inter (body), IBM Plex Mono (code). Reference them as `var(--serif)`, `var(--sans)`, `var(--mono)`. Never name a font family directly in a page.
+- **Colour** — one palette, declared once in `:root` in `site.css`. Pages must not declare `:root` and must not use raw hex. The only exception is the CSS embedded in the Word export in `ats-matcher.html`: that markup is downloaded and opened outside the browser, so custom properties cannot resolve and the token values are hardcoded there on purpose (with a comment saying so).
+- **Shell** — `.sitebar` and `.sitefoot` are identical on every page except the home page, which has its own nav. Every demo page opens the same way: eyebrow (`Demo NN · topic`) → `h1` → lede → chips. Demo numbers match the `PROJECTS` array in `index.html`.
+- **Brand mark** — the inline `TG` SVG carries `class="tg-mark"`; its colours come from `site.css`, not from `fill` attributes.
+- **Chat** — `assets/chat.js` injects the AI assistant on every page. It has no page-specific styling and reads only tokens.
+
+To add a page: link `assets/site.css`, then `assets/chat.js` and `config.js` before `</body>`, and use `.sitebar` / `.wrap head` / `.sitefoot`. Do not write a new `:root`.
+
+The assistant's knowledge base is `THOMAS_CONTEXT` at the top of `server.js`. **If you add or change a demo, update it there too** — it is the only place the chatbot's facts live.

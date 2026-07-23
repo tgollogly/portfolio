@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,50 +6,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="color-scheme" content="light">
 <title>Thermal Compare — live demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css"/>
 <style>
-  :root{color-scheme:light;--bg:#f3f5f1;--surface:#fff;--ink:#15201e;--muted:#586865;--line:#e2e6e1;--teal:#2f39c9;--teal-d:#232cad;}
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
-  a{color:var(--teal);}
-  .top{background:var(--surface);border-bottom:1px solid var(--line);}
-  .top .in{max-width:900px;margin:0 auto;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-  .back{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);}
-  .tag{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);background:#e4f1ef;padding:5px 11px;border-radius:999px;}
-  .wrap{max-width:900px;margin:0 auto;padding:30px 22px 60px;}
-  h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,5vw,44px);margin:0;}
-  .sub{color:var(--muted);margin:8px 0 24px;max-width:60ch;}
+  body{margin:0;background:var(--bg-alt);color:var(--ink);font-family:var(--sans);line-height:1.55;}
+  a{color:var(--accent);}
   .add{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
-  input{font-family:"Inter";font-size:16px;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:var(--surface);flex:1;min-width:200px;color:var(--ink);}
-  input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
-  button{font-family:"IBM Plex Mono";font-weight:600;cursor:pointer;border:none;border-radius:10px;}
-  .addbtn{font-size:14px;background:var(--teal);color:#fff;padding:0 20px;}
-  .addbtn:hover{background:var(--teal-d);}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-  .chip{font-family:"IBM Plex Mono";font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;}
-  .chip:hover{border-color:var(--teal);color:var(--teal);}
+  input{font-family:var(--sans);font-size:16px;padding:12px 15px;border:1px solid var(--line);border-radius:10px;background:var(--card);flex:1;min-width:200px;color:var(--ink);}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  button{font-family:var(--mono);font-weight:600;cursor:pointer;border:none;border-radius:10px;}
+  .addbtn{font-size:14px;background:var(--accent);color:var(--card);padding:0 20px;}
+  .addbtn:hover{background:var(--accent-2);}
+  .chip:hover{border-color:var(--accent);color:var(--accent);}
   .rows{display:flex;flex-direction:column;gap:12px;}
-  .row{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:16px 18px;box-shadow:0 6px 20px rgba(21,32,30,.04);}
+  .row{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;box-shadow:0 6px 20px rgba(21,32,30,.04);}
   .row .rt{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
-  .row .name{font-family:"Bricolage Grotesque";font-weight:700;font-size:19px;}
-  .row .cc{font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);}
-  .row .feels{font-family:"Bricolage Grotesque";font-weight:800;font-size:26px;}
-  .bar{height:12px;border-radius:6px;background:#eef1ee;margin-top:12px;overflow:hidden;}
+  .row .name{font-family:var(--serif);font-weight:600;font-size:19px;}
+  .row .cc{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .row .feels{font-family:var(--serif);font-weight:600;font-size:26px;}
+  .bar{height:12px;border-radius:6px;background:var(--bg-alt);margin-top:12px;overflow:hidden;}
   .bar>span{display:block;height:100%;border-radius:6px;transition:width .5s;}
-  .rmeta{display:flex;gap:20px;margin-top:10px;font-family:"IBM Plex Mono";font-size:12px;color:var(--muted);}
+  .rmeta{display:flex;gap:20px;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--muted);}
   .rm{cursor:pointer;color:var(--muted);background:none;font-size:16px;line-height:1;padding:2px 6px;}
-  .rm:hover{color:#b3271e;}
-  .loader{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:7px;}
+  .rm:hover{color:var(--err);}
+  .loader{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:7px;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{font-family:"IBM Plex Mono";font-size:13.5px;color:var(--muted);padding:20px 0;}
-  footer{max-width:900px;margin:0 auto;padding:0 22px 40px;color:var(--muted);font-family:"IBM Plex Mono";font-size:12px;}
+  .empty{font-family:var(--mono);font-size:13.5px;color:var(--muted);padding:20px 0;}
+  footer{max-width:900px;margin:0 auto;padding:0 22px 40px;color:var(--muted);font-family:var(--mono);font-size:12px;}
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="tag">Live demo · real weather data</span></div></div>
-<div class="wrap">
+<div class="sitebar"><div class="in">
+  <a class="brand" href="/"><svg class="tg-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7"/><text x="15" y="20" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" text-anchor="middle">TG</text></svg><span>Thomas Gollogly</span></a>
+  <a class="back" href="/#work">&larr; All demos</a>
+</div></div>
+
+<div class="wrap head">
+  <span class="eyebrow">Demo 07 &middot; Live data &amp; async</span>
   <h1>Thermal Compare</h1>
-  <p class="sub">Add several locations and compare how hot it actually <em>feels</em> in each right now — ranked by apparent temperature, with live data from Open-Meteo. No key, no sign-up.</p>
+  <p>Add several locations and compare how hot it actually <em>feels</em> in each right now — ranked by apparent temperature, with live data from Open-Meteo. No key, no sign-up.</p>
   <div class="add">
     <input id="q" type="text" placeholder="Add a city — e.g. Madrid" autocomplete="off"/>
     <button class="addbtn" id="addBtn">Add</button>
@@ -58,15 +56,7 @@
 </div>
 
 <style>
-.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:"Inter",system-ui,sans-serif;}
-.cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
-.cs-eyebrow{font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#2f39c9;}
-.cs-h{font-size:26px;color:#0b0f14;margin:6px 0 22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;}
-.cs-block{margin:0 0 20px;}
-.cs-block:last-child{margin-bottom:0;}
-.cs-block h3{font-size:14px;color:#2f39c9;margin:0 0 6px;font-weight:700;letter-spacing:.02em;}
-.cs-block p{font-size:15.5px;line-height:1.62;color:#3f4954;margin:0;}
-.cs-block code{background:#f4f6f9;border:1px solid #e4e8ec;border-radius:5px;padding:1px 6px;font-size:13px;color:#0b0f14;}
+.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:var(--sans);}
 </style>
 
 <section class="cs"><div class="cs-card">
@@ -78,13 +68,13 @@
   <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>Deliberately minimal &mdash; no map &mdash; to stay fast and focused. Next: shareable URLs that remember your cities, and historical comparison.</p></div>
 </div></section>
 
-<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:#8a929c;line-height:1.5;">Data: open-meteo.com. Ranked by &ldquo;feels-like&rdquo; (apparent) temperature.</div>
+<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:var(--faint);line-height:1.5;">Data: open-meteo.com. Ranked by &ldquo;feels-like&rdquo; (apparent) temperature.</div>
 <script>
 const presets=["Madrid","Cairo","Bangkok","London","Reykjavik"];
 const chips=document.getElementById("chips");
 presets.forEach(p=>{const c=document.createElement("span");c.className="chip";c.textContent="+ "+p;c.onclick=()=>add(p);chips.appendChild(c);});
 let items=[];
-function colorFor(t){if(t>=42)return"#b3271e";if(t>=36)return"#d1622e";if(t>=30)return"#b06d12";if(t>=20)return"#2f39c9";return"#2b7fb8";}
+function colorFor(t){if(t>=42)return"var(--err)";if(t>=36)return"var(--c-xcaution)";if(t>=30)return"var(--warn)";if(t>=20)return"var(--accent)";return"var(--c-cool)";}
 async function add(name){
   name=(name||document.getElementById("q").value).trim();if(!name)return;
   document.getElementById("q").value="";
@@ -121,17 +111,14 @@ document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")a
 ["Seville","London","Dubai"].forEach(add);
 </script>
 
-<footer style="border-top:1px solid #e4e8ec;margin-top:44px;background:#fff;">
-  <div style="max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:#5c6672;font-family:system-ui,sans-serif;">
-    <span>&copy; <span class="footyr"></span> Thomas Gollogly · Northern Ireland · <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
-    <span style="display:flex;gap:16px;align-items:center;">
-      <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:#2f39c9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
-      <a href="https://github.com/tgollogly/portfolio" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
-      <a href="https://www.linkedin.com/in/thomasgollogly" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
-    </span>
-  </div>
-</footer>
+<div class="sitefoot"><div class="in">
+  <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland</span>
+  <span><a href="/">tgollogly.dev</a> &middot; <a href="mailto:thomas@tgollogly.dev">thomas@tgollogly.dev</a></span>
+</div></div>
+
 <script>document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());</script>
 
+<script src="config.js"></script>
+<script src="assets/chat.js" defer></script>
 </body>
 </html>

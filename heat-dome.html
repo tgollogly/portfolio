@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,65 +6,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="color-scheme" content="light">
 <title>Heat Anomaly Detector — live 3D demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css"/>
 <style>
-  :root{color-scheme:light;
-    --bg:#ffffff;--alt:#f4f6f9;--ink:#1a2028;--strong:#0b0f14;--muted:#3f4954;--faint:#5c6672;
-    --line:#e4e8ec;--line2:#d6dbe1;--accent:#2f39c9;--accent2:#4750e6;
-    --c-comfort:#0c7a5e;--c-caution:#c79008;--c-xcaution:#d1622e;--c-danger:#c62828;--c-extreme:#7b1fa2;
-    --shadow:0 10px 30px rgba(15,20,23,.10),0 2px 8px rgba(15,20,23,.05);}
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.55;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;}
   a{color:var(--accent);text-decoration:none;}
-  .top{background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
-  .top .in{max-width:1180px;margin:0 auto;padding:13px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-  .back{font-size:14px;color:var(--muted);font-weight:500;}
-  .pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:#eef0fe;padding:5px 11px;border-radius:999px;}
-  .wrap{max-width:1180px;margin:0 auto;padding:26px 22px 60px;}
-  h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(28px,5vw,44px);margin:0;color:var(--strong);letter-spacing:-.015em;}
-  .sub{color:var(--muted);margin:8px 0 22px;max-width:64ch;}
   .search{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
-  input{font-family:inherit;font-size:16px;padding:13px 16px;border:1px solid var(--line2);border-radius:11px;background:#fff;flex:1;min-width:220px;color:var(--ink);}
+  input{font-family:inherit;font-size:16px;padding:13px 16px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);flex:1;min-width:220px;color:var(--ink);}
   input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .btn{font-weight:600;cursor:pointer;border:none;border-radius:11px;font-family:inherit;}
-  .go{font-size:15px;background:var(--accent);color:#fff;padding:0 24px;}
-  .go:hover{background:var(--accent2);}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
-  .chip{font-size:13px;color:var(--muted);background:#fff;border:1px solid var(--line2);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:500;}
+  .go{font-size:15px;background:var(--accent);color:var(--card);padding:0 24px;}
+  .go:hover{background:var(--accent-2);}
   .chip:hover{border-color:var(--accent);color:var(--accent);}
   .layout{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
-  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-md);overflow:hidden;}
   /* WARNING BANNER */
-  .warn{padding:20px 22px;color:#fff;}
+  .warn{padding:20px 22px;color:var(--card);}
   .warn .lvl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.9;}
-  .warn .cat{font-family:"Fraunces",serif;font-weight:700;font-size:27px;margin:3px 0 6px;line-height:1.1;}
+  .warn .cat{font-family:var(--serif);font-weight:600;font-size:27px;margin:3px 0 6px;line-height:1.1;}
   .warn .advice{font-size:14px;opacity:.95;line-height:1.5;}
   .warn .place{font-size:13px;font-weight:600;margin-bottom:10px;opacity:.95;display:flex;align-items:center;gap:7px;}
   .readbox{padding:20px 22px;}
   .bigrow{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;}
-  .bigtemp{font-family:"Fraunces",serif;font-weight:700;font-size:56px;line-height:.9;color:var(--strong);}
+  .bigtemp{font-family:var(--serif);font-weight:600;font-size:56px;line-height:.9;color:var(--strong);}
   .feels{font-size:14px;color:var(--muted);padding-bottom:6px;}
   .feels b{color:var(--strong);}
   .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid var(--line);padding-top:16px;}
   .metric .mk{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;}
-  .metric .mv{font-family:"Fraunces",serif;font-weight:700;font-size:20px;color:var(--strong);}
+  .metric .mv{font-family:var(--serif);font-weight:600;font-size:20px;color:var(--strong);}
   .chart{padding:6px 16px 18px;}
   .chart .ct{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:8px 4px 6px;}
   /* map */
-  .mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
+  .mapwrap{position:relative;height:560px;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-md);}
   #map{position:absolute;inset:0;}
   .mapctrl{position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:8px;}
-  .toggle{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-  .toggle .sw{width:34px;height:20px;border-radius:999px;background:#cfd5dc;position:relative;transition:.2s;flex:none;}
-  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3);}
+  .toggle{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.95);border:1px solid var(--line-2);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .toggle .sw{width:34px;height:20px;border-radius:999px;background:var(--line-2);position:relative;transition:.2s;flex:none;}
+  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--card);transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3);}
   .toggle.on .sw{background:var(--accent);}
   .toggle.on .sw::after{left:16px;}
   .watchdot{width:8px;height:8px;border-radius:50%;background:var(--c-comfort);display:inline-block;}
   .watchdot.live{animation:pulse 1.6s infinite;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(12,122,94,.5);}70%{box-shadow:0 0 0 7px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
-  .radarlabel{position:absolute;bottom:12px;left:12px;z-index:5;background:rgba(255,255,255,.95);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:12px;color:var(--muted);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-  .hint{position:absolute;bottom:12px;right:12px;z-index:5;background:rgba(255,255,255,.92);border:1px solid var(--line2);border-radius:9px;padding:6px 11px;font-size:11.5px;color:var(--faint);}
+  .radarlabel{position:absolute;bottom:12px;left:12px;z-index:5;background:rgba(255,255,255,.95);border:1px solid var(--line-2);border-radius:9px;padding:6px 11px;font-size:12px;color:var(--muted);font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .hint{position:absolute;bottom:12px;right:12px;z-index:5;background:rgba(255,255,255,.92);border:1px solid var(--line-2);border-radius:9px;padding:6px 11px;font-size:11.5px;color:var(--faint);}
   .msg{font-size:13.5px;color:var(--muted);padding:18px 22px;}
   .msg.err{color:var(--c-danger);}
   .loader{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:8px;}
@@ -74,10 +63,15 @@
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><a class="back" href="index.html">&larr; Back to portfolio</a><span class="pill">Live 3D &middot; real radar &amp; weather data</span></div></div>
-<div class="wrap">
+<div class="sitebar"><div class="in">
+  <a class="brand" href="/"><svg class="tg-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7"/><text x="15" y="20" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" text-anchor="middle">TG</text></svg><span>Thomas Gollogly</span></a>
+  <a class="back" href="/#work">&larr; All demos</a>
+</div></div>
+
+<div class="wrap head">
+  <span class="eyebrow">Demo 05 &middot; Live data &amp; 3D maps</span>
   <h1>Heat Anomaly Detector</h1>
-  <p class="sub">Search anywhere on earth for a live heat-risk read that compares today against the 30-year climate average (WMO 1991–2020) to flag genuine heat anomalies — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded warnings and an auto-watch mode. No API key, no sign-up.</p>
+  <p>Search anywhere on earth for a live heat-risk read that compares today against the 30-year climate average (WMO 1991–2020) to flag genuine heat anomalies — with a tilt-and-zoom 3D terrain map, real precipitation radar, colour-coded warnings and an auto-watch mode. No API key, no sign-up.</p>
   <div class="search">
     <input id="q" type="text" placeholder="Search a city — e.g. Seville, Phoenix, Athens" autocomplete="off"/>
     <button class="btn go" id="goBtn">Detect</button>
@@ -106,22 +100,14 @@
 </div>
 
 <style>
-.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:"Inter",system-ui,sans-serif;}
-.anomaly{margin-top:14px;font-size:13px;color:var(--muted,#3f4954);}
-  .anom-in{background:#fff;border:1px solid #e4e8ec;border-radius:12px;padding:12px 14px;}
-  .anom-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#5c6672;font-weight:700;margin-bottom:4px;}
+.cs{max-width:900px;margin:0 auto;padding:8px 22px 54px;font-family:var(--sans);}
+.anomaly{margin-top:14px;font-size:13px;color:var(--muted,var(--muted));}
+  .anom-in{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .anom-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:4px;}
   .anom-h span{font-weight:500;opacity:.7;letter-spacing:0;text-transform:none;}
-  .anom-row{font-size:14.5px;color:#1a2028;line-height:1.4;}
+  .anom-row{font-size:14.5px;color:var(--ink);line-height:1.4;}
   .anom-row b{font-size:17px;}
-  .anom-lab{font-size:12.5px;color:#5c6672;margin-top:3px;text-transform:capitalize;}
-  .cs-card{background:#fff;border:1px solid #e4e8ec;border-radius:16px;padding:30px 28px;box-shadow:0 10px 30px rgba(15,20,23,.06);}
-.cs-eyebrow{font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#2f39c9;}
-.cs-h{font-size:26px;color:#0b0f14;margin:6px 0 22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;}
-.cs-block{margin:0 0 20px;}
-.cs-block:last-child{margin-bottom:0;}
-.cs-block h3{font-size:14px;color:#2f39c9;margin:0 0 6px;font-weight:700;letter-spacing:.02em;}
-.cs-block p{font-size:15.5px;line-height:1.62;color:#3f4954;margin:0;}
-.cs-block code{background:#f4f6f9;border:1px solid #e4e8ec;border-radius:5px;padding:1px 6px;font-size:13px;color:#0b0f14;}
+  .anom-lab{font-size:12.5px;color:var(--faint);margin-top:3px;text-transform:capitalize;}
 </style>
 
 <section class="cs"><div class="cs-card">
@@ -133,7 +119,7 @@
   <div class="cs-block"><h3>Trade-offs &amp; what's next</h3><p>It's fully client-side with no persistence, and radar shows the latest frame rather than a full animation loop, to stay simple and reliable. Next: frame-by-frame radar playback and official severe-weather alert feeds.</p></div>
 </div></section>
 
-<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:#8a929c;line-height:1.5;">Data — Weather: open-meteo.com &middot; Radar: RainViewer &middot; Terrain: AWS elevation tiles &middot; Map: MapLibre GL. Heat-risk bands are indicative (apparent-temperature, NWS-style categories) — not an official public-health warning.</div>
+<div style="max-width:1000px;margin:26px auto 0;padding:0 24px;font-size:12px;color:var(--faint);line-height:1.5;">Data — Weather: open-meteo.com &middot; Radar: RainViewer &middot; Terrain: AWS elevation tiles &middot; Map: MapLibre GL. Heat-risk bands are indicative (apparent-temperature, NWS-style categories) — not an official public-health warning.</div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
@@ -143,11 +129,11 @@ samples.forEach(s=>{const c=document.createElement("span");c.className="chip";c.
 
 // ---- heat categories (apparent temp °C) ----
 function category(t){
-  if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"#7b1fa2",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
-  if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"#c62828",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
-  if(t>=32) return{lvl:"Level 3",cat:"Extreme Caution",c:"var(--c-xcaution)",hex:"#d1622e",advice:"Heat exhaustion possible with prolonged exposure or activity. Take frequent breaks and hydrate."};
-  if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"#c79008",advice:"Fatigue possible with prolonged exposure. Stay hydrated and take it easy in the sun."};
-  return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"#0c7a5e",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
+  if(t>=54) return{lvl:"Level 5",cat:"Extreme Danger",c:"var(--c-extreme)",hex:"var(--c-extreme)",advice:"Heat stroke highly likely. Avoid all outdoor exertion; stay in cool/shaded areas and hydrate constantly."};
+  if(t>=41) return{lvl:"Level 4",cat:"Danger",c:"var(--c-danger)",hex:"var(--err)",advice:"Heat cramps and heat exhaustion likely; heat stroke possible with prolonged exposure. Limit outdoor activity."};
+  if(t>=32) return{lvl:"Level 3",cat:"Extreme Caution",c:"var(--c-xcaution)",hex:"var(--c-xcaution)",advice:"Heat exhaustion possible with prolonged exposure or activity. Take frequent breaks and hydrate."};
+  if(t>=27) return{lvl:"Level 2",cat:"Caution",c:"var(--c-caution)",hex:"var(--warn)",advice:"Fatigue possible with prolonged exposure. Stay hydrated and take it easy in the sun."};
+  return{lvl:"Level 1",cat:"Comfortable",c:"var(--c-comfort)",hex:"var(--ok)",advice:"No significant heat risk right now. Conditions are comfortable for normal activity."};
 }
 function spark(vals){
   if(!vals||!vals.length)return"";
@@ -157,7 +143,7 @@ function spark(vals){
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
     <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(209,98,46,.28)"/><stop offset="100%" stop-color="rgba(209,98,46,0)"/></linearGradient></defs>
     <path d="${d} L ${w-pad} ${h-pad} L ${pad} ${h-pad} Z" fill="url(#sg)"/>
-    <path d="${d}" fill="none" stroke="#d1622e" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
+    <path d="${d}" fill="none" stroke="var(--c-xcaution)" stroke-width="2.4" stroke-linejoin="round"/></svg>`;
 }
 
 // ---- map (3D terrain) ----
@@ -170,7 +156,7 @@ try{
         carto:{type:"raster",tiles:["https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png","https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"],tileSize:256,attribution:"© CARTO © OpenStreetMap"},
         dem:{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:13}
       },
-      layers:[{id:"bg",type:"background",paint:{"background-color":"#dfe7ee"}},{id:"carto",type:"raster",source:"carto"}]
+      layers:[{id:"bg",type:"background",paint:{"background-color":"var(--line)"}},{id:"carto",type:"raster",source:"carto"}]
     },
     center:[-5.99,37.39],zoom:4.5,minZoom:2,maxZoom:11,pitch:55,bearing:-18,maxPitch:80,attributionControl:false
   });
@@ -265,11 +251,11 @@ async function run(q,silent){
         const normal=vals.reduce((x,y)=>x+y,0)/vals.length;
         const anom=todayMax-normal;
         const sign=anom>=0?"+":"";
-        let tone="#0c7a5e", label="around the seasonal norm";
-        if(anom>=8){tone="#b3271e"; label="an extreme heat anomaly — heat-dome territory";}
-        else if(anom>=5){tone="#c05621"; label="a strong heat anomaly";}
-        else if(anom>=2){tone="#b06d12"; label="warmer than normal";}
-        else if(anom<=-2){tone="#2f6fb0"; label="cooler than normal";}
+        let tone="var(--ok)", label="around the seasonal norm";
+        if(anom>=8){tone="var(--err)"; label="an extreme heat anomaly — heat-dome territory";}
+        else if(anom>=5){tone="var(--c-xcaution)"; label="a strong heat anomaly";}
+        else if(anom>=2){tone="var(--warn)"; label="warmer than normal";}
+        else if(anom<=-2){tone="var(--c-cool)"; label="cooler than normal";}
         box.innerHTML=`<div class="anom-in" style="border-left:4px solid ${tone}">`+
           `<div class="anom-h">30-year comparison <span>WMO 1991–2020 baseline</span></div>`+
           `<div class="anom-row"><b style="color:${tone}">${sign}${anom.toFixed(1)}&deg;C</b> vs the 30-year average for this date `+
@@ -281,7 +267,7 @@ async function run(q,silent){
       map.flyTo({center:[loc.longitude,loc.latitude],zoom:7.5,pitch:60,bearing:-15,duration:2600,essential:true});
       if(marker)marker.remove();
       const el=document.createElement("div");
-      el.style.cssText=`width:22px;height:22px;border-radius:50%;background:${cat.hex};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);`;
+      el.style.cssText=`width:22px;height:22px;border-radius:50%;background:${cat.hex};border:3px solid var(--card);box-shadow:0 2px 8px rgba(0,0,0,.4);`;
       marker=new maplibregl.Marker({element:el}).setLngLat([loc.longitude,loc.latitude])
         .setPopup(new maplibregl.Popup({offset:16}).setHTML(`<b>${loc.name}</b><br>${cat.cat} &middot; feels ${Math.round(cur.apparent_temperature)}&deg;C`))
         .addTo(map);
@@ -293,17 +279,14 @@ document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")r
 if(!mapReady){ document.getElementById("radarLabel").style.display="none"; run("Seville"); }
 </script>
 
-<footer style="border-top:1px solid #e4e8ec;margin-top:44px;background:#fff;">
-  <div style="max-width:1000px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;font-size:13px;color:#5c6672;font-family:system-ui,sans-serif;">
-    <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland &middot; <a href="index.html" style="color:#2f39c9;text-decoration:none;">Portfolio</a></span>
-    <span style="display:flex;gap:16px;align-items:center;">
-      <a href="mailto:thomas@tgollogly.dev" aria-label="Email" style="color:#2f39c9;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg></a>
-      <a href="https://github.com/tgollogly/portfolio" target="_blank" rel="noopener" aria-label="GitHub" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
-      <a href="https://www.linkedin.com/in/thomasgollogly" target="_blank" rel="noopener" aria-label="LinkedIn" style="color:#1a2028;"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg></a>
-    </span>
-  </div>
-</footer>
+<div class="sitefoot"><div class="in">
+  <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland</span>
+  <span><a href="/">tgollogly.dev</a> &middot; <a href="mailto:thomas@tgollogly.dev">thomas@tgollogly.dev</a></span>
+</div></div>
+
 <script>document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());</script>
 
+<script src="config.js"></script>
+<script src="assets/chat.js" defer></script>
 </body>
 </html>
