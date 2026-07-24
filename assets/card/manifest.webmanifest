@@ -7,7 +7,8 @@
   "background_color": "#2f39c9",
   "theme_color": "#2f39c9",
   "icons": [
-    { "src": "/assets/card/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/assets/card/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/assets/card/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/card/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/card/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
