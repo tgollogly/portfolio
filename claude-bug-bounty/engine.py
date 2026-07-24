@@ -397,6 +397,15 @@ def cmd_hunt(args):
             info("Phase 2b: Logic/edge-case fuzzer on recon data...")
             _run_shell(f'python3 "{fuzzer}" --recon-dir "{recon_dir}"')
 
+        logic = TOOLS / "logic_hunter.py"
+        program = getattr(args, "program", "") or ""
+        if logic.exists() and recon_dir.exists():
+            info("Phase 2c: Logic hunter (IDOR/auth/mass-assignment on fresh paths)...")
+            cmd = f'python3 "{logic}" --target "{target}" --recon-dir "{recon_dir}"'
+            if program:
+                cmd += f' --program "{program}"'
+            _run_shell(cmd)
+
     # Run vuln scan
     vuln_script = TOOLS / "vuln_scanner.sh"
     if vuln_script.exists() and recon_dir.exists() and not getattr(args, "novelty_first", False):
@@ -714,6 +723,11 @@ def main():
         "--novelty-first",
         action="store_true",
         help="Prioritize fresh surface diff + logic fuzzer over mass scanner templates",
+    )
+    p_hunt.add_argument(
+        "--program",
+        default="",
+        help="HackerOne program handle (enables novelty scoring during logic hunt)",
     )
 
     p_val = sub.add_parser("validate", aliases=["v"], help="7-Question Gate on a finding")
