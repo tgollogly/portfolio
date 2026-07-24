@@ -159,10 +159,18 @@ function spark(vals){
 }
 
 // ---- map (3D terrain) ----
-let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false, firstRunDone=false;
+let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false, firstRunDone=false, radarDataReady=false;
 // Runs the initial search exactly once, whichever fires first: the map's "load"
 // event, or the fallback timer below (in case the map is slow, or never loads).
 function initialRun(){ if(firstRunDone) return; firstRunDone=true; run("Seville"); }
+
+// Fetch the radar frame list straight away — it doesn't depend on the map at
+// all, so it shouldn't wait on the map's "load" event (which can be slow, or
+// on some devices/networks never fire). Whichever of the two finishes last —
+// this fetch, or the map becoming ready — is the one that actually paints
+// the radar layer; see the readiness checks in loadRadar()/map.on("load").
+loadRadar();
+
 try{
   map=new maplibregl.Map({
     container:"map",
@@ -178,7 +186,9 @@ try{
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
   map.on("load",()=>{
     try{map.setTerrain({source:"dem",exaggeration:1.4});}catch(e){}
-    mapReady=true; loadRadar(); initialRun();
+    mapReady=true;
+    if(radarDataReady)showRadarFrame(); // radar data already arrived — paint it now
+    initialRun();
   });
   map.on("error",()=>{}); // swallow tile errors
 }catch(e){
@@ -188,13 +198,21 @@ try{
 }
 // Don't leave the page showing nothing if the map is slow to fire "load".
 setTimeout(initialRun,2500);
+// The 3D map (terrain + basemap tiles) can legitimately take longer than the
+// weather search above, especially on slower connections — give it a wider
+// window before telling the user radar isn't going to show, rather than
+// leaving the label stuck on "Loading radar…" forever.
+setTimeout(()=>{
+  if(!mapReady)document.getElementById("radarLabel").textContent="Radar unavailable — map didn't load";
+},9000);
 
 async function loadRadar(){
   try{
     const j=await fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json());
     radarHost=j.host; radarFrames=(j.radar.past||[]).concat(j.radar.nowcast||[]);
     radarIdx=(j.radar.past||[]).length-1; if(radarIdx<0)radarIdx=0;
-    showRadarFrame();
+    radarDataReady=true;
+    if(mapReady)showRadarFrame(); // map already loaded — paint it now
   }catch(e){ document.getElementById("radarLabel").textContent="Radar unavailable"; }
 }
 function showRadarFrame(){
