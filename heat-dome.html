@@ -179,7 +179,11 @@ try{
         carto:{type:"raster",tiles:["https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png","https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"],tileSize:256,attribution:"© CARTO © OpenStreetMap"},
         dem:{type:"raster-dem",tiles:["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:13}
       },
-      layers:[{id:"bg",type:"background",paint:{"background-color":"var(--line)"}},{id:"carto",type:"raster",source:"carto"}]
+      // MapLibre's style spec is parsed by its own validator, not the CSSOM, so a
+      // CSS custom property like var(--line) is meaningless here — it fails paint
+      // validation, invalidates the whole style, and the map's "load" event then
+      // never fires at all (the actual cause of the 3D map/radar never appearing).
+      layers:[{id:"bg",type:"background",paint:{"background-color":"#e4e8ec"}},{id:"carto",type:"raster",source:"carto"}]
     },
     center:[-5.99,37.39],zoom:4.5,minZoom:2,maxZoom:11,pitch:55,bearing:-18,maxPitch:80,attributionControl:false
   });
