@@ -64,22 +64,33 @@ export default {
   }
 };
 
+const DEV_ROLE_TERMS = ["developer", "engineer", "software", "frontend", "backend", "javascript", "typescript", "react", "node", "full-stack", "fullstack", "devops", ".net", "python", "web"];
+const JOB_FETCH_HEADERS = { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" };
+
 async function handleJobs(request, env) {
   const profile = await loadJobProfile(request, env);
-  const [remoteOk, devItUk, adzunaGb, adzunaIe, arbeitnow] = await Promise.all([
+  const [remoteOk, devItUk, adzunaGb, adzunaIe, arbeitnow, jobicy, remotive, wwr, remote1st] = await Promise.all([
     fetchRemoteOkJobs(),
     fetchDevItJobsUk(),
     fetchAdzunaJobs(env, profile, "gb"),
     fetchAdzunaJobs(env, profile, "ie"),
-    fetchArbeitnowJobs()
+    fetchArbeitnowJobs(),
+    fetchJobicyJobs(),
+    fetchRemotiveJobs(),
+    fetchWeWorkRemotelyJobs(),
+    fetchRemote1stJobs()
   ]);
-  const jobs = dedupeNormalizedJobs([...remoteOk, ...devItUk, ...adzunaGb, ...adzunaIe, ...arbeitnow]);
+  const jobs = dedupeNormalizedJobs([...remoteOk, ...devItUk, ...adzunaGb, ...adzunaIe, ...arbeitnow, ...jobicy, ...remotive, ...wwr, ...remote1st]);
   const sources = [];
   if (remoteOk.length) sources.push("RemoteOK");
   if (devItUk.length) sources.push("DevITjobs UK");
   if (adzunaGb.length) sources.push("Adzuna UK");
   if (adzunaIe.length) sources.push("Adzuna Ireland");
   if (arbeitnow.length) sources.push("Arbeitnow");
+  if (jobicy.length) sources.push("Jobicy");
+  if (remotive.length) sources.push("Remotive");
+  if (wwr.length) sources.push("We Work Remotely");
+  if (remote1st.length) sources.push("Remote1stJobs");
   return jsonGet({ jobs, meta: { sources, count: jobs.length } });
 }
 
@@ -108,6 +119,10 @@ function normaliseJobText(text) {
   return String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function isDevRoleBlob(blob) {
+  return DEV_ROLE_TERMS.some((term) => blob.includes(term));
+}
+
 function detectWorkTypeFromText(title, description, location, source, remoteFlag) {
   const blob = ` ${normaliseJobText([title, description, location].join(" "))} `;
   if (source === "RemoteOK" || remoteFlag) return "remote";
@@ -119,7 +134,7 @@ function detectWorkTypeFromText(title, description, location, source, remoteFlag
 async function fetchRemoteOkJobs() {
   try {
     const response = await fetch("https://remoteok.com/api?tags=dev", {
-      headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
+      headers: JOB_FETCH_HEADERS
     });
     if (!response.ok) return [];
     const payload = await response.json();
@@ -199,15 +214,14 @@ async function fetchAdzunaJobs(env, profile, country) {
 async function fetchArbeitnowJobs() {
   try {
     const response = await fetch("https://www.arbeitnow.com/api/job-board-api", {
-      headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
+      headers: JOB_FETCH_HEADERS
     });
     if (!response.ok) return [];
     const payload = await response.json();
-    const devTerms = ["developer", "engineer", "software", "frontend", "backend", "javascript", "typescript", "react", "node"];
     return (payload.data || [])
       .filter((item) => {
         const blob = normaliseJobText([item.title, item.description, ...(item.tags || [])].join(" "));
-        return devTerms.some((term) => blob.includes(term));
+        return isDevRoleBlob(blob);
       })
       .map((item) => ({
         title: String(item.title || "").trim(),
@@ -232,23 +246,157 @@ function extractXmlCdata(block, tag) {
   return match ? match[1] : "";
 }
 
+function extractXmlTag(block, tag) {
+  const cdata = extractXmlCdata(block, tag);
+  if (cdata) return cdata;
+  const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i");
+  const match = block.match(re);
+  return match ? match[1].trim() : "";
+}
+
+function decodeXmlEntities(text) {
+  return String(text || "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+}
+
 function stripHtml(html) {
-  return String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return decodeXmlEntities(String(html || "")).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function splitCompanyTitle(rawTitle) {
+  const title = String(rawTitle || "").trim();
+  const idx = title.indexOf(": ");
+  if (idx < 0) return { company: "Unknown", title };
+  return { company: title.slice(0, idx).trim(), title: title.slice(idx + 2).trim() };
+}
+
+async function fetchJobicyJobs() {
+  try {
+    const response = await fetch("https://jobicy.com/api/v2/remote-jobs?count=100&tag=dev", {
+      headers: JOB_FETCH_HEADERS
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return (payload.jobs || []).map((item) => ({
+      title: String(item.jobTitle || "").trim(),
+      company: item.companyName || "Unknown",
+      location: item.jobGeo || "Remote",
+      country: "Global",
+      url: item.url || "",
+      source: "Jobicy",
+      description: item.jobDescription || item.jobExcerpt || "",
+      salary: "",
+      posted: item.pubDate || "",
+      workType: "remote"
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRemotiveJobs() {
+  try {
+    const response = await fetch("https://remotive.com/api/remote-jobs?category=software-dev", {
+      headers: JOB_FETCH_HEADERS
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return (payload.jobs || [])
+      .filter((item) => {
+        const blob = normaliseJobText([item.title, item.description, item.category, ...(item.tags || [])].join(" "));
+        return isDevRoleBlob(blob);
+      })
+      .map((item) => ({
+        title: String(item.title || "").trim(),
+        company: item.company_name || "Unknown",
+        location: item.candidate_required_location || "Remote",
+        country: "Global",
+        url: item.url || "",
+        source: "Remotive",
+        description: item.description || "",
+        salary: item.salary || "",
+        posted: item.publication_date || "",
+        workType: "remote"
+      }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchWeWorkRemotelyJobs() {
+  try {
+    const response = await fetch("https://weworkremotely.com/categories/remote-programming-jobs.rss", {
+      headers: JOB_FETCH_HEADERS
+    });
+    if (!response.ok) return [];
+    const xml = await response.text();
+    return xml.split(/<item>/).slice(1).flatMap((block) => {
+      const rawTitle = extractXmlTag(block, "title");
+      const { company, title } = splitCompanyTitle(rawTitle);
+      const description = stripHtml(extractXmlTag(block, "description"));
+      const blob = normaliseJobText([title, description, extractXmlTag(block, "category")].join(" "));
+      if (!title || !isDevRoleBlob(blob)) return [];
+      const location = extractXmlTag(block, "region") || "Remote";
+      return [{
+        title,
+        company,
+        location,
+        country: "Global",
+        url: extractXmlTag(block, "link"),
+        source: "We Work Remotely",
+        description,
+        salary: "",
+        posted: extractXmlTag(block, "pubDate"),
+        workType: "remote"
+      }];
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRemote1stJobs() {
+  try {
+    const response = await fetch("https://www.remote1stjobs.com/jobs.json", {
+      headers: JOB_FETCH_HEADERS
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return (payload.jobs || [])
+      .filter((item) => {
+        const blob = normaliseJobText([item.title, item.description, item.category].join(" "));
+        return isDevRoleBlob(blob);
+      })
+      .map((item) => ({
+        title: String(item.title || "").trim(),
+        company: item.company || "Unknown",
+        location: item.location || "Remote",
+        country: "UK/Europe",
+        url: item.url || "",
+        source: "Remote1stJobs",
+        description: item.description || "",
+        salary: "",
+        posted: item.created_at || "",
+        workType: "remote"
+      }));
+  } catch {
+    return [];
+  }
 }
 
 async function fetchDevItJobsUk() {
   try {
     const response = await fetch("https://devitjobs.uk/job_feed.xml", {
-      headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
+      headers: JOB_FETCH_HEADERS
     });
     if (!response.ok) return [];
     const xml = await response.text();
-    const devTerms = ["developer", "engineer", "software", "javascript", "typescript", "react", "node", "web", ".net", "python"];
     return xml.split(/<job\s+/).slice(1).flatMap((block) => {
       const title = extractXmlCdata(block, "title") || extractXmlCdata(block, "name");
       const description = stripHtml(extractXmlCdata(block, "description"));
       const blob = normaliseJobText([title, description].join(" "));
-      if (!title || !devTerms.some((term) => blob.includes(term))) return [];
+      if (!title || !isDevRoleBlob(blob)) return [];
       const location = extractXmlCdata(block, "location") || extractXmlCdata(block, "city");
       const region = extractXmlCdata(block, "region");
       const fullLocation = [location, region].filter(Boolean).join(", ") || "UK";

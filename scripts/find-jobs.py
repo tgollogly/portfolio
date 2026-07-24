@@ -5,6 +5,11 @@ Thomas Gollogly's CV and do not require commercial experience or a degree.
 
 Sources:
   - RemoteOK (global remote, no key)
+  - Jobicy (global remote dev, no key)
+  - Remotive (global remote dev, no key)
+  - We Work Remotely (programming RSS, no key)
+  - Remote1stJobs (UK/Europe remote JSON, no key)
+  - DevITjobs UK (UK on-site/hybrid XML, no key)
   - Arbeitnow (remote + hybrid, no key)
   - Adzuna UK + Ireland (set ADZUNA_APP_ID and ADZUNA_APP_KEY)
 
@@ -59,6 +64,35 @@ class JobListing:
 def load_profile(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
+
+
+DEV_ROLE_TERMS = [
+    "developer", "engineer", "software", "frontend", "backend", "javascript",
+    "typescript", "react", "node", "full-stack", "fullstack", "devops", ".net", "python", "web",
+]
+
+
+def is_dev_role_blob(blob: str) -> bool:
+    return any(term in blob for term in DEV_ROLE_TERMS)
+
+
+def split_company_title(raw_title: str) -> tuple[str, str]:
+    title = (raw_title or "").strip()
+    if ": " not in title:
+        return "Unknown", title
+    company, _, role = title.partition(": ")
+    return company.strip(), role.strip()
+
+
+def decode_xml_entities(text: str) -> str:
+    return (
+        (text or "")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+        .replace("&quot;", '"')
+        .replace("&#39;", "'")
+    )
 
 
 def normalise(text: str) -> str:
@@ -303,7 +337,138 @@ def remoteok_jobs(profile: dict[str, Any]) -> list[JobListing]:
 
 
 def strip_html(html: str) -> str:
-    return re.sub(r"<[^>]+>", " ", html or "").strip()
+    return re.sub(r"\s+", " ", decode_xml_entities(re.sub(r"<[^>]+>", " ", html or ""))).strip()
+
+
+def jobicy_jobs(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        payload = fetch_json("https://jobicy.com/api/v2/remote-jobs?count=100&tag=dev")
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
+        print(f"Jobicy error: {exc}", file=sys.stderr)
+        return listings
+
+    for item in payload.get("jobs", []):
+        listings.append(
+            JobListing(
+                title=str(item.get("jobTitle", "")).strip(),
+                company=item.get("companyName", "Unknown"),
+                location=item.get("jobGeo") or "Remote",
+                url=item.get("url") or "",
+                source="Jobicy",
+                description=item.get("jobDescription") or item.get("jobExcerpt") or "",
+                posted=item.get("pubDate", ""),
+                country="Global",
+                work_type="remote",
+            )
+        )
+    return listings
+
+
+def remotive_jobs(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        payload = fetch_json("https://remotive.com/api/remote-jobs?category=software-dev")
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
+        print(f"Remotive error: {exc}", file=sys.stderr)
+        return listings
+
+    for item in payload.get("jobs", []):
+        blob = normalise(" ".join([
+            item.get("title", ""),
+            item.get("description", ""),
+            item.get("category", ""),
+            " ".join(item.get("tags") or []),
+        ]))
+        if not is_dev_role_blob(blob):
+            continue
+        listings.append(
+            JobListing(
+                title=str(item.get("title", "")).strip(),
+                company=item.get("company_name", "Unknown"),
+                location=item.get("candidate_required_location") or "Remote",
+                url=item.get("url") or "",
+                source="Remotive",
+                description=item.get("description", ""),
+                salary=item.get("salary") or "",
+                posted=item.get("publication_date", ""),
+                country="Global",
+                work_type="remote",
+            )
+        )
+    return listings
+
+
+def weworkremotely_jobs(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        request = urllib.request.Request(
+            "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+            headers={"User-Agent": USER_AGENT},
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            xml = response.read().decode("utf-8", errors="replace")
+    except (urllib.error.URLError, urllib.error.HTTPError) as exc:
+        print(f"We Work Remotely error: {exc}", file=sys.stderr)
+        return listings
+
+    for block in xml.split("<item>")[1:]:
+        raw_title = re.search(r"<title>([\s\S]*?)</title>", block)
+        if not raw_title:
+            continue
+        company, title = split_company_title(raw_title.group(1).strip())
+        description_match = re.search(r"<description>([\s\S]*?)</description>", block)
+        description = strip_html(description_match.group(1) if description_match else "")
+        category_match = re.search(r"<category>([\s\S]*?)</category>", block)
+        category = category_match.group(1).strip() if category_match else ""
+        blob = normalise(" ".join([title, description, category]))
+        if not title or not is_dev_role_blob(blob):
+            continue
+        location_match = re.search(r"<region>([\s\S]*?)</region>", block)
+        link_match = re.search(r"<link>([\s\S]*?)</link>", block)
+        posted_match = re.search(r"<pubDate>([\s\S]*?)</pubDate>", block)
+        listings.append(
+            JobListing(
+                title=title,
+                company=company,
+                location=location_match.group(1).strip() if location_match else "Remote",
+                url=link_match.group(1).strip() if link_match else "",
+                source="We Work Remotely",
+                description=description,
+                posted=posted_match.group(1).strip() if posted_match else "",
+                country="Global",
+                work_type="remote",
+            )
+        )
+    return listings
+
+
+def remote1st_jobs(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        payload = fetch_json("https://www.remote1stjobs.com/jobs.json")
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
+        print(f"Remote1stJobs error: {exc}", file=sys.stderr)
+        return listings
+
+    for item in payload.get("jobs", []):
+        blob = normalise(" ".join([item.get("title", ""), item.get("description", ""), item.get("category", "")]))
+        if not is_dev_role_blob(blob):
+            continue
+        listings.append(
+            JobListing(
+                title=str(item.get("title", "")).strip(),
+                company=item.get("company", "Unknown"),
+                location=item.get("location") or "Remote",
+                url=item.get("url") or "",
+                source="Remote1stJobs",
+                description=item.get("description", ""),
+                posted=item.get("created_at", ""),
+                country="UK/Europe",
+                work_type="remote",
+            )
+        )
+    return listings
 
 
 def devitjobs_uk(profile: dict[str, Any]) -> list[JobListing]:
@@ -319,12 +484,12 @@ def devitjobs_uk(profile: dict[str, Any]) -> list[JobListing]:
         print(f"DevITjobs UK error: {exc}", file=sys.stderr)
         return listings
 
-    dev_terms = ["developer", "engineer", "software", "javascript", "typescript", "react", "node", "web", "python"]
+    dev_terms = DEV_ROLE_TERMS
     for job_el in root.findall("job"):
         title = (job_el.findtext("title") or job_el.findtext("name") or "").strip()
         description = strip_html(job_el.findtext("description") or "")
         blob = normalise(" ".join([title, description]))
-        if not title or not any(term in blob for term in dev_terms):
+        if not title or not is_dev_role_blob(blob):
             continue
         location = job_el.findtext("location") or job_el.findtext("city") or ""
         region = job_el.findtext("region") or ""
@@ -353,10 +518,9 @@ def arbeitnow_jobs(profile: dict[str, Any]) -> list[JobListing]:
         print(f"Arbeitnow error: {exc}", file=sys.stderr)
         return listings
 
-    dev_terms = ["developer", "engineer", "software", "frontend", "backend", "javascript", "typescript", "react", "node"]
     for item in payload.get("data", []):
         blob = normalise(" ".join([item.get("title", ""), item.get("description", ""), " ".join(item.get("tags") or [])]))
-        if not any(term in blob for term in dev_terms):
+        if not is_dev_role_blob(blob):
             continue
         job = JobListing(
             title=str(item.get("title", "")).strip(),
@@ -449,6 +613,10 @@ def main() -> int:
 
     raw_jobs = dedupe_jobs(
         remoteok_jobs(profile)
+        + jobicy_jobs(profile)
+        + remotive_jobs(profile)
+        + weworkremotely_jobs(profile)
+        + remote1st_jobs(profile)
         + devitjobs_uk(profile)
         + arbeitnow_jobs(profile)
         + adzuna_jobs(profile, "gb", args.max_days, args.per_query)
