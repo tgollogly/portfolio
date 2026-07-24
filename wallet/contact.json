@@ -1,0 +1,20 @@
+{
+  "name": "Thomas Gollogly",
+  "title": "Self-taught Developer",
+  "tagline": "Builds real, working web apps",
+  "email": "thomas@tgollogly.dev",
+  "phone": "+447513468009",
+  "phone_display": "07513 468009",
+  "location": "Northern Ireland",
+  "website": "https://tgollogly.dev",
+  "website_label": "tgollogly.dev",
+  "github": "https://github.com/tgollogly",
+  "linkedin": "https://www.linkedin.com/in/thomasgollogly",
+  "card_url": "https://tgollogly.dev/card.html",
+  "pass_type_id": "pass.dev.tgollogly.businesscard",
+  "team_id": "REPLACE_WITH_TEAM_ID",
+  "organization": "Thomas Gollogly",
+  "background_color": "rgb(47, 57, 201)",
+  "foreground_color": "rgb(255, 255, 255)",
+  "label_color": "rgb(238, 240, 254)"
+}

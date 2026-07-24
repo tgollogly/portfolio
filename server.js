@@ -60,6 +60,22 @@ export default {
       if (request.method === "POST") return handleAI(request, env);
       return new Response("POST only", { status: 405, headers: cors() });
     }
+    if (path.endsWith(".pkpass")) {
+      const asset = await env.ASSETS.fetch(request);
+      if (!asset.ok) return asset;
+      const headers = new Headers(asset.headers);
+      headers.set("Content-Type", "application/vnd.apple.pkpass");
+      headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.pkpass"');
+      return new Response(asset.body, { status: asset.status, headers });
+    }
+    if (path.endsWith(".vcf")) {
+      const asset = await env.ASSETS.fetch(request);
+      if (!asset.ok) return asset;
+      const headers = new Headers(asset.headers);
+      headers.set("Content-Type", "text/vcard; charset=utf-8");
+      headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.vcf"');
+      return new Response(asset.body, { status: asset.status, headers });
+    }
     return env.ASSETS.fetch(request); // everything else = your website files
   }
 };
