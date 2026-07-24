@@ -146,9 +146,24 @@
   </div>
 
   <div class="note" id="walletNote">
-    <strong>Apple Wallet note:</strong> Wallet passes must be signed with an Apple Developer certificate. The pass file on this site is ready to sign — run <code>python3 scripts/build-wallet-pass.py</code> after adding your certs (see script header). Until then, use <strong>Add to Contacts</strong> above — that works immediately on iPhone.
+    <strong>Why not a one-tap button?</strong> Apple only allows signed passes into Wallet. Signing needs a &pound;99/year developer account. Pass2U is free and puts a real pass in your Wallet app in a few minutes.
   </div>
 </div>
+
+<script>
+(function(){
+  var ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  var homeBtn=document.getElementById("homeBtn");
+  var iosTip=document.getElementById("iosTip");
+  if(ios){
+    homeBtn.hidden=false;
+    iosTip.classList.add("show");
+    homeBtn.addEventListener("click",function(){
+      iosTip.scrollIntoView({behavior:"smooth",block:"nearest"});
+    });
+  }
+})();
+</script>
 
 <div class="sitefoot"><div class="in">
   <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland</span>
