@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="light">
+<title>Thomas Gollogly — Business Card</title>
+<meta name="description" content="Digital business card for Thomas Gollogly — self-taught developer in Northern Ireland. Add to Apple Wallet or save as a contact."/>
+<link rel="canonical" href="https://tgollogly.dev/card.html"/>
+<meta property="og:type" content="profile"/>
+<meta property="og:url" content="https://tgollogly.dev/card.html"/>
+<meta property="og:title" content="Thomas Gollogly — Business Card"/>
+<meta property="og:description" content="Self-taught developer in Northern Ireland. Add to Apple Wallet or save my contact details."/>
+<meta property="og:image" content="https://tgollogly.dev/assets/card-og.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Thomas Gollogly — Business Card"/>
+<meta name="twitter:description" content="Self-taught developer. Add to Apple Wallet or save as a contact."/>
+<meta name="twitter:image" content="https://tgollogly.dev/assets/card-og.png"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css"/>
+
+<style>
+  body{margin:0;background:var(--bg-alt);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);text-decoration:none;}
+  .page{max-width:520px;margin:0 auto;padding:0 20px 56px;}
+  .preview{margin-top:28px;background:linear-gradient(160deg,var(--accent) 0%,#4750e6 100%);border-radius:22px;padding:28px 26px 24px;color:#fff;box-shadow:0 18px 48px rgba(47,57,201,.28);position:relative;overflow:hidden;}
+  .preview::after{content:"";position:absolute;top:-40%;right:-20%;width:70%;height:120%;background:radial-gradient(circle,rgba(255,255,255,.12) 0%,transparent 70%);pointer-events:none;}
+  .preview .mark{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:18px;letter-spacing:-.02em;margin-bottom:18px;}
+  .preview h1{font-family:var(--serif);font-size:28px;font-weight:600;margin:0;letter-spacing:-.02em;color:#fff;}
+  .preview .role{margin:6px 0 0;font-size:14.5px;font-weight:500;color:rgba(238,240,254,.95);}
+  .preview .tagline{margin:4px 0 0;font-size:13.5px;color:rgba(220,224,252,.9);}
+  .preview .details{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.2);display:grid;gap:10px;}
+  .preview .row{display:flex;align-items:center;gap:10px;font-size:13.5px;color:rgba(255,255,255,.92);}
+  .preview .row svg{width:16px;height:16px;fill:currentColor;flex:none;opacity:.85;}
+  .preview a.row{color:inherit;}
+  .preview a.row:hover{color:#fff;text-decoration:underline;}
+  .actions{display:flex;flex-direction:column;gap:12px;margin-top:26px;}
+  .wallet-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#000;color:#fff;border:none;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;transition:transform .15s,opacity .15s;}
+  .wallet-btn:hover{transform:translateY(-1px);opacity:.92;color:#fff;}
+  .wallet-btn svg{width:28px;height:28px;fill:currentColor;flex:none;}
+  .btn-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .btn{font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;border:1px solid var(--line-2);background:var(--card);color:var(--strong);border-radius:10px;padding:11px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:7px;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn svg{width:15px;height:15px;fill:currentColor;}
+  .share{margin-top:34px;text-align:center;}
+  .share h2{font-family:var(--serif);font-size:18px;color:var(--strong);margin:0 0 6px;}
+  .share p{font-size:13.5px;color:var(--muted);margin:0 0 16px;}
+  .qr-wrap{display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-sm);}
+  .qr-wrap img{display:block;width:160px;height:160px;}
+  .note{margin-top:28px;padding:16px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;font-size:13.5px;color:var(--muted);}
+  .note strong{color:var(--strong);}
+  .note ol{margin:8px 0 0;padding-left:18px;}
+  .note li{margin:4px 0;}
+  @media(max-width:640px){
+    .preview{border-radius:18px;padding:24px 20px 20px;}
+    .preview h1{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+<div class="sitebar"><div class="in">
+  <a class="brand" href="/"><svg class="tg-mark" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7"/><text x="15" y="20" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" text-anchor="middle">TG</text></svg><span>Thomas Gollogly</span></a>
+  <a class="back" href="/">&larr; Back to portfolio</a>
+</div></div>
+
+<div class="wrap head">
+  <span class="eyebrow">Business card</span>
+  <h1>Add me to your phone</h1>
+  <p>Save my details to Apple Wallet, or add me as a contact. Scan the QR code to open this page on another device.</p>
+</div>
+
+<div class="page">
+  <div class="preview" aria-label="Business card preview">
+    <div class="mark">TG</div>
+    <h1>Thomas Gollogly</h1>
+    <p class="role">Self-taught Developer</p>
+    <p class="tagline">Builds real, working web apps</p>
+    <div class="details">
+      <a class="row" href="mailto:thomas@tgollogly.dev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5.5A1.5 1.5 0 0 1 3.5 4h17A1.5 1.5 0 0 1 22 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 2 18.5v-13zm2.2.5 7.15 5.72a1 1 0 0 0 1.3 0L19.8 6H4.2zM4 8.1V18h16V8.1l-6.86 5.5a3 3 0 0 1-3.78 0L4 8.1z"/></svg>thomas@tgollogly.dev</a>
+      <a class="row" href="tel:+447513468009"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>07513 468009</a>
+      <span class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Northern Ireland</span>
+      <a class="row" href="https://tgollogly.dev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.69 3.5 9.5V21a1 1 0 0 0 1 1H9v-7h6v7h4.5a1 1 0 0 0 1-1V9.5L12 2.69z"/></svg>tgollogly.dev</a>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="wallet-btn" href="/Thomas-Gollogly.pkpass" id="walletBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7H3a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a1 1 0 0 0-1-1zm-1 2v9H4V9h16zM3 5h18a1 1 0 0 1 1 1v1H2V6a1 1 0 0 1 1-1z"/></svg>
+      Add to Apple Wallet
+    </a>
+    <div class="btn-row">
+      <a class="btn" href="/Thomas-Gollogly.vcf" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Add to Contacts</a>
+      <a class="btn" href="/cv.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM7 13h10v1.5H7V13zm0 4h10v1.5H7V17zm0-8h5v1.5H7V9z"/></svg>View CV</a>
+      <a class="btn" href="https://www.linkedin.com/in/thomasgollogly" target="_blank" rel="noopener me"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>LinkedIn</a>
+    </div>
+  </div>
+
+  <div class="share">
+    <h2>Share this card</h2>
+    <p>Scan to open on another phone</p>
+    <div class="qr-wrap">
+      <img src="/assets/card-qr.png" width="160" height="160" alt="QR code linking to tgollogly.dev/card.html"/>
+    </div>
+  </div>
+
+  <div class="note" id="walletNote">
+    <strong>Apple Wallet note:</strong> Wallet passes must be signed with an Apple Developer certificate. The pass file on this site is ready to sign — run <code>python3 scripts/build-wallet-pass.py</code> after adding your certs (see script header). Until then, use <strong>Add to Contacts</strong> above — that works immediately on iPhone.
+  </div>
+</div>
+
+<div class="sitefoot"><div class="in">
+  <span>&copy; <span class="footyr"></span> Thomas Gollogly &middot; Northern Ireland</span>
+  <span class="footlinks">
+    <a class="ico" href="/" aria-label="Home"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.69 3.5 9.5V21a1 1 0 0 0 1 1H9v-7h6v7h4.5a1 1 0 0 0 1-1V9.5L12 2.69z"/></svg><span>Home</span></a>
+    <a class="ico" href="/cv.html" aria-label="CV"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM7 13h10v1.5H7V13zm0 4h10v1.5H7V17zm0-8h5v1.5H7V9z"/></svg><span>CV</span></a>
+    <a class="ico" href="mailto:thomas@tgollogly.dev" aria-label="Email"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5.5A1.5 1.5 0 0 1 3.5 4h17A1.5 1.5 0 0 1 22 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 2 18.5v-13zm2.2.5 7.15 5.72a1 1 0 0 0 1.3 0L19.8 6H4.2zM4 8.1V18h16V8.1l-6.86 5.5a3 3 0 0 1-3.78 0L4 8.1z"/></svg><span>Email</span></a>
+    <a class="ico" href="https://github.com/tgollogly/portfolio" target="_blank" rel="noopener me" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.4-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .98-.31 3.2 1.18a11.1 11.1 0 0 1 5.83 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg><span>GitHub</span></a>
+    <a class="ico" href="https://www.linkedin.com/in/thomasgollogly" target="_blank" rel="noopener me" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg><span>LinkedIn</span></a>
+  </span>
+</div>
+<div class="in footnote">
+  <span>All demos use invented sample data and are for demonstration only &mdash; not professional, legal, financial or medical advice. This site sets no cookies and uses no analytics or tracking. The AI assistant and the CV tool send what you type to Google&rsquo;s Gemini API to generate a reply; nothing is stored by this site, so please don&rsquo;t enter confidential information. <a href="/privacy.html">Privacy &amp; AI notice</a></span>
+</div></div>
+
+<script>document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());</script>
+<script src="config.js"></script>
+<script src="assets/chat.js" defer></script>
+</body>
+</html>

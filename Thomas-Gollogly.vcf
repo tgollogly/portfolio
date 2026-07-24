@@ -1,0 +1,14 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Gollogly;Thomas;;;
+FN:Thomas Gollogly
+TITLE:Self-taught Developer
+ORG:Thomas Gollogly
+EMAIL;TYPE=INTERNET,PREF:thomas@tgollogly.dev
+TEL;TYPE=CELL:+447513468009
+ADR;TYPE=WORK:;;Northern Ireland;;;;
+URL:https://tgollogly.dev
+NOTE:Self-taught developer who builds and ships real web apps. Portfolio: tgollogly.dev
+X-SOCIALPROFILE;TYPE=linkedin:https://www.linkedin.com/in/thomasgollogly
+X-SOCIALPROFILE;TYPE=github:https://github.com/tgollogly
+END:VCARD
