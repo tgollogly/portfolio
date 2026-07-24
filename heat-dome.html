@@ -159,7 +159,10 @@ function spark(vals){
 }
 
 // ---- map (3D terrain) ----
-let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false;
+let map, marker, radarOn=true, radarFrames=[], radarHost="", radarIdx=0, mapReady=false, firstRunDone=false;
+// Runs the initial search exactly once, whichever fires first: the map's "load"
+// event, or the fallback timer below (in case the map is slow, or never loads).
+function initialRun(){ if(firstRunDone) return; firstRunDone=true; run("Seville"); }
 try{
   map=new maplibregl.Map({
     container:"map",
@@ -175,10 +178,16 @@ try{
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
   map.on("load",()=>{
     try{map.setTerrain({source:"dem",exaggeration:1.4});}catch(e){}
-    mapReady=true; loadRadar(); run("Seville");
+    mapReady=true; loadRadar(); initialRun();
   });
   map.on("error",()=>{}); // swallow tile errors
-}catch(e){ mapReady=false; }
+}catch(e){
+  mapReady=false;
+  document.getElementById("radarLabel").style.display="none";
+  initialRun();
+}
+// Don't leave the page showing nothing if the map is slow to fire "load".
+setTimeout(initialRun,2500);
 
 async function loadRadar(){
   try{
@@ -197,7 +206,7 @@ function showRadarFrame(){
   map.addSource("radar",{type:"raster",tiles:[url],tileSize:256,minzoom:0,maxzoom:7});
   map.addLayer({id:"radar",type:"raster",source:"radar",paint:{"raster-opacity":radarOn?0.65:0}});
   const dt=new Date(f.time*1000);
-  document.getElementById("radarLabel").textContent="Radar &middot; "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  document.getElementById("radarLabel").textContent="Radar \u00b7 "+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
 }
 document.getElementById("radarToggle").onclick=function(){
   radarOn=!radarOn; this.classList.toggle("on",radarOn);
@@ -252,7 +261,10 @@ async function run(q,silent){
         const a=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${loc.latitude}&longitude=${loc.longitude}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max&timezone=auto`).then(r=>r.json());
         const times=a.daily.time, maxes=a.daily.temperature_2m_max;
         const doy=d=>{const s=new Date(Date.UTC(d.getUTCFullYear(),0,0));return Math.floor((d-s)/86400000);};
-        const t=doy(new Date());
+        // Use the location's own local date (from its timezone-adjusted forecast), not the visitor's — otherwise
+        // a search near midnight in a distant timezone compares against the wrong day of year.
+        const todayStr = (cur && cur.time) ? cur.time.slice(0,10) : new Date().toISOString().slice(0,10);
+        const t=doy(new Date(todayStr+"T00:00:00Z"));
         const vals=[];
         for(let i=0;i<times.length;i++){
           const d=new Date(times[i]+"T00:00:00Z");
@@ -273,7 +285,7 @@ async function run(q,silent){
           `<div class="anom-row"><b style="color:${tone}">${sign}${anom.toFixed(1)}&deg;C</b> vs the 30-year average for this date `+
           `(today ~${Math.round(todayMax)}&deg;C &middot; normal ~${Math.round(normal)}&deg;C)</div>`+
           `<div class="anom-lab">${label}</div></div>`;
-      }catch(e){ document.getElementById("anomaly").style.display="none"; }
+      }catch(e){ box.style.display="none"; }
     })();
     if(mapReady){
       map.flyTo({center:[loc.longitude,loc.latitude],zoom:7.5,pitch:60,bearing:-15,duration:2600,essential:true});
@@ -288,7 +300,6 @@ async function run(q,silent){
 }
 document.getElementById("goBtn").onclick=()=>run();
 document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
-if(!mapReady){ document.getElementById("radarLabel").style.display="none"; run("Seville"); }
 </script>
 
 <div class="sitefoot"><div class="in">

@@ -123,7 +123,14 @@ function loadSample(){
   ];
   render();
 }
-function fmtDate(d){if(!d)return"—";const dt=new Date(d);return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
+function fmtDate(d){
+  if(!d)return"—";
+  // Parse "YYYY-MM-DD" as a local calendar date, not UTC — new Date("YYYY-MM-DD")
+  // is midnight UTC, which renders as the previous day in timezones west of Greenwich.
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  const dt=m?new Date(+m[1],+m[2]-1,+m[3]):new Date(d);
+  return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+}
 function render(){
   const list=document.getElementById("list");
   if(!items.length){list.innerHTML='<div class="empty">No documents yet. Add one above, or load a sample.</div>';document.getElementById("pages").textContent="";buildPrint();return;}
