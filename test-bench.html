@@ -275,6 +275,7 @@ test("date: American order is rejected", () => {
 
 test("money: pounds and pence convert exactly", () => {
   expect(poundsToPence("£1,234.56").value).toBe(123456);
+  expect(poundsToPence("1.5").value).toBe(150); // a single decimal digit is padded — 5 means 50p, not 5p
 });
 test("money: the classic 0.1 + 0.2 problem does not arise", () => {
   const a = poundsToPence("0.10").value;
@@ -310,7 +311,7 @@ test("csv: null becomes an empty field", () => {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script>
-document.getElementById("yr").textContent = new Date().getFullYear();
+document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());
 
 const SEED = document.getElementById("seed").textContent.trim();
 const $ = id => document.getElementById(id);

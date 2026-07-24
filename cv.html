@@ -99,7 +99,7 @@
   <span>All demos use invented sample data and are for demonstration only &mdash; not professional, legal, financial or medical advice. This site sets no cookies and uses no analytics or tracking. The AI assistant and the CV tool send what you type to Google&rsquo;s Gemini API to generate a reply; nothing is stored by this site, so please don&rsquo;t enter confidential information. <a href="/privacy.html">Privacy &amp; AI notice</a></span>
 </div></div>
 
-<script>document.getElementById("yr").textContent=new Date().getFullYear();</script>
+<script>document.querySelectorAll(".footyr").forEach(e=>e.textContent=new Date().getFullYear());</script>
 <script src="config.js"></script>
 <script src="assets/chat.js" defer></script>
 </body>
