@@ -168,6 +168,23 @@ export function rankJobs(rawJobs, { minScore = 20, limit = 40, workTypeFilter = 
   return scored.slice(0, limit);
 }
 
+export function normalizeRawJob(item) {
+  if (item.title) return item;
+  if (!item.position) return null;
+  return {
+    title: String(item.position || "").trim(),
+    company: item.company || "Unknown",
+    location: item.location || "Remote",
+    country: "Global",
+    url: item.url || item.apply_url || "",
+    source: "RemoteOK",
+    description: item.description || "",
+    salary: item.salary_min || item.salary_max ? `$${item.salary_min || "?"} – $${item.salary_max || "?"}` : "",
+    posted: item.date || "",
+    workType: "remote"
+  };
+}
+
 export async function fetchJobs() {
   const response = await fetch("/api/jobs", {
     headers: { Accept: "application/json" },
@@ -177,7 +194,8 @@ export async function fetchJobs() {
   const payload = await response.json();
   if (Array.isArray(payload.jobs)) return payload;
   if (Array.isArray(payload)) {
-    return { jobs: payload, meta: { sources: ["RemoteOK"], count: payload.length } };
+    const jobs = payload.map(normalizeRawJob).filter(Boolean);
+    return { jobs, meta: { sources: ["RemoteOK"], count: jobs.length, note: "Site update pending — UK listings loading after deploy." } };
   }
   throw new Error("Unexpected job feed format");
 }

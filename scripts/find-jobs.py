@@ -28,6 +28,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -301,6 +302,49 @@ def remoteok_jobs(profile: dict[str, Any]) -> list[JobListing]:
     return listings
 
 
+def strip_html(html: str) -> str:
+    return re.sub(r"<[^>]+>", " ", html or "").strip()
+
+
+def devitjobs_uk(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        request = urllib.request.Request(
+            "https://devitjobs.uk/job_feed.xml",
+            headers={"User-Agent": USER_AGENT},
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            root = ET.fromstring(response.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, ET.ParseError) as exc:
+        print(f"DevITjobs UK error: {exc}", file=sys.stderr)
+        return listings
+
+    dev_terms = ["developer", "engineer", "software", "javascript", "typescript", "react", "node", "web", "python"]
+    for job_el in root.findall("job"):
+        title = (job_el.findtext("title") or job_el.findtext("name") or "").strip()
+        description = strip_html(job_el.findtext("description") or "")
+        blob = normalise(" ".join([title, description]))
+        if not title or not any(term in blob for term in dev_terms):
+            continue
+        location = job_el.findtext("location") or job_el.findtext("city") or ""
+        region = job_el.findtext("region") or ""
+        full_location = ", ".join(part for part in [location, region] if part) or "UK"
+        listing = JobListing(
+            title=title,
+            company=job_el.findtext("company") or job_el.findtext("company-name") or "Unknown",
+            location=full_location,
+            url=job_el.findtext("url") or job_el.findtext("link") or "",
+            source="DevITjobs UK",
+            description=description,
+            salary=job_el.findtext("salary") or "",
+            posted=job_el.findtext("pubdate") or "",
+            country=job_el.findtext("country") or "UK",
+        )
+        listing.work_type = detect_work_type(listing, profile)
+        listings.append(listing)
+    return listings
+
+
 def arbeitnow_jobs(profile: dict[str, Any]) -> list[JobListing]:
     listings: list[JobListing] = []
     try:
@@ -405,6 +449,7 @@ def main() -> int:
 
     raw_jobs = dedupe_jobs(
         remoteok_jobs(profile)
+        + devitjobs_uk(profile)
         + arbeitnow_jobs(profile)
         + adzuna_jobs(profile, "gb", args.max_days, args.per_query)
         + adzuna_jobs(profile, "ie", args.max_days, args.per_query)
