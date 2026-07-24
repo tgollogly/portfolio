@@ -49,15 +49,27 @@ The chatbot and ATS Matcher call a small serverless backend (`server.js`) that r
 
     index.html            Homepage (projects, terminal intro, AI chatbot)
     cv.html               Developer profile page
-    ats-matcher.html      AI ATS Resume Matcher tool
-    heat-dome.html        Live demo + case study
-    thermal-compare.html  Live demo + case study
-    beneish.html          Live demo + case study
-    bundlebuilder.html    Live demo + case study
+    privacy.html          Privacy & AI notice page
+
+    ats-matcher.html      Demo 01 — AI ATS Resume Matcher, live demo + case study
+    bom-desk.html         Demo 02 — BOM Desk, live demo + case study
+    sql-lab.html          Demo 03 — SQL Lab, live demo + case study
+    test-bench.html       Demo 04 — Test Bench, live demo + case study
+    heat-dome.html        Demo 05 — Heat Anomaly Detector, live demo + case study
+    beneish.html          Demo 06 — Beneish M-Score Screener, live demo + case study
+    thermal-compare.html  Demo 07 — Thermal Compare, live demo + case study
+    bundlebuilder.html    Demo 08 — BundleBuilder, live demo + case study
+
+    assets/
+      site.css            Single source of truth for colour, type and page shell
+      chat.js             Site-wide AI assistant widget, injected on every page
+
     server.js             Serverless backend: serves the site + AI endpoint (/api)
     config.js             Points the frontend at the AI backend (/api)
     wrangler.toml         Cloudflare deployment config
     .assetsignore         Keeps backend/config files out of public assets
+
+    og-preview.png        Social-share preview image (Open Graph / Twitter cards)
     README.md             This file — project overview
     LICENSE               MIT licence
 
