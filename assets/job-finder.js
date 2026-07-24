@@ -46,7 +46,8 @@ function isDeveloperRole(title) {
 export function detectWorkType(job) {
   if (job.workType) return job.workType;
   const blob = ` ${normalise([job.title, job.description, job.location].join(" "))} `;
-  if (job.source === "RemoteOK" || CV_PROFILE.remoteTerms.some((term) => blob.includes(term))) return "remote";
+  const remoteSources = new Set(["RemoteOK", "Jobicy", "Remotive", "We Work Remotely", "Remote1stJobs"]);
+  if (remoteSources.has(job.source) || CV_PROFILE.remoteTerms.some((term) => blob.includes(term))) return "remote";
   if (CV_PROFILE.hybridTerms.some((term) => blob.includes(term))) return "hybrid";
   if (CV_PROFILE.localLocationTerms.some((term) => blob.includes(term))) return "on-site";
   return "unknown";
