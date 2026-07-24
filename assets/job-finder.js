@@ -1,4 +1,4 @@
-/** Shared profile + scoring for remote junior developer job search. */
+/** Shared profile + scoring for junior developer job search. */
 export const CV_PROFILE = {
   skills: [
     "javascript", "typescript", "html", "css", "react", "node.js", "nodejs", "express",
@@ -8,8 +8,9 @@ export const CV_PROFILE = {
   ],
   preferredTerms: [
     "junior", "trainee", "apprentice", "entry level", "entry-level", "graduate scheme",
-    "no experience required", "no prior experience", "no degree required", "degree not required",
-    "self-taught", "self taught", "bootcamp", "career changer", "first developer role"
+    "graduate programme", "no experience required", "no prior experience", "no degree required",
+    "degree not required", "self-taught", "self taught", "bootcamp", "career changer",
+    "first developer role"
   ],
   excludeTerms: [
     "senior ", " lead ", "principal ", "staff engineer", "architect",
@@ -19,13 +20,18 @@ export const CV_PROFILE = {
     "masters required", "phd", "computer science degree required", "cs degree required",
     "must have a degree", "commercial experience required", "proven commercial experience",
     "extensive experience", "data entry clerk", "data entry ", "virtual assistant",
-    "customer support representative", "on-site only", "onsite only", "office based only"
+    "customer support representative"
   ],
   developerTitleTerms: [
     "developer", "engineer", "programmer", "software", "web dev", "full stack", "fullstack",
     "frontend", "front end", "backend", "back end", "devops"
   ],
-  remoteTerms: ["remote", "work from home", "wfh", "anywhere", "distributed", "worldwide"]
+  remoteTerms: ["remote", "work from home", "wfh", "anywhere", "distributed", "worldwide", "fully remote"],
+  hybridTerms: ["hybrid", "flexible working", "home/office", "office and home", "partially remote", "blended working"],
+  localLocationTerms: [
+    "northern ireland", "belfast", "newry", "armagh", "derry", "londonderry", "dublin", "cork",
+    "galway", "limerick", "ireland", "united kingdom", " uk", "england", "scotland", "wales"
+  ]
 };
 
 function normalise(text) {
@@ -37,10 +43,18 @@ function isDeveloperRole(title) {
   return CV_PROFILE.developerTitleTerms.some((term) => haystack.includes(term));
 }
 
-function isRemoteJob(job) {
-  if (job.source === "RemoteOK") return true;
+export function detectWorkType(job) {
+  if (job.workType) return job.workType;
   const blob = ` ${normalise([job.title, job.description, job.location].join(" "))} `;
-  return CV_PROFILE.remoteTerms.some((term) => blob.includes(term)) || normalise(job.location).includes("remote");
+  if (job.source === "RemoteOK" || CV_PROFILE.remoteTerms.some((term) => blob.includes(term))) return "remote";
+  if (CV_PROFILE.hybridTerms.some((term) => blob.includes(term))) return "hybrid";
+  if (CV_PROFILE.localLocationTerms.some((term) => blob.includes(term))) return "on-site";
+  return "unknown";
+}
+
+function isLocalUkIe(job) {
+  const blob = ` ${normalise([job.title, job.description, job.location, job.country || ""].join(" "))} `;
+  return CV_PROFILE.localLocationTerms.some((term) => blob.includes(term));
 }
 
 export function rejectionReason(text, title) {
@@ -98,28 +112,41 @@ function skillMatches(text) {
   return unique;
 }
 
-export function scoreJob(job, { remoteOnly = true } = {}) {
+function matchesWorkType(job, workTypeFilter) {
+  if (!workTypeFilter || workTypeFilter === "all") return true;
+  const type = detectWorkType(job);
+  if (workTypeFilter === "remote") return type === "remote";
+  if (workTypeFilter === "hybrid") return type === "hybrid";
+  if (workTypeFilter === "local") return type === "on-site" || isLocalUkIe(job);
+  return true;
+}
+
+export function scoreJob(job, { workTypeFilter = "all" } = {}) {
   const blob = [job.title, job.description, job.location].join(" ");
   const reason = rejectionReason(blob, job.title);
   if (reason) {
-    return { ...job, rejectionReason: reason, matchScore: 0, matchedSkills: [], friendlySignals: [] };
+    return { ...job, rejectionReason: reason, matchScore: 0, matchedSkills: [], friendlySignals: [], workType: detectWorkType(job) };
   }
-  if (remoteOnly && !isRemoteJob(job)) {
-    return { ...job, rejectionReason: "excluded: not a remote role", matchScore: 0, matchedSkills: [], friendlySignals: [] };
+  if (!matchesWorkType(job, workTypeFilter)) {
+    return { ...job, rejectionReason: `excluded: does not match ${workTypeFilter} filter`, matchScore: 0, matchedSkills: [], friendlySignals: [], workType: detectWorkType(job) };
   }
 
   const skills = skillMatches(blob);
   const signals = friendlySignals(blob);
   const title = normalise(job.title);
+  const workType = detectWorkType(job);
   let score = Math.min(skills.length * 8, 56);
   score += Math.min(signals.length * 5, 25);
   if (["junior", "trainee", "apprentice", "graduate", "entry level", "entry-level"].some((word) => title.includes(word))) {
     score += 12;
   }
-  if (isRemoteJob(job)) score += 6;
+  if (workType === "remote") score += 5;
+  if (workType === "hybrid") score += 4;
+  if (isLocalUkIe(job)) score += 6;
 
   return {
     ...job,
+    workType,
     matchedSkills: skills,
     friendlySignals: signals,
     matchScore: Math.round(Math.min(score, 100) * 10) / 10,
@@ -127,46 +154,37 @@ export function scoreJob(job, { remoteOnly = true } = {}) {
   };
 }
 
-export function mapRemoteOkItem(item) {
-  const salary =
-    item.salary_min || item.salary_max
-      ? `$${item.salary_min || "?"} – $${item.salary_max || "?"}`
-      : "";
-  return {
-    title: String(item.position || "").trim(),
-    company: item.company || "Unknown",
-    location: item.location || "Remote",
-    url: item.url || item.apply_url || "",
-    source: "RemoteOK",
-    description: item.description || "",
-    salary,
-    posted: item.date || ""
-  };
-}
-
-export function rankJobs(rawJobs, { minScore = 20, limit = 30, remoteOnly = true } = {}) {
+export function rankJobs(rawJobs, { minScore = 20, limit = 40, workTypeFilter = "all" } = {}) {
   const seen = new Set();
   const scored = [];
   for (const raw of rawJobs) {
     const key = `${normalise(raw.title)}|${normalise(raw.company)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const job = scoreJob(raw, { remoteOnly });
+    const job = scoreJob(raw, { workTypeFilter });
     if (!job.rejectionReason && job.matchScore >= minScore) scored.push(job);
   }
   scored.sort((a, b) => b.matchScore - a.matchScore || a.title.localeCompare(b.title));
   return scored.slice(0, limit);
 }
 
-export async function fetchRemoteJobs() {
+export async function fetchJobs() {
   const response = await fetch("/api/jobs", {
     headers: { Accept: "application/json" },
     credentials: "same-origin"
   });
   if (!response.ok) throw new Error(`Job feed unavailable (${response.status})`);
   const payload = await response.json();
-  if (!Array.isArray(payload)) throw new Error("Unexpected job feed format");
-  return payload
-    .filter((item) => item && typeof item === "object" && item.position)
-    .map(mapRemoteOkItem);
+  if (Array.isArray(payload.jobs)) return payload;
+  if (Array.isArray(payload)) {
+    return { jobs: payload, meta: { sources: ["RemoteOK"], count: payload.length } };
+  }
+  throw new Error("Unexpected job feed format");
+}
+
+export function workTypeLabel(type) {
+  if (type === "remote") return "Remote";
+  if (type === "hybrid") return "Hybrid";
+  if (type === "on-site") return "On-site";
+  return "Flexible";
 }

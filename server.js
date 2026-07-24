@@ -52,7 +52,7 @@ export default {
 
     if (path === "/api/jobs") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handleJobs();
+      if (request.method === "GET") return handleJobs(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (url.pathname === "/api") {
@@ -64,16 +64,163 @@ export default {
   }
 };
 
-async function handleJobs() {
+async function handleJobs(request, env) {
+  const profile = await loadJobProfile(request, env);
+  const [remoteOk, adzunaGb, adzunaIe, arbeitnow] = await Promise.all([
+    fetchRemoteOkJobs(),
+    fetchAdzunaJobs(env, profile, "gb"),
+    fetchAdzunaJobs(env, profile, "ie"),
+    fetchArbeitnowJobs()
+  ]);
+  const jobs = dedupeNormalizedJobs([...remoteOk, ...adzunaGb, ...adzunaIe, ...arbeitnow]);
+  const sources = [];
+  if (remoteOk.length) sources.push("RemoteOK");
+  if (adzunaGb.length) sources.push("Adzuna UK");
+  if (adzunaIe.length) sources.push("Adzuna Ireland");
+  if (arbeitnow.length) sources.push("Arbeitnow");
+  return jsonGet({ jobs, meta: { sources, count: jobs.length } });
+}
+
+async function loadJobProfile(request, env) {
+  try {
+    const res = await env.ASSETS.fetch(new URL("/scripts/cv-profile.json", request.url));
+    if (res.ok) return res.json();
+  } catch { /* use defaults */ }
+  return {
+    role_keywords: ["junior developer", "trainee developer", "entry level developer"],
+    search_locations: { gb: ["UK", "Northern Ireland", "Belfast"], ie: ["Ireland", "Dublin"] }
+  };
+}
+
+function dedupeNormalizedJobs(jobs) {
+  const seen = new Set();
+  return jobs.filter((job) => {
+    const key = `${normaliseJobText(job.title)}|${normaliseJobText(job.company)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function normaliseJobText(text) {
+  return String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function detectWorkTypeFromText(title, description, location, source, remoteFlag) {
+  const blob = ` ${normaliseJobText([title, description, location].join(" "))} `;
+  if (source === "RemoteOK" || remoteFlag) return "remote";
+  if (/\b(remote|work from home|wfh|anywhere|distributed|fully remote)\b/.test(blob)) return "remote";
+  if (/\b(hybrid|flexible working|home\/office|partially remote|blended working)\b/.test(blob)) return "hybrid";
+  return "on-site";
+}
+
+async function fetchRemoteOkJobs() {
   try {
     const response = await fetch("https://remoteok.com/api?tags=dev", {
       headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
     });
-    if (!response.ok) return jsonGet({ error: "Remote job feed unavailable" }, response.status);
-    const data = await response.json();
-    return jsonGet(data);
+    if (!response.ok) return [];
+    const payload = await response.json();
+    if (!Array.isArray(payload)) return [];
+    return payload
+      .filter((item) => item && item.position)
+      .map((item) => ({
+        title: String(item.position || "").trim(),
+        company: item.company || "Unknown",
+        location: item.location || "Remote",
+        country: "Global",
+        url: item.url || item.apply_url || "",
+        source: "RemoteOK",
+        description: item.description || "",
+        salary: item.salary_min || item.salary_max ? `$${item.salary_min || "?"} – $${item.salary_max || "?"}` : "",
+        posted: item.date || "",
+        workType: "remote"
+      }));
   } catch {
-    return jsonGet({ error: "Could not fetch remote jobs" }, 502);
+    return [];
+  }
+}
+
+async function fetchAdzunaJobs(env, profile, country) {
+  const appId = await getSecret(env, "ADZUNA_APP_ID");
+  const appKey = await getSecret(env, "ADZUNA_APP_KEY");
+  if (!appId || !appKey) return [];
+
+  const listings = [];
+  const seen = new Set();
+  const locations = (profile.search_locations?.[country] || []).slice(0, 6);
+  const keywords = (profile.role_keywords || ["junior developer"]).slice(0, 5);
+  const currency = country === "ie" ? "€" : "£";
+
+  for (const keyword of keywords) {
+    for (const where of locations) {
+      const params = new URLSearchParams({
+        app_id: appId,
+        app_key: appKey,
+        results_per_page: "15",
+        what: keyword,
+        where,
+        max_days_old: "30",
+        category: "it-jobs",
+        "content-type": "application/json"
+      });
+      try {
+        const response = await fetch(`https://api.adzuna.com/v1/api/jobs/${country}/search/1?${params}`);
+        if (!response.ok) continue;
+        const payload = await response.json();
+        for (const item of payload.results || []) {
+          const link = item.redirect_url || item.url || "";
+          if (!link || seen.has(link)) continue;
+          seen.add(link);
+          const title = item.title || "";
+          const description = item.description || "";
+          const location = item.location?.display_name || where;
+          listings.push({
+            title: title.trim(),
+            company: item.company?.display_name || "Unknown",
+            location,
+            country: country === "ie" ? "Ireland" : "UK",
+            url: link,
+            source: country === "ie" ? "Adzuna Ireland" : "Adzuna UK",
+            description,
+            salary: item.salary_min || item.salary_max ? `${currency}${item.salary_min || "?"} – ${currency}${item.salary_max || "?"}` : "",
+            posted: item.created || "",
+            workType: detectWorkTypeFromText(title, description, location, "Adzuna", false)
+          });
+        }
+      } catch { /* try next query */ }
+    }
+  }
+  return listings;
+}
+
+async function fetchArbeitnowJobs() {
+  try {
+    const response = await fetch("https://www.arbeitnow.com/api/job-board-api", {
+      headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    const devTerms = ["developer", "engineer", "software", "frontend", "backend", "javascript", "typescript", "react", "node"];
+    return (payload.data || [])
+      .filter((item) => {
+        const blob = normaliseJobText([item.title, item.description, ...(item.tags || [])].join(" "));
+        return devTerms.some((term) => blob.includes(term));
+      })
+      .map((item) => ({
+        title: String(item.title || "").trim(),
+        company: item.company_name || "Unknown",
+        location: item.location || (item.remote ? "Remote" : "Unknown"),
+        country: item.remote ? "Global" : "Europe",
+        url: item.url || "",
+        source: "Arbeitnow",
+        description: item.description || "",
+        salary: "",
+        posted: item.created_at ? new Date(item.created_at * 1000).toISOString().slice(0, 10) : "",
+        workType: item.remote ? "remote" : detectWorkTypeFromText(item.title, item.description, item.location, "Arbeitnow", false)
+      }));
+  } catch {
+    return [];
   }
 }
 

@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex, nofollow">
-<title>Remote job finder — testing</title>
-<meta name="description" content="Remote job search tool for testing. Add JOB_FINDER_PASSWORD in Cloudflare to lock it later."/>
+<title>Job finder — UK, Ireland &amp; remote</title>
+<meta name="description" content="Private job search: UK, Ireland, remote and hybrid junior developer roles matched to Thomas Gollogly's CV."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
 <style>
   body{margin:0;background:var(--bg-alt);color:var(--ink);font-family:var(--sans);line-height:1.55;}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(15,20,23,.05);}
-  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0;}
+  .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0;}
   .controls label{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
   .controls input,.controls select{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);}
   .go{margin-top:4px;font-family:inherit;font-weight:600;font-size:16px;background:var(--accent);color:var(--card);border:none;border-radius:12px;padding:15px 22px;cursor:pointer;width:100%;}
@@ -25,7 +25,11 @@
   .job{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
   .job h2{font-family:var(--serif);font-size:20px;margin:0 0 6px;color:var(--strong);}
   .job .sub{font-size:14px;color:var(--muted);margin-bottom:10px;}
-  .score{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:4px 10px;border-radius:999px;font-weight:700;font-size:13px;background:var(--accent-soft);color:var(--accent);margin-bottom:10px;}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+  .score,.badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px;}
+  .score{background:var(--accent-soft);color:var(--accent);}
+  .badge.type{background:var(--bg-alt);color:var(--muted);}
+  .badge.src{background:var(--ok-soft);color:var(--ok);}
   .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
   .chip{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--bg-alt);color:var(--muted);}
   .chip.ok{color:var(--ok);background:var(--ok-soft);}
@@ -34,13 +38,7 @@
   .msg{margin-top:16px;padding:14px;border-radius:12px;font-size:14px;background:var(--card);border:1px solid var(--line);color:var(--muted);}
   .msg.err{color:var(--err);border-color:var(--err-soft);background:var(--err-soft);}
   .how{margin-top:28px;font-size:14px;color:var(--muted);}
-  .how ol{margin:8px 0 0;padding-left:20px;}
-  .how li{margin:6px 0;}
-  @media(max-width:640px){
-    .controls{grid-template-columns:1fr;}
-    .job{padding:16px;}
-    .job h2{font-size:18px;}
-  }
+  @media(max-width:640px){.controls{grid-template-columns:1fr;}.job{padding:16px;}.job h2{font-size:18px;}}
 </style>
 </head>
 <body>
@@ -50,19 +48,28 @@
 </div></div>
 
 <div class="wrap head">
-  <span class="eyebrow">Testing &middot; remote only</span>
-  <h1>Remote job finder</h1>
-  <p>Search for <strong>remote</strong> junior developer jobs that match my CV. Filters out listings asking for commercial experience or a degree. Open for testing — add <code>JOB_FINDER_PASSWORD</code> in Cloudflare when you want to lock it.</p>
+  <span class="eyebrow">Private tool</span>
+  <h1>Job finder</h1>
+  <p>Junior developer roles across <strong>UK, Ireland, remote and hybrid</strong> — matched to my CV skills and filtered for no commercial experience or degree required.</p>
 
   <div class="panel">
     <div class="controls">
+      <div>
+        <label for="workType">Work type</label>
+        <select id="workType">
+          <option value="all">All (remote, hybrid &amp; on-site)</option>
+          <option value="remote">Remote only</option>
+          <option value="hybrid">Hybrid only</option>
+          <option value="local">UK / Ireland on-site</option>
+        </select>
+      </div>
       <div>
         <label for="minScore">Min match score</label>
         <input id="minScore" type="number" min="0" max="100" value="20"/>
       </div>
       <div>
         <label for="limit">Max results</label>
-        <input id="limit" type="number" min="1" max="50" value="20"/>
+        <input id="limit" type="number" min="1" max="80" value="30"/>
       </div>
       <div>
         <label for="sort">Sort by</label>
@@ -72,32 +79,25 @@
         </select>
       </div>
     </div>
-    <button class="go" id="go">Search remote jobs</button>
-    <div class="meta" id="meta">Tap search to load live remote listings.</div>
+    <button class="go" id="go">Search jobs</button>
+    <div class="meta" id="meta">Searches RemoteOK, Arbeitnow, and Adzuna UK/Ireland when API keys are set.</div>
     <div class="msg" id="msg" style="display:none;"></div>
   </div>
 
   <div class="jobs" id="jobs"></div>
 
   <div class="how panel">
-    <strong>On your iPhone</strong>
-    <ol>
-      <li>Open Safari and go to <strong>tgollogly.dev/job-finder.html</strong></li>
-      <li>Tap <strong>Search remote jobs</strong></li>
-      <li>Tap <strong>View &amp; apply</strong> on any match</li>
-      <li>Optional: Share → <strong>Add to Home Screen</strong></li>
-    </ol>
-    <p style="margin:12px 0 0;">No password while testing. Set <code>JOB_FINDER_PASSWORD</code> in Cloudflare Pages secrets when you are ready to make it private.</p>
+    <p>Sources: global remote listings (RemoteOK, Arbeitnow) plus UK and Ireland roles via Adzuna when <code>ADZUNA_APP_ID</code> and <code>ADZUNA_APP_KEY</code> are set in Cloudflare. Add <code>JOB_FINDER_PASSWORD</code> when you want to lock this page.</p>
   </div>
 </div>
 
 <div class="sitefoot"><div class="in">
   <span>&copy; Thomas Gollogly</span>
-  <span><a href="/cv.html">CV</a> · <a href="/ats-matcher.html">ATS matcher</a> · <a href="mailto:thomas@tgollogly.dev">thomas@tgollogly.dev</a></span>
+  <span><a href="/cv.html">CV</a> · <a href="mailto:thomas@tgollogly.dev">thomas@tgollogly.dev</a></span>
 </div></div>
 
 <script type="module">
-import { fetchRemoteJobs, rankJobs } from "./assets/job-finder.js";
+import { fetchJobs, rankJobs, workTypeLabel } from "./assets/job-finder.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -108,14 +108,18 @@ function esc(s) {
 function renderJobs(jobs) {
   const box = $("jobs");
   if (!jobs.length) {
-    box.innerHTML = `<div class="panel msg">No remote matches right now. Try lowering the min score or check again later.</div>`;
+    box.innerHTML = `<div class="panel msg">No matches right now. Try lowering the min score, changing work type, or check again later.</div>`;
     return;
   }
   box.innerHTML = jobs.map((job) => `
     <article class="job">
-      <div class="score">${esc(job.matchScore)} match</div>
+      <div class="badges">
+        <span class="score">${esc(job.matchScore)} match</span>
+        <span class="badge type">${esc(workTypeLabel(job.workType))}</span>
+        <span class="badge src">${esc(job.source)}</span>
+      </div>
       <h2>${esc(job.title)}</h2>
-      <div class="sub">${esc(job.company)} · ${esc(job.location || "Remote")}${job.salary ? ` · ${esc(job.salary)}` : ""}</div>
+      <div class="sub">${esc(job.company)} · ${esc(job.location || "—")}${job.country ? ` · ${esc(job.country)}` : ""}${job.salary ? ` · ${esc(job.salary)}` : ""}</div>
       <div class="chips">
         ${job.matchedSkills.slice(0, 8).map((s) => `<span class="chip ok">${esc(s)}</span>`).join("")}
         ${job.friendlySignals.slice(0, 4).map((s) => `<span class="chip sig">${esc(s)}</span>`).join("")}
@@ -131,19 +135,21 @@ $("go").addEventListener("click", async () => {
   const meta = $("meta");
   btn.disabled = true;
   msg.style.display = "none";
-  meta.textContent = "Searching remote listings…";
+  meta.textContent = "Searching UK, Ireland, remote and hybrid listings…";
   $("jobs").innerHTML = "";
 
   try {
-    const raw = await fetchRemoteJobs();
+    const { jobs: raw, meta: feedMeta } = await fetchJobs();
     const minScore = Number($("minScore").value || 20);
-    const limit = Number($("limit").value || 20);
-    let jobs = rankJobs(raw, { minScore, limit, remoteOnly: true });
+    const limit = Number($("limit").value || 30);
+    const workTypeFilter = $("workType").value;
+    let jobs = rankJobs(raw, { minScore, limit, workTypeFilter });
     if ($("sort").value === "title") {
       jobs = [...jobs].sort((a, b) => a.title.localeCompare(b.title));
     }
     renderJobs(jobs);
-    meta.textContent = `Checked ${raw.length} remote developer listings · showing ${jobs.length} matches (no experience/degree required)`;
+    const sources = (feedMeta?.sources || []).join(", ") || "live feeds";
+    meta.textContent = `Checked ${raw.length} listings from ${sources} · showing ${jobs.length} matches (no experience/degree required)`;
   } catch (err) {
     msg.style.display = "block";
     msg.className = "msg err";

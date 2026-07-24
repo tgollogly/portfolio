@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Find remote developer jobs that match Thomas Gollogly's CV and do not require
-commercial experience or a computer science degree.
+Find developer jobs across UK, Ireland, remote and hybrid that match
+Thomas Gollogly's CV and do not require commercial experience or a degree.
 
-Sources (remote-only by default):
-  - RemoteOK public API (no key required)
-  - Adzuna UK API only with --include-local (set ADZUNA_APP_ID and ADZUNA_APP_KEY)
+Sources:
+  - RemoteOK (global remote, no key)
+  - Arbeitnow (remote + hybrid, no key)
+  - Adzuna UK + Ireland (set ADZUNA_APP_ID and ADZUNA_APP_KEY)
 
-Run on iPhone (no password while testing):
-  Open https://tgollogly.dev/job-finder.html in Safari.
+Web UI: https://tgollogly.dev/job-finder.html
 
 Usage:
   python3 scripts/find-jobs.py
-  python3 scripts/find-jobs.py --min-score 25 --limit 20
-  python3 scripts/find-jobs.py --include-local   # also search UK on-site/hybrid via Adzuna
+  python3 scripts/find-jobs.py --work-type remote --limit 30
+  python3 scripts/find-jobs.py --work-type hybrid --min-score 25
 """
 
 from __future__ import annotations
@@ -47,6 +47,8 @@ class JobListing:
     description: str
     salary: str = ""
     posted: str = ""
+    country: str = ""
+    work_type: str = "unknown"
     match_score: float = 0.0
     matched_skills: list[str] = field(default_factory=list)
     friendly_signals: list[str] = field(default_factory=list)
@@ -62,37 +64,54 @@ def normalise(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "").lower()).strip()
 
 
-def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
 def is_developer_role(title: str, profile: dict[str, Any]) -> bool:
     haystack = normalise(title)
     return any(term in haystack for term in profile.get("developer_title_terms", []))
 
 
-def is_remote_job(job: JobListing, profile: dict[str, Any]) -> bool:
-    if job.source == "RemoteOK":
-        return True
-    remote_terms = profile.get(
-        "remote_terms",
-        ["remote", "work from home", "wfh", "anywhere", "distributed", "worldwide"],
-    )
+def detect_work_type(job: JobListing, profile: dict[str, Any]) -> str:
+    if job.work_type and job.work_type != "unknown":
+        return job.work_type
     blob = f" {normalise(' '.join([job.title, job.description, job.location]))} "
-    return any(term in blob for term in remote_terms) or "remote" in normalise(job.location)
+    if job.source == "RemoteOK":
+        return "remote"
+    remote_terms = profile.get("remote_terms", [])
+    hybrid_terms = profile.get("hybrid_terms", [])
+    if any(term in blob for term in remote_terms):
+        return "remote"
+    if any(term in blob for term in hybrid_terms):
+        return "hybrid"
+    local_terms = profile.get("local_location_terms", [])
+    if any(term in blob for term in local_terms):
+        return "on-site"
+    return "unknown"
 
 
-def rejection_reason(text: str, title: str, profile: dict[str, Any], remote_only: bool, job: JobListing) -> str:
+def is_local_uk_ie(job: JobListing, profile: dict[str, Any]) -> bool:
+    blob = f" {normalise(' '.join([job.title, job.description, job.location, job.country]))} "
+    return any(term in blob for term in profile.get("local_location_terms", []))
+
+
+def matches_work_type(job: JobListing, profile: dict[str, Any], work_type: str) -> bool:
+    if work_type == "all":
+        return True
+    detected = detect_work_type(job, profile)
+    if work_type == "remote":
+        return detected == "remote"
+    if work_type == "hybrid":
+        return detected == "hybrid"
+    if work_type == "local":
+        return detected == "on-site" or is_local_uk_ie(job, profile)
+    return True
+
+
+def rejection_reason(text: str, title: str, profile: dict[str, Any]) -> str:
     haystack = f" {normalise(text)} "
     for term in profile.get("exclude_terms", []):
         if term.lower() in haystack:
             return f"excluded: contains '{term.strip()}'"
     if not is_developer_role(title, profile):
         return "excluded: title is not a developer/engineer role"
-    if remote_only and not is_remote_job(job, profile):
-        return "excluded: not a remote role"
     years = re.search(r"(\d+)\+?\s*years?(?:\s+of)?\s+(?:commercial\s+)?experience", haystack)
     if years and int(years.group(1)) >= 2:
         return f"excluded: asks for {years.group(1)}+ years experience"
@@ -126,7 +145,6 @@ def skill_matches(text: str, profile: dict[str, Any]) -> list[str]:
         pattern = re.escape(token).replace(r"\ ", r"[\s/-]?")
         if re.search(rf"\b{pattern}\b", haystack):
             matched.append(skill if skill[0].isupper() else skill.title())
-    # dedupe while preserving order
     seen: set[str] = set()
     unique = []
     for item in matched:
@@ -137,25 +155,31 @@ def skill_matches(text: str, profile: dict[str, Any]) -> list[str]:
     return unique
 
 
-def score_job(job: JobListing, profile: dict[str, Any], remote_only: bool = True) -> JobListing:
+def score_job(job: JobListing, profile: dict[str, Any], work_type: str = "all") -> JobListing:
     blob = " ".join([job.title, job.description, job.location])
-    reason = rejection_reason(blob, job.title, profile, remote_only, job)
+    reason = rejection_reason(blob, job.title, profile)
+    job.work_type = detect_work_type(job, profile)
     if reason:
         job.rejection_reason = reason
+        job.match_score = 0.0
+        return job
+    if not matches_work_type(job, profile, work_type):
+        job.rejection_reason = f"excluded: does not match {work_type} filter"
         job.match_score = 0.0
         return job
 
     skills = skill_matches(blob, profile)
     signals = friendly_signals(blob, profile)
     title = normalise(job.title)
-
     score = min(len(skills) * 8, 56)
     score += min(len(signals) * 5, 25)
     if any(word in title for word in ("junior", "trainee", "apprentice", "graduate", "entry level", "entry-level")):
         score += 12
-    if is_remote_job(job, profile):
-        score += 6
-    if not remote_only and any(loc.lower() in normalise(job.location) for loc in profile.get("search_locations", [])[:5]):
+    if job.work_type == "remote":
+        score += 5
+    if job.work_type == "hybrid":
+        score += 4
+    if is_local_uk_ie(job, profile):
         score += 6
 
     job.matched_skills = skills
@@ -164,18 +188,29 @@ def score_job(job: JobListing, profile: dict[str, Any], remote_only: bool = True
     return job
 
 
-def adzuna_jobs(profile: dict[str, Any], max_days: int, per_query: int) -> list[JobListing]:
+def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def adzuna_jobs(profile: dict[str, Any], country: str, max_days: int, per_query: int) -> list[JobListing]:
     app_id = os.environ.get("ADZUNA_APP_ID", "").strip()
     app_key = os.environ.get("ADZUNA_APP_KEY", "").strip()
     if not app_id or not app_key:
-        print("Adzuna: skipped (set ADZUNA_APP_ID and ADZUNA_APP_KEY to search UK listings).", file=sys.stderr)
+        label = "UK" if country == "gb" else "Ireland"
+        print(f"Adzuna {label}: skipped (set ADZUNA_APP_ID and ADZUNA_APP_KEY).", file=sys.stderr)
         return []
 
     listings: list[JobListing] = []
     seen_urls: set[str] = set()
-    locations = profile.get("search_locations", ["Northern Ireland"])[:4]
+    locations_map = profile.get("search_locations", {})
+    locations = (locations_map.get(country) if isinstance(locations_map, dict) else profile.get("search_locations", []))[:6]
+    currency = "£" if country == "gb" else "€"
+    source = "Adzuna UK" if country == "gb" else "Adzuna Ireland"
+    country_label = "UK" if country == "gb" else "Ireland"
 
-    for keyword in profile.get("role_keywords", [])[:8]:
+    for keyword in profile.get("role_keywords", [])[:6]:
         for where in locations:
             params = {
                 "app_id": app_id,
@@ -187,11 +222,11 @@ def adzuna_jobs(profile: dict[str, Any], max_days: int, per_query: int) -> list[
                 "category": "it-jobs",
                 "content-type": "application/json",
             }
-            url = "https://api.adzuna.com/v1/api/jobs/gb/search/1?" + urllib.parse.urlencode(params)
+            url = f"https://api.adzuna.com/v1/api/jobs/{country}/search/1?" + urllib.parse.urlencode(params)
             try:
                 payload = fetch_json(url)
             except urllib.error.HTTPError as exc:
-                print(f"Adzuna error for '{keyword}' in '{where}': HTTP {exc.code}", file=sys.stderr)
+                print(f"Adzuna {country} error for '{keyword}' in '{where}': HTTP {exc.code}", file=sys.stderr)
                 continue
             except urllib.error.URLError as exc:
                 print(f"Adzuna network error: {exc.reason}", file=sys.stderr)
@@ -204,21 +239,24 @@ def adzuna_jobs(profile: dict[str, Any], max_days: int, per_query: int) -> list[
                 seen_urls.add(link)
                 salary = ""
                 if item.get("salary_min") or item.get("salary_max"):
-                    salary = f"£{item.get('salary_min', '?')} – £{item.get('salary_max', '?')}"
-                listings.append(
-                    JobListing(
-                        title=item.get("title", "").strip(),
-                        company=item.get("company", {}).get("display_name", "Unknown"),
-                        location=item.get("location", {}).get("display_name", where),
-                        url=link,
-                        source="Adzuna",
-                        description=item.get("description", ""),
-                        salary=salary,
-                        posted=item.get("created", ""),
-                    )
+                    salary = f"{currency}{item.get('salary_min', '?')} – {currency}{item.get('salary_max', '?')}"
+                title = item.get("title", "").strip()
+                description = item.get("description", "")
+                location = item.get("location", {}).get("display_name", where)
+                job = JobListing(
+                    title=title,
+                    company=item.get("company", {}).get("display_name", "Unknown"),
+                    location=location,
+                    url=link,
+                    source=source,
+                    description=description,
+                    salary=salary,
+                    posted=item.get("created", ""),
+                    country=country_label,
                 )
-            time.sleep(0.3)
-
+                job.work_type = detect_work_type(job, profile)
+                listings.append(job)
+            time.sleep(0.25)
     return listings
 
 
@@ -256,8 +294,39 @@ def remoteok_jobs(profile: dict[str, Any]) -> list[JobListing]:
                 description=item.get("description", ""),
                 salary=salary,
                 posted=item.get("date", ""),
+                country="Global",
+                work_type="remote",
             )
         )
+    return listings
+
+
+def arbeitnow_jobs(profile: dict[str, Any]) -> list[JobListing]:
+    listings: list[JobListing] = []
+    try:
+        payload = fetch_json("https://www.arbeitnow.com/api/job-board-api")
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
+        print(f"Arbeitnow error: {exc}", file=sys.stderr)
+        return listings
+
+    dev_terms = ["developer", "engineer", "software", "frontend", "backend", "javascript", "typescript", "react", "node"]
+    for item in payload.get("data", []):
+        blob = normalise(" ".join([item.get("title", ""), item.get("description", ""), " ".join(item.get("tags") or [])]))
+        if not any(term in blob for term in dev_terms):
+            continue
+        job = JobListing(
+            title=str(item.get("title", "")).strip(),
+            company=item.get("company_name", "Unknown"),
+            location=item.get("location") or ("Remote" if item.get("remote") else "Europe"),
+            url=item.get("url") or "",
+            source="Arbeitnow",
+            description=item.get("description", ""),
+            posted="",
+            country="Global" if item.get("remote") else "Europe",
+            work_type="remote" if item.get("remote") else "unknown",
+        )
+        job.work_type = detect_work_type(job, profile)
+        listings.append(job)
     return listings
 
 
@@ -275,15 +344,15 @@ def dedupe_jobs(jobs: list[JobListing]) -> list[JobListing]:
 
 def print_table(jobs: list[JobListing]) -> None:
     if not jobs:
-        print("No matching jobs found. Try widening --max-days or adding Adzuna API keys.")
+        print("No matching jobs found. Try lowering --min-score or changing --work-type.")
         return
 
-    print(f"\nFound {len(jobs)} matching remote jobs (no experience/degree required):\n")
+    print(f"\nFound {len(jobs)} matching jobs (no experience/degree required):\n")
     for index, job in enumerate(jobs, start=1):
         skills = ", ".join(job.matched_skills[:8]) or "—"
         signals = ", ".join(job.friendly_signals[:4]) or "—"
         print(f"{index}. [{job.match_score:>5.1f}] {job.title}")
-        print(f"    {job.company} · {job.location} · {job.source}")
+        print(f"    {job.company} · {job.location} · {job.work_type} · {job.source}")
         if job.salary:
             print(f"    Salary: {job.salary}")
         print(f"    Skills: {skills}")
@@ -301,16 +370,8 @@ def save_csv(path: Path, jobs: list[JobListing]) -> None:
         writer = csv.DictWriter(
             handle,
             fieldnames=[
-                "match_score",
-                "title",
-                "company",
-                "location",
-                "source",
-                "salary",
-                "posted",
-                "matched_skills",
-                "friendly_signals",
-                "url",
+                "match_score", "title", "company", "location", "work_type", "country", "source",
+                "salary", "posted", "matched_skills", "friendly_signals", "url",
             ],
         )
         writer.writeheader()
@@ -329,16 +390,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE, help="Path to cv-profile.json")
     parser.add_argument("--min-score", type=float, default=20.0, help="Minimum match score to include (0-100)")
     parser.add_argument("--max-days", type=int, default=30, help="Adzuna: only jobs posted within this many days")
-    parser.add_argument("--per-query", type=int, default=20, help="Adzuna: results per keyword/location query")
+    parser.add_argument("--per-query", type=int, default=15, help="Adzuna: results per keyword/location query")
     parser.add_argument("--limit", type=int, default=40, help="Maximum jobs to return")
+    parser.add_argument("--work-type", choices=("all", "remote", "hybrid", "local"), default="all", help="Filter by work type")
     parser.add_argument("--format", choices=("table", "json", "csv"), default="table", help="Output format")
     parser.add_argument("--save", type=Path, help="Optional file path to save results (.json or .csv)")
     parser.add_argument("--include-rejected", action="store_true", help="Show filtered-out jobs for debugging")
-    parser.add_argument(
-        "--include-local",
-        action="store_true",
-        help="Also search UK on-site/hybrid jobs via Adzuna (remote-only is the default)",
-    )
     return parser.parse_args()
 
 
@@ -346,24 +403,18 @@ def main() -> int:
     args = parse_args()
     profile = load_profile(args.profile)
 
-    remote_only = not args.include_local
-    sources: list[JobListing] = [remoteok_jobs(profile)]
-    if args.include_local:
-        sources.append(adzuna_jobs(profile, args.max_days, args.per_query))
-    else:
-        print("Remote-only mode (use --include-local to add UK on-site/hybrid via Adzuna).", file=sys.stderr)
-
-    raw_jobs = dedupe_jobs([job for source in sources for job in source])
-    scored = [score_job(job, profile, remote_only=remote_only) for job in raw_jobs]
+    raw_jobs = dedupe_jobs(
+        remoteok_jobs(profile)
+        + arbeitnow_jobs(profile)
+        + adzuna_jobs(profile, "gb", args.max_days, args.per_query)
+        + adzuna_jobs(profile, "ie", args.max_days, args.per_query)
+    )
+    scored = [score_job(job, profile, work_type=args.work_type) for job in raw_jobs]
 
     if args.include_rejected:
         visible = sorted(scored, key=lambda job: job.match_score, reverse=True)
     else:
-        visible = [
-            job
-            for job in scored
-            if not job.rejection_reason and job.match_score >= args.min_score
-        ]
+        visible = [job for job in scored if not job.rejection_reason and job.match_score >= args.min_score]
         visible.sort(key=lambda job: (job.match_score, job.title), reverse=True)
 
     visible = visible[: args.limit]
@@ -381,7 +432,7 @@ def main() -> int:
 
     rejected = sum(1 for job in scored if job.rejection_reason)
     print(
-        f"Checked {len(scored)} listings · kept {len(visible)} · filtered {rejected} for experience/degree requirements",
+        f"Checked {len(scored)} listings · kept {len(visible)} · filtered {rejected}",
         file=sys.stderr,
     )
     return 0

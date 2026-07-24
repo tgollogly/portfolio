@@ -1,15 +1,31 @@
 {
   "name": "Thomas Gollogly",
   "location": "Northern Ireland",
-  "search_locations": [
-    "Northern Ireland",
-    "Belfast",
-    "Newry",
-    "Armagh",
-    "Derry",
-    "UK",
-    "Remote"
-  ],
+  "search_locations": {
+    "gb": [
+      "Northern Ireland",
+      "Belfast",
+      "Newry",
+      "Armagh",
+      "Derry",
+      "London",
+      "Manchester",
+      "Leeds",
+      "Birmingham",
+      "Glasgow",
+      "Edinburgh",
+      "Cardiff",
+      "UK"
+    ],
+    "ie": [
+      "Dublin",
+      "Cork",
+      "Galway",
+      "Limerick",
+      "Belfast",
+      "Ireland"
+    ]
+  },
   "role_keywords": [
     "junior developer",
     "trainee developer",
@@ -21,7 +37,9 @@
     "junior javascript developer",
     "junior full stack developer",
     "software developer trainee",
-    "developer apprentice"
+    "developer apprentice",
+    "junior frontend developer",
+    "junior backend developer"
   ],
   "skills": [
     "javascript",
@@ -64,6 +82,7 @@
     "entry level",
     "entry-level",
     "graduate scheme",
+    "graduate programme",
     "no experience required",
     "no prior experience",
     "no degree required",
@@ -114,7 +133,34 @@
     "wfh",
     "anywhere",
     "distributed",
-    "worldwide"
+    "worldwide",
+    "fully remote"
+  ],
+  "hybrid_terms": [
+    "hybrid",
+    "flexible working",
+    "home/office",
+    "office and home",
+    "partially remote",
+    "blended working"
+  ],
+  "local_location_terms": [
+    "northern ireland",
+    "belfast",
+    "newry",
+    "armagh",
+    "derry",
+    "londonderry",
+    "dublin",
+    "cork",
+    "galway",
+    "limerick",
+    "ireland",
+    "united kingdom",
+    " uk",
+    "england",
+    "scotland",
+    "wales"
   ],
   "developer_title_terms": [
     "developer",
