@@ -1,5 +1,5 @@
 
-name = "portfolio1"
+name = "test"
 main = "server.js"
 compatibility_date = "2026-07-08"
 compatibility_flags = ["nodejs_compat"]
