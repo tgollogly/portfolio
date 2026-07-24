@@ -396,35 +396,42 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     return;
   }
 
-  let rendered="", li=0;
-  function typeCmd(text,done){
+  // `gen` invalidates any in-flight timers from a previous animation run, so
+  // crossing the breakpoint mid-type-out can't leave two overlapping loops
+  // fighting over the same element.
+  let rendered="", li=0, gen=0;
+  function typeCmd(text,done,myGen){
     let i=0;
     (function step(){
+      if(myGen!==gen) return;
       el.innerHTML=rendered+cmdHtml(text.slice(0,i))+cur;
       if(i<=text.length){ i++; setTimeout(step,45); }
       else{ rendered+=cmdHtml(text)+"\n"; done(); }
     })();
   }
-  function next(){
+  function next(myGen){
+    if(myGen!==gen) return;
     if(li>=lines.length){ el.innerHTML=rendered+cur; return; }
     const l=lines[li++];
-    if(l.t==="cmd") typeCmd(l.x,()=>{ el.innerHTML=rendered+cur; setTimeout(next,280); });
-    else{ rendered+=outHtml(l); el.innerHTML=rendered+cur; setTimeout(next,430); }
+    if(l.t==="cmd") typeCmd(l.x,()=>{ if(myGen!==gen)return; el.innerHTML=rendered+cur; setTimeout(()=>next(myGen),280); },myGen);
+    else{ rendered+=outHtml(l); el.innerHTML=rendered+cur; setTimeout(()=>next(myGen),430); }
   }
-  setTimeout(next,500);
+  function startAnim(){
+    const myGen=++gen;
+    rendered=""; li=0;
+    setTimeout(()=>next(myGen),500);
+  }
+  startAnim();
 
-  // Rotating the phone can cross the breakpoint. Re-render the finished
-  // terminal with the right line set rather than leaving it clipped.
+  // Rotating the phone can cross the breakpoint. Restart the animation with
+  // the right line set rather than leaving a stale, clipped render.
   let wasNarrow = narrow();
   addEventListener("resize", () => {
     const isNarrow = narrow();
     if (isNarrow === wasNarrow) return;
     wasNarrow = isNarrow;
     lines = isNarrow ? NARROW : WIDE;
-    el.innerHTML = lines.map(l =>
-      l.t === "cmd" ? cmdHtml(l.x)
-                    : `<span class="${l.t === "ok" ? "ok" : "out"}">${esc(l.x)}</span>`
-    ).join("\n") + cur;
+    startAnim();
   }, { passive: true });
 })();
 </script>

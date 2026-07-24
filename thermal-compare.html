@@ -86,6 +86,7 @@ const presets=["Madrid","Cairo","Bangkok","London","Reykjavik"];
 const chips=document.getElementById("chips");
 presets.forEach(p=>{const c=document.createElement("span");c.className="chip";c.textContent="+ "+p;c.onclick=()=>add(p);chips.appendChild(c);});
 let items=[];
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function colorFor(t){if(t>=42)return"var(--err)";if(t>=36)return"var(--c-xcaution)";if(t>=30)return"var(--warn)";if(t>=20)return"var(--accent)";return"var(--c-cool)";}
 async function add(name){
   name=(name||document.getElementById("q").value).trim();if(!name)return;
@@ -109,9 +110,9 @@ function render(){
   const max=ready.length?Math.max(...ready.map(i=>i.feels),40):40;
   const sorted=[...items].sort((a,b)=>(b.feels??-99)-(a.feels??-99));
   box.innerHTML=sorted.map(i=>{
-    if(i.loading)return `<div class="row"><span class="loader"></span>Loading ${i.name}…</div>`;
+    if(i.loading)return `<div class="row"><span class="loader"></span>Loading ${esc(i.name)}…</div>`;
     const col=colorFor(i.feels), pct=Math.max(4,Math.min(100,(i.feels/max)*100));
-    return `<div class="row"><div class="rt"><div><div class="name">${i.name} <span class="cc">${i.cc}</span></div></div>
+    return `<div class="row"><div class="rt"><div><div class="name">${esc(i.name)} <span class="cc">${esc(i.cc)}</span></div></div>
       <div style="display:flex;align-items:baseline;gap:12px;"><span class="feels" style="color:${col}">${Math.round(i.feels)}&deg;C</span>
       <button class="rm" onclick="remove(${i.id})" title="Remove">&times;</button></div></div>
       <div class="bar"><span style="width:${pct}%;background:${col}"></span></div>

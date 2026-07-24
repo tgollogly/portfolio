@@ -116,6 +116,8 @@ function loadExample(which){
   FIELDS.forEach(([k])=>{document.getElementById("p_"+k).value=e.prior[k];document.getElementById("l_"+k).value=e.latest[k];});
   compute();
 }
+// The lede promises the score updates as you type, so recompute on every edit.
+tbody.addEventListener("input",compute);
 function g(pfx,k){return parseFloat(document.getElementById(pfx+"_"+k).value)||0;}
 function compute(){
   const p={},l={};
