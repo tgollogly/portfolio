@@ -66,15 +66,17 @@ export default {
 
 async function handleJobs(request, env) {
   const profile = await loadJobProfile(request, env);
-  const [remoteOk, adzunaGb, adzunaIe, arbeitnow] = await Promise.all([
+  const [remoteOk, devItUk, adzunaGb, adzunaIe, arbeitnow] = await Promise.all([
     fetchRemoteOkJobs(),
+    fetchDevItJobsUk(),
     fetchAdzunaJobs(env, profile, "gb"),
     fetchAdzunaJobs(env, profile, "ie"),
     fetchArbeitnowJobs()
   ]);
-  const jobs = dedupeNormalizedJobs([...remoteOk, ...adzunaGb, ...adzunaIe, ...arbeitnow]);
+  const jobs = dedupeNormalizedJobs([...remoteOk, ...devItUk, ...adzunaGb, ...adzunaIe, ...arbeitnow]);
   const sources = [];
   if (remoteOk.length) sources.push("RemoteOK");
+  if (devItUk.length) sources.push("DevITjobs UK");
   if (adzunaGb.length) sources.push("Adzuna UK");
   if (adzunaIe.length) sources.push("Adzuna Ireland");
   if (arbeitnow.length) sources.push("Arbeitnow");
@@ -219,6 +221,50 @@ async function fetchArbeitnowJobs() {
         posted: item.created_at ? new Date(item.created_at * 1000).toISOString().slice(0, 10) : "",
         workType: item.remote ? "remote" : detectWorkTypeFromText(item.title, item.description, item.location, "Arbeitnow", false)
       }));
+  } catch {
+    return [];
+  }
+}
+
+function extractXmlCdata(block, tag) {
+  const re = new RegExp(`<${tag}><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`, "i");
+  const match = block.match(re);
+  return match ? match[1] : "";
+}
+
+function stripHtml(html) {
+  return String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+async function fetchDevItJobsUk() {
+  try {
+    const response = await fetch("https://devitjobs.uk/job_feed.xml", {
+      headers: { "User-Agent": "tgollogly-job-finder/1.0 (+https://tgollogly.dev)" }
+    });
+    if (!response.ok) return [];
+    const xml = await response.text();
+    const devTerms = ["developer", "engineer", "software", "javascript", "typescript", "react", "node", "web", ".net", "python"];
+    return xml.split(/<job\s+/).slice(1).flatMap((block) => {
+      const title = extractXmlCdata(block, "title") || extractXmlCdata(block, "name");
+      const description = stripHtml(extractXmlCdata(block, "description"));
+      const blob = normaliseJobText([title, description].join(" "));
+      if (!title || !devTerms.some((term) => blob.includes(term))) return [];
+      const location = extractXmlCdata(block, "location") || extractXmlCdata(block, "city");
+      const region = extractXmlCdata(block, "region");
+      const fullLocation = [location, region].filter(Boolean).join(", ") || "UK";
+      return [{
+        title: title.trim(),
+        company: extractXmlCdata(block, "company") || extractXmlCdata(block, "company-name") || "Unknown",
+        location: fullLocation,
+        country: extractXmlCdata(block, "country") || "UK",
+        url: extractXmlCdata(block, "url") || extractXmlCdata(block, "link"),
+        source: "DevITjobs UK",
+        description,
+        salary: extractXmlCdata(block, "salary"),
+        posted: extractXmlCdata(block, "pubdate"),
+        workType: detectWorkTypeFromText(title, description, fullLocation, "DevITjobs", false)
+      }];
+    });
   } catch {
     return [];
   }
