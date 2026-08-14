@@ -120,7 +120,15 @@
       });
       var d = await r.json();
       t.remove();
-      var reply = d.reply || d.error || "Sorry, I couldn't answer that.";
+      var reply = d.reply;
+      if (!reply && d.error) {
+        if (/not configured|no api key|GEMINI_API_KEY/i.test(d.error)) {
+          reply = "The AI assistant isn't connected right now. Please email Thomas at thomas@tgollogly.dev.";
+        } else {
+          reply = d.error;
+        }
+      }
+      reply = reply || "Sorry, I couldn't answer that just now. Please email Thomas at thomas@tgollogly.dev.";
       add(reply, "bot");
       history.push({ role: "assistant", text: reply });
     } catch (e) {

@@ -55,10 +55,11 @@ export default {
       if (request.method === "GET") return handleJobs(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
-    if (url.pathname === "/api") {
+    if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
-      if (request.method === "POST") return handleAI(request, env);
-      return new Response("POST only", { status: 405, headers: cors() });
+      if (url.pathname === "/api/health" && request.method === "GET") return handleAIHealth(env);
+      if (url.pathname === "/api" && request.method === "POST") return handleAI(request, env);
+      return new Response(url.pathname === "/api/health" ? "GET only" : "POST only", { status: 405, headers: cors() });
     }
     if (path.endsWith(".pkpass")) {
       const asset = await env.ASSETS.fetch(request);
@@ -436,9 +437,23 @@ async function fetchDevItJobsUk() {
 
 async function getSecret(env, name) {
   const value = env[name];
-  if (!value) return null;
-  if (typeof value === "string") return value;
-  if (typeof value.get === "function") return await value.get();
+  if (value == null) return null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (typeof value === "object" && typeof value.get === "function") {
+    try {
+      const resolved = await value.get();
+      if (typeof resolved === "string") {
+        const trimmed = resolved.trim();
+        return trimmed || null;
+      }
+      return resolved || null;
+    } catch {
+      return null;
+    }
+  }
   return null;
 }
 
@@ -477,14 +492,29 @@ function jobFinderUnauthorized() {
 //  - classic secret / env var  -> env.GEMINI_API_KEY is a string
 //  - Secrets Store binding     -> env.GEMINI_API_KEY.get() returns the value
 async function getKey(env) {
-  return getSecret(env, "GEMINI_API_KEY");
+  for (const name of ["GEMINI_API_KEY", "GOOGLE_API_KEY"]) {
+    const key = await getSecret(env, name);
+    if (key) return key;
+  }
+  return null;
+}
+
+const NO_AI_KEY_CHAT_REPLY =
+  "The AI assistant isn't connected right now. Please email Thomas at thomas@tgollogly.dev and he'll get back to you.";
+
+async function handleAIHealth(env) {
+  const key = await getKey(env);
+  return json({ ok: true, aiConfigured: !!key });
 }
 
 async function handleAI(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Bad JSON" }, 400); }
   const key = await getKey(env);
-  if (!key) return json({ error: "Server not configured (no API key)" }, 500);
+  if (!key) {
+    if (body.mode === "chat") return json({ reply: NO_AI_KEY_CHAT_REPLY });
+    return json({ error: "AI backend not configured. Set GEMINI_API_KEY in Cloudflare Pages → Settings → Variables and Secrets (Production)." }, 503);
+  }
   try {
     if (body.mode === "chat") {
       const msg = (body.message || "").slice(0, 2000);

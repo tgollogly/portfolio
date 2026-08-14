@@ -4,6 +4,11 @@ main = "server.js"
 compatibility_date = "2026-07-08"
 compatibility_flags = ["nodejs_compat"]
 
+# AI chat + ATS matcher need GEMINI_API_KEY set as an encrypted secret:
+#   Cloudflare dashboard → Workers & Pages → portfolio1 → Settings →
+#   Variables and Secrets → Add → Secret → name: GEMINI_API_KEY
+# Or locally: copy .dev.vars.example to .dev.vars and run `npx wrangler dev`
+
 [assets]
 directory = "."
 binding = "ASSETS"

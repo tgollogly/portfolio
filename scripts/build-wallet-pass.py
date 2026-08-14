@@ -158,11 +158,17 @@ def build_pass_json(contact: dict) -> dict:
                     "label": "EMAIL",
                     "value": contact["email"],
                 },
-                {
-                    "key": "phone",
-                    "label": "PHONE",
-                    "value": contact["phone_display"],
-                },
+                *(
+                    [
+                        {
+                            "key": "phone",
+                            "label": "PHONE",
+                            "value": contact["phone_display"],
+                        }
+                    ]
+                    if contact.get("phone_display")
+                    else []
+                ),
             ],
             "backFields": [
                 {

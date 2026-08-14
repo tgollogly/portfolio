@@ -43,6 +43,14 @@ Each project is a **real, deployed application** — not a mockup. Case studies 
 
 The chatbot and ATS Matcher call a small serverless backend (`server.js`) that reads a Google Gemini API key from an **encrypted secret** (`GEMINI_API_KEY`) set in Cloudflare. The key is **never** committed to this repo.
 
+**If chat says the AI isn't connected**, the worker is running but `GEMINI_API_KEY` is missing from Cloudflare:
+
+1. Open [Cloudflare dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **portfolio1** → **Settings** → **Variables and Secrets**
+2. **Add** → **Secret** → name: `GEMINI_API_KEY` → paste your [Google AI Studio](https://aistudio.google.com/apikey) key
+3. Set it for **Production** (and Preview if you use preview deploys), then redeploy
+
+**Local testing:** copy `.dev.vars.example` to `.dev.vars`, add your key, then run `npx wrangler dev` and open `http://localhost:8787`. Check status at `/api/health` (`{"ok":true,"aiConfigured":true}` when the key is loaded).
+
 ---
 
 ## 📂 Structure
