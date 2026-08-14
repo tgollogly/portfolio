@@ -1,13 +1,8 @@
 {
-  "name": "Thomas Gollogly",
-  "location": "Northern Ireland",
   "search_locations": {
     "gb": [
       "Northern Ireland",
       "Belfast",
-      "Newry",
-      "Armagh",
-      "Derry",
       "London",
       "Manchester",
       "Leeds",
@@ -147,10 +142,6 @@
   "local_location_terms": [
     "northern ireland",
     "belfast",
-    "newry",
-    "armagh",
-    "derry",
-    "londonderry",
     "dublin",
     "cork",
     "galway",
