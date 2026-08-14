@@ -9,6 +9,7 @@
 [![Email](https://img.shields.io/badge/Email-thomas@tgollogly.dev-2f39c9?style=for-the-badge&logo=maildotru&logoColor=white)](mailto:thomas@tgollogly.dev)
 [![GitHub](https://img.shields.io/badge/GitHub-tgollogly%2Fportfolio-2f39c9?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tgollogly/portfolio)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Thomas_Gollogly-2f39c9?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thomasgollogly)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2f39c9?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -86,6 +87,13 @@ The chatbot and ATS Matcher call a small serverless backend (`server.js`) that r
 ## 📝 Notes
 
 Demos are for demonstration only and are not legal, financial or professional advice. AI features send entered text to Google's Gemini API to generate a response; that text is not stored by the site. The site uses no tracking cookies.
+
+## ⚖️ Disclaimer
+
+This repository and the live site at [tgollogly.dev](https://tgollogly.dev) are a **personal portfolio**. The demos — including the AI assistant, ATS matcher, Beneish screener, BundleBuilder and Heat Anomaly Detector — are for **demonstration only** and must not be relied on for legal, financial, medical, career or other professional decisions.
+
+- **Privacy & AI:** see [privacy.html](privacy.html) on the live site (also in this repo).
+- **Licence:** [MIT License](LICENSE) — Copyright (c) 2026 Thomas Gollogly.
 
 ---
 
