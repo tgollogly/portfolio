@@ -79,7 +79,7 @@
 <div class="wrap head">
   <span class="eyebrow">Demo 01 &middot; AI &amp; full-stack</span>
   <h1>AI ATS Resume Matcher</h1>
-  <p>Nearly 60% of job seekers say their biggest worry is never knowing if a human saw their CV — because software screens most applications first. Paste your CV and a job description: the AI scores the match, shows the missing keywords, and — with one click — generates a tailored cover letter and an improved CV you can download. Built by Thomas Gollogly.</p>
+  <p>Nearly 60% of job seekers say their biggest worry is never knowing if a human saw their CV — because software screens most applications first. Paste your CV and a job description: the AI scores the match, shows the missing keywords, and — with one click — generates a tailored cover letter and an improved CV you can download.</p>
 
   <div class="grid">
     <div class="field"><label>Your CV</label><textarea id="cv"></textarea></div>
@@ -145,12 +145,12 @@
   .gentext{padding:18px;white-space:pre-wrap;font-size:14.5px;line-height:1.6;color:var(--ink);max-height:520px;overflow:auto;}
 </style>
 <script>
-// Pre-fill Thomas's CV so the tool is usable immediately
+// Sample CV text so the tool is usable immediately (generic — no personal details)
 document.getElementById("cv").value = `Alex Developer — Software Developer
-Self-taught developer who builds and ships real, working web applications end to end, fluent with AI-assisted development. Background in customer service, administration and research.
-Skills: JavaScript, TypeScript, HTML, CSS, React, SQL/SQLite, WebAssembly, Cloudflare Workers (serverless), REST/JSON APIs, LLM API integration (Gemini), public APIs, MapLibre 3D maps, unit testing, input validation, CSV import/export, client-side applications, asynchronous data loading, Python, Git/GitHub, CI/CD, AI-assisted development.
-Projects: AI ATS Resume Matcher (full-stack AI tool with a secure serverless backend); BOM Desk (React data-administration console, eight live validation rules, CSV import/export, audit log); SQL Lab (SQLite compiled to WebAssembly, five-table schema, free-form query editor); Test Bench (TypeScript validation library with a 28-case unit test suite); Heat Anomaly Detector (live weather-risk dashboard, 3D map, radar); Beneish M-Score Screener (in-browser forensic-accounting model); Thermal Compare (multi-location live weather, async loading); BundleBuilder (court-bundle structure generator).
-Education: 6 GCSEs incl. Maths & English.`;
+Self-taught developer who builds and ships real, working web applications end to end.
+Skills: JavaScript, TypeScript, HTML, CSS, React, SQL/SQLite, WebAssembly, Cloudflare Workers, REST/JSON APIs, unit testing, CSV import/export, Python, Git, CI/CD.
+Projects: AI resume matcher (full-stack with serverless backend); data admin console with validation rules; SQLite in the browser; TypeScript validation library with unit tests; live weather dashboard; forensic accounting screener; multi-location weather compare; document bundle generator.
+Education: Relevant qualifications and training.`;
 
 const $=id=>document.getElementById(id);
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -298,6 +298,7 @@ $("dlBtn").addEventListener("click",()=>{
 
 
 <script src="config.js"></script>
+<script src="assets/privacy.js"></script>
 <script src="assets/chat.js" defer></script>
 </body>
 </html>

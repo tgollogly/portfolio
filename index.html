@@ -280,8 +280,8 @@
 const CONTACT_EMAIL = "thomas@tgollogly.dev";       // your email
 const PHONE         = "";            // hidden
 const LOCATION      = "Northern Ireland";
-const GITHUB_URL    = "https://github.com/tgollogly/portfolio";
-const LINKEDIN_URL  = "https://www.linkedin.com/in/thomasgollogly";
+const GITHUB_URL    = "";
+const LINKEDIN_URL  = "";
 
 const PROJECTS = [
   { n:"01", title:"AI ATS Resume Matcher", live:true,
@@ -345,7 +345,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   // narrow set says the same thing in ~32 characters.
   const WIDE=[
     {t:"cmd",x:"whoami"},
-    {t:"out",x:"Thomas Gollogly — self-taught developer"},
+    {t:"out",x:"Self-taught developer"},
     {t:"cmd",x:"cat stack.txt"},
     {t:"out",x:"JavaScript · TypeScript · React"},
     {t:"out",x:"Node.js · SQL · Python"},
@@ -364,8 +364,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   ];
   const NARROW=[
     {t:"cmd",x:"whoami"},
-    {t:"out",x:"Thomas Gollogly"},
-    {t:"out",x:"self-taught developer"},
+    {t:"out",x:"Self-taught developer"},
     {t:"cmd",x:"cat stack.txt"},
     {t:"out",x:"JavaScript · TypeScript"},
     {t:"out",x:"React · SQL · Node.js · Python"},
@@ -436,6 +435,7 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 })();
 </script>
 <script src="config.js"></script>
+<script src="assets/privacy.js"></script>
 <script src="assets/chat.js" defer></script>
 </body>
 </html>
