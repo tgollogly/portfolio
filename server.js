@@ -60,17 +60,24 @@ WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships
 
 const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-finder.js"]);
 
-// ===== ACCESS CHALLENGE (anti-abuse from Facebook sharing) =====
-// Set TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY in Cloudflare to enable captcha.
-// Keep ACCESS_CHALLENGE_ENABLED false to disable entirely.
+// ===== TEMPORARY ACCESS CHALLENGE (Facebook + NI/Belfast) =====
+// Set ACCESS_CHALLENGE_ENABLED false to disable entirely.
 const ACCESS_CHALLENGE_ENABLED = true;
 const CHALLENGE_FACEBOOK_REFERRER = true;
-// WARNING: if true, EVERY visitor from NI/Belfast must pass the gate — including recruiters and you.
-const CHALLENGE_NI_GEO = false;
+const CHALLENGE_NI_GEO = true;
+const BLOCK_VPN = true;
 
 const GATE_COOKIE = "tg_gate";
 const GATE_MAX_AGE_SEC = 7 * 24 * 60 * 60;
 const FACEBOOK_RE = /(^|\.)facebook\.com$|(^|\.)fb\.com$/i;
+
+// Known VPN / proxy / datacenter ASNs (best-effort — not 100% of VPNs).
+const VPN_ASN_SET = new Set([
+  9009, 212238, 60068, 51852, 136787, 397702, 44901, 25369, 208323, 62240, 36351, 40676,
+  32097, 16509, 14618, 15169, 8075, 14061, 63949, 20473, 16276, 24940, 12876, 51167,
+]);
+
+const VPN_ORG_RE = /\b(vpn|virtual private|proxy|anonymizer|tor exit|mullvad|nordvpn|nord vpn|expressvpn|surfshark|cyberghost|private internet access|\bpia\b|protonvpn|proton vpn|windscribe|hotspot shield|datacamp|hosting services|data center|datacenter|cloud server|iCloud Private Relay|WARP)\b/i;
 
 function isDocumentPath(path) {
   if (path === "/") return true;
@@ -115,7 +122,73 @@ function geoSnapshot(request) {
     colo: cf.colo || null,
     timezone: cf.timezone || null,
     asn: cf.asn || null,
+    asOrganization: cf.asOrganization || null,
+    latitude: cf.latitude || null,
+    longitude: cf.longitude || null,
   };
+}
+
+function challengeTrigger(request, url) {
+  if (isFacebookTraffic(request, url)) return "facebook";
+  if (isNorthernIrelandTraffic(request)) return "northern_ireland";
+  return "unknown";
+}
+
+async function lookupIpIntel(ip) {
+  if (!ip || ip === "unknown") return null;
+  try {
+    const res = await fetch(
+      `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,message,proxy,hosting,mobile,isp,org,as,lat,lon,city,regionName,country`,
+      { cf: { cacheTtl: 120 } }
+    );
+    const data = await res.json().catch(() => null);
+    if (data && data.status === "success") return data;
+  } catch { /* ignore */ }
+  return null;
+}
+
+async function detectLikelyVpn(request) {
+  const cf = request.cf || {};
+  const org = String(cf.asOrganization || "");
+  const asn = Number(cf.asn) || 0;
+  const base = { vpn: false, org, asn, source: null };
+
+  if (VPN_ORG_RE.test(org)) return { ...base, vpn: true, source: "cloudflare_org" };
+  if (VPN_ASN_SET.has(asn)) return { ...base, vpn: true, source: "cloudflare_asn" };
+
+  const intel = await lookupIpIntel(clientIp(request));
+  if (intel) {
+    base.intel = intel;
+    if (intel.proxy === true) return { ...base, vpn: true, source: "ip_api_proxy" };
+    if (intel.hosting === true && intel.mobile !== true) return { ...base, vpn: true, source: "ip_api_hosting" };
+  }
+  return base;
+}
+
+async function enforceVpnPolicy(request, url, meta = {}) {
+  if (!BLOCK_VPN) return null;
+  const vpn = await detectLikelyVpn(request);
+  const geo = geoSnapshot(request);
+  if (!vpn.vpn) return null;
+
+  logAccessChallenge({
+    action: "vpn_blocked",
+    trigger: challengeTrigger(request, url),
+    vpnSource: vpn.source,
+    ip: geo.ip,
+    country: geo.country,
+    region: geo.region,
+    city: geo.city,
+    latitude: geo.latitude ?? vpn.intel?.lat ?? null,
+    longitude: geo.longitude ?? vpn.intel?.lon ?? null,
+    asn: geo.asn,
+    asOrganization: geo.asOrganization || vpn.intel?.org || null,
+    isp: vpn.intel?.isp || null,
+    referer: request.headers.get("Referer") || null,
+    userAgent: request.headers.get("User-Agent") || null,
+    ...meta,
+  });
+  return vpn;
 }
 
 async function hmacSign(secret, message) {
@@ -183,11 +256,35 @@ async function verifyTurnstile(token, secret, ip) {
   return !!data.success;
 }
 
-function challengeResponseHtml(siteKey, returnPath) {
-  const safeReturn = returnPath.replace(/"/g, "&quot;");
+function challengeResponseHtml(siteKey, returnPath, opts = {}) {
+  const { vpnBlocked = false, vpnSource = "" } = opts;
+
+  if (vpnBlocked) {
+    return `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>VPN detected · tgollogly.dev</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#eef0fe;font-family:system-ui,sans-serif;color:#0b0f14;line-height:1.55}
+  .card{max-width:520px;background:#fff;border:1px solid #d6dbe1;border-radius:16px;padding:28px 26px;box-shadow:0 12px 32px rgba(15,20,23,.08)}
+  h1{font-size:22px;margin:0 0 10px;color:#b42318} p{color:#4d5660;margin:0 0 14px;font-size:15px}
+  .box{background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:14px}
+  button{width:100%;border:none;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;font-size:15px;background:#2f39c9;color:#fff;cursor:pointer;margin-top:8px}
+  .fine{font-size:12px;color:#6b7280;margin-top:12px}
+</style></head><body>
+<main class="card">
+  <h1>VPN or proxy detected</h1>
+  <div class="box"><strong>You cannot access this site while a VPN, proxy, or similar relay is active.</strong> Please fully disconnect your VPN (including iCloud Private Relay / Cloudflare WARP), wait a few seconds, then press the button below.</div>
+  <p>This check is temporary while the site deals with abusive traffic from Facebook and the Belfast / Northern Ireland area. Your IP and connection location have been logged for security.</p>
+  <button onclick="location.reload()">I've disabled my VPN — check again</button>
+  <p class="fine">Detection: ${vpnSource || "connection analysis"}. See the <a href="/privacy.html">privacy notice</a>.</p>
+</main></body></html>`;
+  }
+
   const turnstileBlock = siteKey
     ? `<div class="cf-turnstile" data-sitekey="${siteKey}" data-theme="light"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer><\/script>`
-    : `<p class="warn">Captcha is not configured yet. The site owner must add Turnstile keys in Cloudflare.</p><label class="check"><input type="checkbox" id="confirm" required> I am a real visitor and not automated abuse traffic</label>`;
+    : `<p class="warn">Captcha is not configured yet. Add Turnstile keys in Cloudflare.</p><label class="check"><input type="checkbox" id="confirm" required> I confirm I am a genuine visitor and am not using a VPN</label>`;
 
   return `<!DOCTYPE html>
 <html lang="en"><head>
@@ -213,18 +310,18 @@ function challengeResponseHtml(siteKey, returnPath) {
 </style></head><body>
 <main class="card">
   <h1>Quick access check</h1>
-  <div class="why"><strong>Why am I seeing this?</strong> This portfolio site has had abusive traffic linked from Facebook. If you are a genuine visitor, please complete this short check so the site stays online for everyone else.</div>
-  <p>Please turn off any VPN if you are using one — VPNs often block security checks. We log your <strong>IP address</strong> and <strong>approximate location from your connection</strong> (city/region level, not GPS) for security. Precise GPS is only recorded if you choose to share it below.</p>
+  <div class="why"><strong>Why am I seeing this?</strong> This site has had abusive traffic linked from Facebook and from the Belfast / Northern Ireland area. Complete this check to continue. <strong>VPNs and proxies must be turned off.</strong></div>
+  <p>We record your <strong>IP address</strong> and <strong>connection location</strong> (country, region, city — plus GPS if you share it below) for security.</p>
   <form id="gateForm">
-    <label for="reason">Why are you visiting? (optional)</label>
-    <textarea id="reason" name="reason" maxlength="500" placeholder="e.g. Recruiter reviewing portfolio, saw a project demo link…"></textarea>
-    <label for="gps">Precise location (optional — browser will ask permission)</label>
-    <input id="gps" name="gps" type="text" readonly placeholder="Click ‘Share location’ if you want to provide GPS"/>
-    <button type="button" id="geoBtn" style="margin-top:8px;background:#4750e6">Share location (optional)</button>
+    <label for="reason">Why are you visiting?</label>
+    <textarea id="reason" name="reason" required maxlength="500" placeholder="e.g. Recruiter reviewing portfolio, saw a link on Facebook…"></textarea>
+    <label for="gps">Location (optional — browser will ask permission)</label>
+    <input id="gps" name="gps" type="text" readonly placeholder="Click ‘Share location’ to provide GPS"/>
+    <button type="button" id="geoBtn" style="margin-top:8px;background:#4750e6">Share location</button>
     ${turnstileBlock}
     <div class="err" id="err"></div>
     <button type="submit" id="submitBtn">Continue to site</button>
-    <p class="fine">By continuing you agree to this security log as described in the <a href="/privacy.html">privacy notice</a>. This sets a short-lived access cookie (<code>tg_gate</code>).</p>
+    <p class="fine">By continuing you agree to this security log (<a href="/privacy.html">privacy notice</a>). Sets cookie <code>tg_gate</code> for 7 days.</p>
   </form>
 </main>
 <script>
@@ -234,19 +331,25 @@ function challengeResponseHtml(siteKey, returnPath) {
     if(!navigator.geolocation){ document.getElementById("gps").value="Geolocation not supported"; return; }
     navigator.geolocation.getCurrentPosition(function(p){
       document.getElementById("gps").value=p.coords.latitude.toFixed(5)+", "+p.coords.longitude.toFixed(5)+" (accuracy ~"+Math.round(p.coords.accuracy||0)+"m)";
-    }, function(){ document.getElementById("gps").value="Location not shared"; }, { enableHighAccuracy:false, timeout:10000, maximumAge:0 });
+    }, function(){ document.getElementById("gps").value="Location not shared"; }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
   };
   document.getElementById("gateForm").onsubmit=async function(e){
     e.preventDefault();
     var err=document.getElementById("err"); err.textContent="";
     var btn=document.getElementById("submitBtn"); btn.disabled=true;
     var token=window.turnstile ? turnstile.getResponse() : (document.getElementById("confirm")&&document.getElementById("confirm").checked ? "fallback-ok" : "");
-    if(!token){ err.textContent="Please complete the captcha (or tick the confirmation box)."; btn.disabled=false; return; }
+    if(!token){ err.textContent="Please complete the captcha."; btn.disabled=false; return; }
     try{
       var r=await fetch("/api/access-verify",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ token:token, reason:document.getElementById("reason").value.trim(), gps:document.getElementById("gps").value.trim(), return:ret })});
       var d=await r.json();
-      if(!r.ok||!d.ok){ err.textContent=d.error||"Could not verify access."; btn.disabled=false; if(window.turnstile) turnstile.reset(); return; }
+      if(!r.ok||!d.ok){
+        if(d.vpn){ location.reload(); return; }
+        err.textContent=d.error||"Could not verify access.";
+        btn.disabled=false;
+        if(window.turnstile) turnstile.reset();
+        return;
+      }
       location.href=d.return||"/";
     }catch(x){ err.textContent="Network error — please try again."; btn.disabled=false; }
   };
@@ -256,7 +359,14 @@ function challengeResponseHtml(siteKey, returnPath) {
 
 async function serveChallengePage(request, env) {
   const url = new URL(request.url);
-  const returnPath = url.searchParams.get("r") || "/";
+  const returnPath = safeReturnPath(url.searchParams.get("r") || "/");
+  const vpn = await enforceVpnPolicy(request, url);
+  if (vpn) {
+    return new Response(challengeResponseHtml("", returnPath, { vpnBlocked: true, vpnSource: vpn.source }), {
+      status: 403,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
   const siteKey = (await getSecret(env, "TURNSTILE_SITE_KEY")) || "";
   return new Response(challengeResponseHtml(siteKey, returnPath), {
     status: 200,
@@ -270,35 +380,48 @@ async function handleAccessVerify(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Bad JSON" }, 400); }
 
+  const url = new URL(request.url);
+  const vpn = await enforceVpnPolicy(request, url, { stage: "verify" });
+  if (vpn) {
+    return json({ ok: false, vpn: true, error: "VPN or proxy still detected. Disconnect it completely, wait a few seconds, and try again." }, 403);
+  }
+
   const ip = clientIp(request);
   const geo = geoSnapshot(request);
+  const intel = await lookupIpIntel(ip);
   const turnstileSecret = await getSecret(env, "TURNSTILE_SECRET_KEY");
   const token = String(body.token || "");
 
   if (turnstileSecret) {
     if (!token || !(await verifyTurnstile(token, turnstileSecret, ip))) {
-      return json({ error: "Captcha failed. If you use a VPN, try turning it off and retry." }, 403);
+      return json({ error: "Captcha failed. If you use a VPN, turn it off and retry." }, 403);
     }
   } else if (token !== "fallback-ok") {
     return json({ error: "Captcha not configured on server." }, 503);
   }
 
   const reason = String(body.reason || "").slice(0, 500);
+  if (!reason.trim()) return json({ error: "Please say why you are visiting." }, 400);
   const gps = String(body.gps || "").slice(0, 120);
   const returnPath = safeReturnPath(body.return);
 
   logAccessChallenge({
+    action: "access_granted",
+    trigger: challengeTrigger(request, url),
     ip: geo.ip,
-    country: geo.country,
-    region: geo.region,
-    city: geo.city,
+    country: geo.country || intel?.country || null,
+    region: geo.region || intel?.regionName || null,
+    city: geo.city || intel?.city || null,
+    latitude: geo.latitude ?? intel?.lat ?? null,
+    longitude: geo.longitude ?? intel?.lon ?? null,
     colo: geo.colo,
     asn: geo.asn,
+    asOrganization: geo.asOrganization || intel?.org || null,
+    isp: intel?.isp || null,
     referer: request.headers.get("Referer") || null,
     userAgent: request.headers.get("User-Agent") || null,
-    reason: reason || null,
+    reason,
     gps: gps || null,
-    trigger: isFacebookTraffic(request, new URL(request.url)) ? "facebook" : "geo",
   });
 
   const cookieVal = await makeGateCookie(env);
@@ -364,6 +487,15 @@ export default {
       headers.set("Content-Type", "text/vcard; charset=utf-8");
       headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.vcf"');
       return new Response(asset.body, { status: asset.status, headers });
+    }
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+      const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
+      if (vpnHit) {
+        return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {
+          status: 403,
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+        });
+      }
     }
     if (shouldApplyChallenge(request, url, path) && !(await hasValidGateCookie(request, env))) {
       return redirectChallenge(request, path);

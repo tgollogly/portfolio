@@ -51,11 +51,11 @@
 
   <h2>Cookies and tracking</h2>
   <p>Under normal browsing this site sets <strong>no analytics cookies</strong> and does not use visitor tracking pixels.</p>
-  <p>If you arrive from Facebook (or, when enabled by the site owner, from certain regions) you may see a short <strong>access check</strong> first. When you pass that check, the site sets one functional cookie:</p>
+  <p>If you arrive from Facebook or from the Belfast / Northern Ireland area you may see a short <strong>access check</strong> first. VPNs, proxies and similar relays are blocked until disconnected. When you pass the check, the site sets one functional cookie:</p>
   <ul>
     <li><strong><code>tg_gate</code></strong> &mdash; proves you passed the access check. HttpOnly, about 7 days, then it expires. Required to continue browsing after the check.</li>
   </ul>
-  <p>That check uses <a href="https://www.cloudflare.com/products/turnstile/" rel="noopener">Cloudflare Turnstile</a> (captcha) when configured. The server may log your IP address, approximate connection location (country/region/city from Cloudflare &mdash; not GPS unless you choose to share it), browser user-agent, referer, and any optional reason you type. Logs are kept for site security only and are visible to the site owner in Cloudflare; they are not sold or used for advertising.</p>
+  <p>That check uses <a href="https://www.cloudflare.com/products/turnstile/" rel="noopener">Cloudflare Turnstile</a> (captcha) when configured. The server logs your IP address, approximate connection location (country/region/city from Cloudflare and ip-api.com), ISP/network name, browser user-agent, referer, optional reason you type, and optional GPS if you choose to share it. VPN/proxy connections are blocked and also logged. Logs are kept for site security only and are visible to the site owner in Cloudflare; they are not sold or used for advertising.</p>
   <p>Most demos still do not write to local storage. There is no tag manager and no advertising pixel.</p>
 
   <h2>What the demos do with what you type</h2>
