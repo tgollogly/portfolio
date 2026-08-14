@@ -65,6 +65,9 @@
       input = panel.querySelector("#chatInput"),
       send = panel.querySelector("#chatSend");
   var history = [], greeted = false;
+  var maintenance = !!window.CHAT_MAINTENANCE_MODE;
+  var maintenanceMsg = window.CHAT_MAINTENANCE_MESSAGE ||
+    "Hey — thanks for stopping by! I'm doing some backend updates right now and will be back online soon. Email me at thomas@tgollogly.dev in the meantime.";
 
   function add(text, who) {
     var d = document.createElement("div");
@@ -77,7 +80,17 @@
   function greet() {
     if (greeted) return;
     greeted = true;
+    if (maintenance) {
+      add(maintenanceMsg, "bot");
+      return;
+    }
     add("Hi! I'm Thomas's AI assistant. Ask about his skills, projects or how to get in touch. (I use AI \u2014 your messages go to Google's Gemini API and aren't stored here; please don't share anything confidential.)", "bot");
+  }
+
+  if (maintenance) {
+    var headNote = panel.querySelector(".chat-head span");
+    if (headNote) headNote.textContent = "Back soon \u00b7 email me in the meantime";
+    input.placeholder = "AI paused — email thomas@tgollogly.dev";
   }
 
   btn.onclick = function () {
@@ -103,6 +116,10 @@
     add(msg, "user");
     history.push({ role: "user", text: msg });
     input.value = "";
+    if (maintenance) {
+      add("The AI assistant is paused while I finish some backend updates. Email me at thomas@tgollogly.dev and I'll get back to you.", "bot");
+      return;
+    }
     if (!window.AI_BACKEND_URL) {
       add("Chat isn't switched on just now \u2014 please email Thomas at thomas@tgollogly.dev.", "bot");
       return;
