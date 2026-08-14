@@ -7,47 +7,6 @@
 // =====================================================================
 const MODEL = "gemini-3.5-flash"; // current free model (2.0 was retired June 2026); fallback: "gemini-flash-latest"
 
-// Keep in sync with PRIVACY_MODE in config.js — set both to false to restore personal details.
-const PRIVACY_MODE = true;
-
-const WORK_EMAIL = "thomas@tgollogly.dev";
-
-const PRIVACY_BLOCKED_PATHS = new Set([
-  "/cv.html",
-  "/card.html",
-  "/Thomas-Gollogly-CV.pdf",
-  "/Thomas-Gollogly.vcf",
-]);
-
-function privacyOn(env) {
-  return PRIVACY_MODE || env.PRIVACY_MODE === "1" || env.PRIVACY_MODE === "true";
-}
-
-function isPrivacyBlockedPath(path) {
-  if (PRIVACY_BLOCKED_PATHS.has(path)) return true;
-  if (path.endsWith(".pkpass")) return true;
-  if (path.endsWith(".vcf")) return true;
-  if (/Thomas-Gollogly.*\.pdf$/i.test(path)) return true;
-  return false;
-}
-
-const THOMAS_CONTEXT_PRIVACY = `You are the friendly AI assistant on a developer portfolio site (tgollogly.dev). Help visitors understand the technical demos on the site. Answer using ONLY the facts below. Keep answers concise (2-5 sentences). Use UK English. Do NOT share the developer's full name, phone number, location, employment history, education, CV, LinkedIn, or GitHub — those are temporarily unavailable. The only contact detail you may give is the work email: ${WORK_EMAIL}. If asked for personal details or a CV, politely say those aren't available on the site right now and suggest emailing ${WORK_EMAIL}. Never invent personal facts.
-
-THE EIGHT LIVE DEMOS (all on this site):
-
-1. AI ATS Resume Matcher (ats-matcher.html) — paste a CV and job description; scores the match and generates tailored documents via a secure serverless backend.
-2. BOM Desk (bom-desk.html) — React data-administration console with live validation rules and audit log.
-3. SQL Lab (sql-lab.html) — SQLite compiled to WebAssembly, running client-side.
-4. Test Bench (test-bench.html) — TypeScript validation library with 28 unit tests.
-5. Heat Anomaly Detector (heat-dome.html) — live heat-risk dashboard with 3D map and radar.
-6. Beneish M-Score Screener (beneish.html) — forensic-accounting model in the browser.
-7. Thermal Compare (thermal-compare.html) — multi-location live weather comparison.
-8. BundleBuilder (bundlebuilder.html) — court bundle structure generator.
-
-TECH: JavaScript, TypeScript, React, SQL/SQLite, WebAssembly, Cloudflare Workers, REST APIs, Gemini integration, unit testing, CSV handling.
-
-Encourage visitors to email ${WORK_EMAIL} about work opportunities.`;
-
 const THOMAS_CONTEXT = `You are the friendly, professional AI assistant on Thomas Gollogly's developer portfolio site (tgollogly.dev). Your job is to help visitors — usually recruiters or hiring managers — understand Thomas's skills and projects, and to encourage them to get in touch. Answer using ONLY the facts below. Keep answers concise (2-5 sentences) but specific and confident. Use UK English. If asked to run a demo, explain you can't operate the page but point them to the live demo on this site. If you don't know something, say so and suggest emailing Thomas. Never invent employers, dates, qualifications or technologies that aren't listed here.
 
 WHO HE IS:
@@ -100,9 +59,6 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
       if (request.method === "POST") return handleAI(request, env);
       return new Response("POST only", { status: 405, headers: cors() });
-    }
-    if (privacyOn(env) && isPrivacyBlockedPath(path)) {
-      return new Response("Not found", { status: 404 });
     }
     if (path.endsWith(".pkpass")) {
       const asset = await env.ASSETS.fetch(request);
@@ -534,8 +490,7 @@ async function handleAI(request, env) {
       const msg = (body.message || "").slice(0, 2000);
       const history = (body.history || []).slice(-6)
         .map(m => `${m.role === "user" ? "Visitor" : "Assistant"}: ${m.text}`).join("\n");
-      const context = privacyOn(env) ? THOMAS_CONTEXT_PRIVACY : THOMAS_CONTEXT;
-      const prompt = `${context}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
+      const prompt = `${THOMAS_CONTEXT}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
       return json({ reply: await gemini(prompt, key) });
     }
     if (body.mode === "ats") {
@@ -559,7 +514,7 @@ ${jd}`;
       const jd = (body.jd || "").slice(0, 9000);
       const prompt = `Write a professional, tailored cover letter for this job, based ONLY on the candidate's real CV below. 
 STRICT RULES: Do not invent jobs, employers, dates, qualifications or skills. Only use what is in the CV. Focus ONLY on the experience and skills that are genuinely relevant to THIS job — do NOT pad the letter with unrelated past roles just to fill space. If the candidate lacks something the job wants, do not fake it; instead honestly emphasise transferable strengths, willingness to learn, and the working software they have built. Keep it genuine, not generic. The candidate is a self-taught, early-career developer — be confident but honest about that; never claim senior experience. 
-STYLE: UK English, warm but professional, about 250-320 words, 3-4 short paragraphs. Start with "Dear Hiring Manager," and end with "Kind regards," followed by the candidate's name from the CV only (do not invent a name). Do not use markdown, asterisks or headings — plain paragraphs only.
+STYLE: UK English, warm but professional, about 250-320 words, 3-4 short paragraphs. Start with "Dear Hiring Manager," and end with "Kind regards,\nThomas Gollogly". Do not use markdown, asterisks or headings — plain paragraphs only.
 
 CANDIDATE CV:
 ${cv}
