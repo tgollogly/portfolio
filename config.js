@@ -10,3 +10,7 @@ window.AI_BACKEND_URL = "/api";
 window.CHAT_MAINTENANCE_MODE = true;
 window.CHAT_MAINTENANCE_MESSAGE =
   "Hey — thanks for stopping by! I'm doing some backend updates and technical tweaks behind the scenes, so the AI assistant is paused for now. I'll be back online and fully responsive soon.\n\nIn the meantime, email me at thomas@tgollogly.dev — I do check it regularly.";
+
+// ===== TEMPORARY CV PRIVACY =====
+// Set CV_HIDDEN to false to restore cv.html and the PDF download site-wide.
+window.CV_HIDDEN = true;

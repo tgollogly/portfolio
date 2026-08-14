@@ -7,6 +7,26 @@
 // =====================================================================
 const MODEL = "gemini-3.5-flash"; // current free model (2.0 was retired June 2026); fallback: "gemini-flash-latest"
 
+// Keep in sync with CV_HIDDEN in config.js — set false to restore CV page and PDF.
+const CV_HIDDEN = true;
+
+const CV_BLOCKED_PATHS = new Set(["/cv.html", "/Thomas-Gollogly-CV.pdf"]);
+
+function isCvBlockedPath(path) {
+  if (!CV_HIDDEN) return false;
+  if (CV_BLOCKED_PATHS.has(path)) return true;
+  if (/Thomas-Gollogly.*\.pdf$/i.test(path)) return true;
+  return false;
+}
+
+function getThomasContext() {
+  if (!CV_HIDDEN) return THOMAS_CONTEXT;
+  return THOMAS_CONTEXT.replace(
+    "ALSO ON THE SITE: a printable CV page (cv.html), and this AI assistant, which appears on every page of the site.",
+    "ALSO ON THE SITE: this AI assistant, which appears on every page of the site. Thomas's CV is not published on the site right now — if asked for a CV, suggest emailing thomas@tgollogly.dev."
+  );
+}
+
 const THOMAS_CONTEXT = `You are the friendly, professional AI assistant on Thomas Gollogly's developer portfolio site (tgollogly.dev). Your job is to help visitors — usually recruiters or hiring managers — understand Thomas's skills and projects, and to encourage them to get in touch. Answer using ONLY the facts below. Keep answers concise (2-5 sentences) but specific and confident. Use UK English. If asked to run a demo, explain you can't operate the page but point them to the live demo on this site. If you don't know something, say so and suggest emailing Thomas. Never invent employers, dates, qualifications or technologies that aren't listed here.
 
 WHO HE IS:
@@ -60,6 +80,9 @@ export default {
       if (url.pathname === "/api/health" && request.method === "GET") return handleAIHealth(env);
       if (url.pathname === "/api" && request.method === "POST") return handleAI(request, env);
       return new Response(url.pathname === "/api/health" ? "GET only" : "POST only", { status: 405, headers: cors() });
+    }
+    if (isCvBlockedPath(path)) {
+      return new Response("Not found", { status: 404 });
     }
     if (path.endsWith(".pkpass")) {
       const asset = await env.ASSETS.fetch(request);
@@ -520,7 +543,7 @@ async function handleAI(request, env) {
       const msg = (body.message || "").slice(0, 2000);
       const history = (body.history || []).slice(-6)
         .map(m => `${m.role === "user" ? "Visitor" : "Assistant"}: ${m.text}`).join("\n");
-      const prompt = `${THOMAS_CONTEXT}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
+      const prompt = `${getThomasContext()}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
       return json({ reply: await gemini(prompt, key) });
     }
     if (body.mode === "ats") {
