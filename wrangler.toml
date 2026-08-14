@@ -9,6 +9,9 @@ compatibility_flags = ["nodejs_compat"]
 #   Variables and Secrets → Add → Secret → name: GEMINI_API_KEY
 # Or locally: copy .dev.vars.example to .dev.vars and run `npx wrangler dev`
 
+# Access challenge (Facebook-linked abuse): set TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY
+# from Cloudflare Turnstile. Toggle in server.js: ACCESS_CHALLENGE_ENABLED, CHALLENGE_NI_GEO.
+
 [assets]
 directory = "."
 binding = "ASSETS"

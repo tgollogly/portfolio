@@ -60,6 +60,269 @@ WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships
 
 const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-finder.js"]);
 
+// ===== ACCESS CHALLENGE (anti-abuse from Facebook sharing) =====
+// Set TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY in Cloudflare to enable captcha.
+// Keep ACCESS_CHALLENGE_ENABLED false to disable entirely.
+const ACCESS_CHALLENGE_ENABLED = true;
+const CHALLENGE_FACEBOOK_REFERRER = true;
+// WARNING: if true, EVERY visitor from NI/Belfast must pass the gate — including recruiters and you.
+const CHALLENGE_NI_GEO = false;
+
+const GATE_COOKIE = "tg_gate";
+const GATE_MAX_AGE_SEC = 7 * 24 * 60 * 60;
+const FACEBOOK_RE = /(^|\.)facebook\.com$|(^|\.)fb\.com$/i;
+
+function isDocumentPath(path) {
+  if (path === "/") return true;
+  if (path.endsWith(".html")) return true;
+  if (!path.includes(".") && !path.startsWith("/api") && !path.startsWith("/assets/")) return true;
+  return false;
+}
+
+function isFacebookTraffic(request, url) {
+  if (!CHALLENGE_FACEBOOK_REFERRER) return false;
+  if (url.searchParams.has("fbclid")) return true;
+  const referer = request.headers.get("Referer") || "";
+  if (!referer) return false;
+  try {
+    return FACEBOOK_RE.test(new URL(referer).hostname);
+  } catch {
+    return /facebook\.com|fb\.com/i.test(referer);
+  }
+}
+
+function isNorthernIrelandTraffic(request) {
+  if (!CHALLENGE_NI_GEO) return false;
+  const cf = request.cf || {};
+  const country = String(cf.country || request.headers.get("CF-IPCountry") || "").toUpperCase();
+  if (country !== "GB") return false;
+  const region = String(cf.region || cf.regionCode || "").toLowerCase();
+  const city = String(cf.city || "").toLowerCase();
+  return region.includes("northern ireland") || city.includes("belfast");
+}
+
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() || "unknown";
+}
+
+function geoSnapshot(request) {
+  const cf = request.cf || {};
+  return {
+    ip: clientIp(request),
+    country: cf.country || request.headers.get("CF-IPCountry") || null,
+    region: cf.region || null,
+    city: cf.city || null,
+    colo: cf.colo || null,
+    timezone: cf.timezone || null,
+    asn: cf.asn || null,
+  };
+}
+
+async function hmacSign(secret, message) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function gateSecret(env) {
+  return (await getSecret(env, "CHALLENGE_SECRET")) || (await getSecret(env, "GEMINI_API_KEY")) || "change-me-in-cloudflare-secrets";
+}
+
+async function makeGateCookie(env) {
+  const exp = Math.floor(Date.now() / 1000) + GATE_MAX_AGE_SEC;
+  const sig = await hmacSign(await gateSecret(env), String(exp));
+  return `${exp}.${sig}`;
+}
+
+async function hasValidGateCookie(request, env) {
+  const raw = getCookie(request, GATE_COOKIE);
+  if (!raw) return false;
+  const dot = raw.lastIndexOf(".");
+  if (dot < 1) return false;
+  const exp = Number(raw.slice(0, dot));
+  const sig = raw.slice(dot + 1);
+  if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return false;
+  const expected = await hmacSign(await gateSecret(env), String(exp));
+  return sig === expected;
+}
+
+function getCookie(request, name) {
+  const header = request.headers.get("Cookie") || "";
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx < 0) continue;
+    if (part.slice(0, idx).trim() === name) return decodeURIComponent(part.slice(idx + 1).trim());
+  }
+  return null;
+}
+
+function shouldApplyChallenge(request, url, path) {
+  if (!ACCESS_CHALLENGE_ENABLED) return false;
+  if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
+  if (path === "/access-challenge" || path === "/api/access-verify") return false;
+  if (path.startsWith("/api/")) return false;
+  if (!isDocumentPath(path)) return false;
+  return isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request);
+}
+
+function logAccessChallenge(entry) {
+  console.log(JSON.stringify({ event: "access_challenge", ...entry, ts: new Date().toISOString() }));
+}
+
+async function verifyTurnstile(token, secret, ip) {
+  const body = new URLSearchParams({ secret, response: token, remoteip: ip });
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body });
+  const data = await res.json().catch(() => ({}));
+  return !!data.success;
+}
+
+function challengeResponseHtml(siteKey, returnPath) {
+  const safeReturn = returnPath.replace(/"/g, "&quot;");
+  const turnstileBlock = siteKey
+    ? `<div class="cf-turnstile" data-sitekey="${siteKey}" data-theme="light"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer><\/script>`
+    : `<p class="warn">Captcha is not configured yet. The site owner must add Turnstile keys in Cloudflare.</p><label class="check"><input type="checkbox" id="confirm" required> I am a real visitor and not automated abuse traffic</label>`;
+
+  return `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Quick access check · tgollogly.dev</title>
+<style>
+  :root{--accent:#2f39c9;--ink:#0b0f14;--muted:#4d5660;--line:#d6dbe1;--card:#fff;--sans:system-ui,-apple-system,Segoe UI,sans-serif}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#eef0fe;font-family:var(--sans);color:var(--ink);line-height:1.55}
+  .card{max-width:520px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 26px;box-shadow:0 12px 32px rgba(15,20,23,.08)}
+  h1{font-size:22px;margin:0 0 10px} p{color:var(--muted);margin:0 0 14px;font-size:15px}
+  .why{background:#f7f8ff;border:1px solid #dfe3ff;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:14px;color:#333}
+  label{display:block;font-weight:600;font-size:13px;margin:12px 0 6px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px}
+  textarea{min-height:72px;resize:vertical}
+  .check{display:flex;gap:8px;align-items:flex-start;font-weight:500;font-size:14px;color:var(--muted)}
+  .check input{margin-top:3px}
+  .warn{color:#8a6116;background:#fff8e6;border:1px solid #f0dfa8;border-radius:8px;padding:10px 12px;font-size:13px}
+  button{margin-top:16px;width:100%;border:none;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;font-size:15px;background:var(--accent);color:#fff;cursor:pointer}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .fine{font-size:12px;color:#6b7280;margin-top:12px}
+  .err{color:#b42318;font-size:13px;min-height:18px;margin-top:8px}
+</style></head><body>
+<main class="card">
+  <h1>Quick access check</h1>
+  <div class="why"><strong>Why am I seeing this?</strong> This portfolio site has had abusive traffic linked from Facebook. If you are a genuine visitor, please complete this short check so the site stays online for everyone else.</div>
+  <p>Please turn off any VPN if you are using one — VPNs often block security checks. We log your <strong>IP address</strong> and <strong>approximate location from your connection</strong> (city/region level, not GPS) for security. Precise GPS is only recorded if you choose to share it below.</p>
+  <form id="gateForm">
+    <label for="reason">Why are you visiting? (optional)</label>
+    <textarea id="reason" name="reason" maxlength="500" placeholder="e.g. Recruiter reviewing portfolio, saw a project demo link…"></textarea>
+    <label for="gps">Precise location (optional — browser will ask permission)</label>
+    <input id="gps" name="gps" type="text" readonly placeholder="Click ‘Share location’ if you want to provide GPS"/>
+    <button type="button" id="geoBtn" style="margin-top:8px;background:#4750e6">Share location (optional)</button>
+    ${turnstileBlock}
+    <div class="err" id="err"></div>
+    <button type="submit" id="submitBtn">Continue to site</button>
+    <p class="fine">By continuing you agree to this security log as described in the <a href="/privacy.html">privacy notice</a>. This sets a short-lived access cookie (<code>tg_gate</code>).</p>
+  </form>
+</main>
+<script>
+(function(){
+  var ret=${JSON.stringify(returnPath)};
+  document.getElementById("geoBtn").onclick=function(){
+    if(!navigator.geolocation){ document.getElementById("gps").value="Geolocation not supported"; return; }
+    navigator.geolocation.getCurrentPosition(function(p){
+      document.getElementById("gps").value=p.coords.latitude.toFixed(5)+", "+p.coords.longitude.toFixed(5)+" (accuracy ~"+Math.round(p.coords.accuracy||0)+"m)";
+    }, function(){ document.getElementById("gps").value="Location not shared"; }, { enableHighAccuracy:false, timeout:10000, maximumAge:0 });
+  };
+  document.getElementById("gateForm").onsubmit=async function(e){
+    e.preventDefault();
+    var err=document.getElementById("err"); err.textContent="";
+    var btn=document.getElementById("submitBtn"); btn.disabled=true;
+    var token=window.turnstile ? turnstile.getResponse() : (document.getElementById("confirm")&&document.getElementById("confirm").checked ? "fallback-ok" : "");
+    if(!token){ err.textContent="Please complete the captcha (or tick the confirmation box)."; btn.disabled=false; return; }
+    try{
+      var r=await fetch("/api/access-verify",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ token:token, reason:document.getElementById("reason").value.trim(), gps:document.getElementById("gps").value.trim(), return:ret })});
+      var d=await r.json();
+      if(!r.ok||!d.ok){ err.textContent=d.error||"Could not verify access."; btn.disabled=false; if(window.turnstile) turnstile.reset(); return; }
+      location.href=d.return||"/";
+    }catch(x){ err.textContent="Network error — please try again."; btn.disabled=false; }
+  };
+})();
+<\/script></body></html>`;
+}
+
+async function serveChallengePage(request, env) {
+  const url = new URL(request.url);
+  const returnPath = url.searchParams.get("r") || "/";
+  const siteKey = (await getSecret(env, "TURNSTILE_SITE_KEY")) || "";
+  return new Response(challengeResponseHtml(siteKey, returnPath), {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
+async function handleAccessVerify(request, env) {
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+  if (request.method !== "POST") return json({ error: "POST only" }, 405);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "Bad JSON" }, 400); }
+
+  const ip = clientIp(request);
+  const geo = geoSnapshot(request);
+  const turnstileSecret = await getSecret(env, "TURNSTILE_SECRET_KEY");
+  const token = String(body.token || "");
+
+  if (turnstileSecret) {
+    if (!token || !(await verifyTurnstile(token, turnstileSecret, ip))) {
+      return json({ error: "Captcha failed. If you use a VPN, try turning it off and retry." }, 403);
+    }
+  } else if (token !== "fallback-ok") {
+    return json({ error: "Captcha not configured on server." }, 503);
+  }
+
+  const reason = String(body.reason || "").slice(0, 500);
+  const gps = String(body.gps || "").slice(0, 120);
+  const returnPath = safeReturnPath(body.return);
+
+  logAccessChallenge({
+    ip: geo.ip,
+    country: geo.country,
+    region: geo.region,
+    city: geo.city,
+    colo: geo.colo,
+    asn: geo.asn,
+    referer: request.headers.get("Referer") || null,
+    userAgent: request.headers.get("User-Agent") || null,
+    reason: reason || null,
+    gps: gps || null,
+    trigger: isFacebookTraffic(request, new URL(request.url)) ? "facebook" : "geo",
+  });
+
+  const cookieVal = await makeGateCookie(env);
+  return new Response(JSON.stringify({ ok: true, return: returnPath }), {
+    status: 200,
+    headers: {
+      ...cors(),
+      "Content-Type": "application/json",
+      "Set-Cookie": `${GATE_COOKIE}=${encodeURIComponent(cookieVal)}; Path=/; Max-Age=${GATE_MAX_AGE_SEC}; HttpOnly; Secure; SameSite=Lax`,
+    },
+  });
+}
+
+function safeReturnPath(value) {
+  const path = String(value || "/");
+  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  return path;
+}
+
+function redirectChallenge(request, path) {
+  const r = encodeURIComponent(path + (new URL(request.url).search || ""));
+  return Response.redirect(`${new URL(request.url).origin}/access-challenge?r=${r}`, 302);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -81,6 +344,8 @@ export default {
       if (url.pathname === "/api" && request.method === "POST") return handleAI(request, env);
       return new Response(url.pathname === "/api/health" ? "GET only" : "POST only", { status: 405, headers: cors() });
     }
+    if (path === "/api/access-verify") return handleAccessVerify(request, env);
+    if (path === "/access-challenge") return serveChallengePage(request, env);
     if (isCvBlockedPath(path)) {
       return new Response("Not found", { status: 404 });
     }
@@ -99,6 +364,9 @@ export default {
       headers.set("Content-Type", "text/vcard; charset=utf-8");
       headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.vcf"');
       return new Response(asset.body, { status: asset.status, headers });
+    }
+    if (shouldApplyChallenge(request, url, path) && !(await hasValidGateCookie(request, env))) {
+      return redirectChallenge(request, path);
     }
     return env.ASSETS.fetch(request); // everything else = your website files
   }
