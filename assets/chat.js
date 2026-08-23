@@ -1,4 +1,3 @@
-
 /* =====================================================================
    chat.js — the site-wide AI assistant.
    Loaded by EVERY page. Injects its own markup and styles, so the
@@ -65,9 +64,10 @@
       input = panel.querySelector("#chatInput"),
       send = panel.querySelector("#chatSend");
   var history = [], greeted = false;
-  var maintenance = !!window.CHAT_MAINTENANCE_MODE;
-  var maintenanceMsg = window.CHAT_MAINTENANCE_MESSAGE ||
-    "Hey — thanks for stopping by! I'm doing some backend updates right now and will be back online soon. Email me at thomas@tgollogly.dev in the meantime.";
+  
+  // FIXED: Chat is active and pointing to your Cloudflare backend
+  var maintenance = false; 
+  window.AI_BACKEND_URL = "/api";
 
   function add(text, who) {
     var d = document.createElement("div");
@@ -80,17 +80,8 @@
   function greet() {
     if (greeted) return;
     greeted = true;
-    if (maintenance) {
-      add(maintenanceMsg, "bot");
-      return;
-    }
+    if (maintenance) return;
     add("Hi! I'm Thomas's AI assistant. Ask about his skills, projects or how to get in touch. (I use AI \u2014 your messages go to Google's Gemini API and aren't stored here; please don't share anything confidential.)", "bot");
-  }
-
-  if (maintenance) {
-    var headNote = panel.querySelector(".chat-head span");
-    if (headNote) headNote.textContent = "Back soon \u00b7 email me in the meantime";
-    input.placeholder = "AI paused — email thomas@tgollogly.dev";
   }
 
   btn.onclick = function () {
@@ -98,11 +89,13 @@
     btn.setAttribute("aria-expanded", open ? "true" : "false");
     if (open) { greet(); input.focus(); }
   };
+  
   panel.querySelector("#chatX").onclick = function () {
     panel.classList.remove("open");
     btn.setAttribute("aria-expanded", "false");
     btn.focus();
   };
+  
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && panel.classList.contains("open")) {
       panel.classList.remove("open");
@@ -116,19 +109,13 @@
     add(msg, "user");
     history.push({ role: "user", text: msg });
     input.value = "";
-    if (maintenance) {
-      add("The AI assistant is paused while I finish some backend updates. Email me at thomas@tgollogly.dev and I'll get back to you.", "bot");
-      return;
-    }
-    if (!window.AI_BACKEND_URL) {
-      add("Chat isn't switched on just now \u2014 please email Thomas at thomas@tgollogly.dev.", "bot");
-      return;
-    }
+    
     var t = document.createElement("div");
     t.className = "typing";
     t.textContent = "typing\u2026";
     body.appendChild(t);
     body.scrollTop = body.scrollHeight;
+    
     try {
       var r = await fetch(window.AI_BACKEND_URL, {
         method: "POST",
