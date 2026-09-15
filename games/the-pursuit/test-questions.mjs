@@ -79,4 +79,15 @@ if (!server.includes("pursuit-store") || !server.includes("scheduled")) {
   process.exit(1);
 }
 
+const wrangler = readFileSync(join(dir, "../../wrangler.toml"), "utf8");
+const wranglerP1 = readFileSync(join(dir, "../../wrangler.portfolio1.toml"), "utf8");
+if (/^\[triggers\]/m.test(wrangler) || wrangler.includes('crons = [')) {
+  console.error("FAIL: shared wrangler.toml must not define cron triggers (multi-worker quota)");
+  process.exit(1);
+}
+if (!wranglerP1.includes('crons = ["0 6 * * *", "0 18 * * *"]')) {
+  console.error("FAIL: wrangler.portfolio1.toml missing portfolio1 cron schedules");
+  process.exit(1);
+}
+
 console.log(`Question bank OK: ${bank.length} questions`, diffs);
