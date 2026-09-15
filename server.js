@@ -1,3 +1,10 @@
+import {
+  REFUSAL_REPLY,
+  appendPrivacyInstructions,
+  guardAiRequest,
+  sanitizeAiOutput,
+  sanitizeJsonValues,
+} from "./lib/privacy-guardrails.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -505,6 +512,8 @@ export default {
       const headers = new Headers(asset.headers);
       headers.set("Content-Type", "application/vnd.apple.pkpass");
       headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.pkpass"');
+      headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
     if (path.endsWith(".vcf")) {
@@ -513,6 +522,8 @@ export default {
       const headers = new Headers(asset.headers);
       headers.set("Content-Type", "text/vcard; charset=utf-8");
       headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.vcf"');
+      headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
     if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isCloverGameHost(url.hostname) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
@@ -960,6 +971,13 @@ async function handleAIHealth(env) {
 async function handleAI(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Bad JSON" }, 400); }
+
+  const guard = guardAiRequest(body);
+  if (guard.blocked) {
+    if (body.mode === "chat") return json({ reply: REFUSAL_REPLY });
+    return json({ error: REFUSAL_REPLY }, 400);
+  }
+
   const key = await getKey(env);
   if (!key) {
     if (body.mode === "chat") return json({ reply: NO_AI_KEY_CHAT_REPLY });
@@ -970,8 +988,9 @@ async function handleAI(request, env) {
       const msg = (body.message || "").slice(0, 2000);
       const history = (body.history || []).slice(-6)
         .map(m => `${m.role === "user" ? "Visitor" : "Assistant"}: ${m.text}`).join("\n");
-      const prompt = `${getThomasContext()}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
-      return json({ reply: await gemini(prompt, key) });
+      const prompt = `${appendPrivacyInstructions(getThomasContext())}\n\nConversation so far:\n${history}\n\nVisitor: ${msg}\nAssistant:`;
+      const reply = sanitizeAiOutput(await gemini(prompt, key));
+      return json({ reply });
     }
     if (body.mode === "ats") {
       const cv = (body.cv || "").slice(0, 9000);
@@ -987,7 +1006,7 @@ ${jd}`;
       const raw = await gemini(prompt, key);
       const clean = raw.replace(/```json|```/g, "").trim();
       let data; try { data = JSON.parse(clean); } catch { data = { error: "Could not parse", raw: clean }; }
-      return json(data);
+      return json(sanitizeJsonValues(data));
     }
     if (body.mode === "cover") {
       const cv = (body.cv || "").slice(0, 9000);
@@ -1001,7 +1020,7 @@ ${cv}
 
 JOB DESCRIPTION:
 ${jd}`;
-      return json({ text: await gemini(prompt, key) });
+      return json({ text: sanitizeAiOutput(await gemini(prompt, key)) });
     }
     if (body.mode === "cvimprove") {
       const cv = (body.cv || "").slice(0, 9000);
@@ -1021,7 +1040,7 @@ ${cv}
 
 JOB DESCRIPTION (tailor towards this):
 ${jd}`;
-      return json({ text: await gemini(prompt, key) });
+      return json({ text: sanitizeAiOutput(await gemini(prompt, key)) });
     }
     return json({ error: "Unknown mode" }, 400);
   } catch (e) {
