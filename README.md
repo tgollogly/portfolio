@@ -54,6 +54,22 @@ The chatbot and ATS Matcher call a small serverless backend (`server.js`) that r
 
 ---
 
+## 🤖 Cloudflare MCP (Cursor)
+
+Use Cloudflare MCP to manage **portfolio1** from Cursor — deploys, secrets, logs, and docs — without leaving the IDE.
+
+**Quick start**
+
+1. Open this repo in Cursor.
+2. Run `/add-plugin cloudflare` (or install Cloudflare from the Cursor Marketplace).
+3. Restart Cursor if asked.
+4. Ask the agent to use Cloudflare (e.g. “Check deploy status for portfolio1”).
+5. Sign in with Cloudflare OAuth when the browser opens.
+
+This repo already includes `.cursor/mcp.json` with the recommended servers. Full step-by-step instructions: **[docs/CLOUDFLARE-MCP.md](docs/CLOUDFLARE-MCP.md)**.
+
+---
+
 ## 📂 Structure
 
     index.html            Homepage (projects, terminal intro, AI chatbot)
@@ -76,6 +92,8 @@ The chatbot and ATS Matcher call a small serverless backend (`server.js`) that r
     server.js             Serverless backend: serves the site + AI endpoint (/api)
     config.js             Points the frontend at the AI backend (/api)
     wrangler.toml         Cloudflare deployment config
+    .cursor/mcp.json      Cloudflare MCP servers for Cursor
+    docs/CLOUDFLARE-MCP.md  Step-by-step MCP setup guide
     .assetsignore         Keeps backend/config files out of public assets
 
     og-preview.png        Social-share preview image (Open Graph / Twitter cards)
