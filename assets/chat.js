@@ -64,10 +64,10 @@
       input = panel.querySelector("#chatInput"),
       send = panel.querySelector("#chatSend");
   var history = [], greeted = false;
-  
-  // FIXED: Chat is active and pointing to your Cloudflare backend
-  var maintenance = false; 
-  window.AI_BACKEND_URL = "/api";
+  var maintenance = !!window.CHAT_MAINTENANCE_MODE;
+  var maintenanceMsg = window.CHAT_MAINTENANCE_MESSAGE ||
+    "The AI assistant is paused for maintenance. Email Thomas at thomas@tgollogly.dev.";
+  if (!window.AI_BACKEND_URL) window.AI_BACKEND_URL = "/api";
 
   function add(text, who) {
     var d = document.createElement("div");
@@ -80,7 +80,10 @@
   function greet() {
     if (greeted) return;
     greeted = true;
-    if (maintenance) return;
+    if (maintenance) {
+      add(maintenanceMsg, "bot");
+      return;
+    }
     add("Hi! I'm Thomas's AI assistant. Ask about his skills, projects or how to get in touch. (I use AI \u2014 your messages go to Google's Gemini API and aren't stored here; please don't share anything confidential.)", "bot");
   }
 
@@ -106,6 +109,10 @@
   async function sendMsg() {
     var msg = input.value.trim();
     if (!msg) return;
+    if (maintenance) {
+      add(maintenanceMsg, "bot");
+      return;
+    }
     add(msg, "user");
     history.push({ role: "user", text: msg });
     input.value = "";

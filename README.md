@@ -60,13 +60,17 @@ Use Cloudflare MCP to manage **portfolio1** from Cursor — deploys, secrets, lo
 
 **Quick start**
 
-1. Open this repo in Cursor.
-2. Run `/add-plugin cloudflare` (or install Cloudflare from the Cursor Marketplace).
-3. Restart Cursor if asked.
-4. Ask the agent to use Cloudflare (e.g. “Check deploy status for portfolio1”).
-5. Sign in with Cloudflare OAuth when the browser opens.
+1. Open this repo in Cursor with **File → Open Folder** (not a multi-root workspace).
+2. Install MCP to **user scope** (required for servers to appear in Customize):
+   ```bash
+   ./scripts/install-cursor-mcp.sh
+   ```
+   Windows: `.\scripts\install-cursor-mcp.ps1`
+3. **Fully quit and reopen Cursor** (Reload Window is not enough).
+4. **Customize → MCPs** → enable servers under **User** (start with `cloudflare-docs`).
+5. Ask the agent to use Cloudflare (e.g. “Check deploy status for portfolio1”) and complete OAuth when prompted.
 
-This repo already includes `.cursor/mcp.json` with the recommended servers. Full step-by-step instructions: **[docs/CLOUDFLARE-MCP.md](docs/CLOUDFLARE-MCP.md)**.
+Project `.cursor/mcp.json` is for team sharing; user-level install fixes the “servers not visible” Cursor bug. Full guide: **[docs/CLOUDFLARE-MCP.md](docs/CLOUDFLARE-MCP.md)**.
 
 ---
 
