@@ -121,3 +121,5 @@ Reference `@wrangler.toml` in Composer so the agent knows the Worker name and bi
 - [Cursor forum: project MCP not visible](https://forum.cursor.com/t/project-scope-mcp-servers-never-appear-in-customize-mcps-while-user-scope-servers-do/167808)
 
 This repo’s Cloudflare project name is **`portfolio1`** (see `wrangler.toml`).
+
+**Pursuit cron:** shared `wrangler.toml` has no cron triggers (avoids quota errors across `portfolio` / `test` / `portfolio1`). Production cron is registered only via `scripts/deploy-portfolio1.sh` or `wrangler.portfolio1.toml`. Set that script as the **portfolio1** Workers Builds deploy command.

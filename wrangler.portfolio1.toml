@@ -1,0 +1,24 @@
+# portfolio1-only config — includes cron triggers for Pursuit question refresh.
+# Use: npx wrangler deploy -c wrangler.portfolio1.toml
+# Or run scripts/deploy-portfolio1.sh (deploy + register crons).
+
+name = "portfolio1"
+main = "server.js"
+compatibility_date = "2026-07-08"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "PURSUIT_KV"
+id = "3959b665a51148bea2e6a518f58c2d5f"
+
+[[d1_databases]]
+binding = "PURSUIT_DB"
+database_name = "pursuit-questions"
+database_id = "af4e6f9a-3527-42a7-8f04-9290c8f78117"
+
+[triggers]
+crons = ["0 6 * * *", "0 18 * * *"]
+
+[assets]
+directory = "."
+binding = "ASSETS"
