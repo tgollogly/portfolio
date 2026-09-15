@@ -6,5 +6,5 @@ GEMINI_API_KEY=your_google_gemini_api_key_here
 TURNSTILE_SITE_KEY=your_turnstile_site_key
 TURNSTILE_SECRET_KEY=your_turnstile_secret_key
 
-# Optional: separate secret for signing access cookies (falls back to GEMINI_API_KEY)
-# CHALLENGE_SECRET=random_long_string
+# Required when ACCESS_CHALLENGE_ENABLED is true in server.js (signs tg_gate cookies)
+CHALLENGE_SECRET=random_long_string_at_least_32_chars

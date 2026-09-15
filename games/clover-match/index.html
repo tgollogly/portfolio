@@ -43,7 +43,7 @@ button.secondary{background:rgba(255,255,255,.12);color:var(--cream);border:1px 
 button:active{transform:scale(.98)}
 #msg{min-height:1.4em;text-align:center;font-size:.9rem;color:var(--gold);margin-top:8px;max-width:420px}
 .legal{max-width:420px;margin-top:16px;font-size:.72rem;color:var(--muted);line-height:1.45;text-align:center}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:20px;z-index:20}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:20px;z-index:20;pointer-events:auto}
 .overlay.show{display:flex}
 .modal{background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:22px 20px;max-width:320px;text-align:center}
 .modal h2{margin:0 0 8px;color:var(--gold)}
@@ -80,7 +80,7 @@ button:active{transform:scale(.98)}
 "use strict";
 var TYPES=["🍀","🎻","🌈","🥔","🪙","☘️"];
 var SIZE=8,TARGET=1200,START_MOVES=25;
-var grid=[],selected=null,busy=false,score=0,moves=START_MOVES;
+var grid=[],selected=null,busy=false,ended=false,score=0,moves=START_MOVES;
 var board=document.getElementById("board");
 var scoreEl=document.getElementById("score");
 var movesEl=document.getElementById("moves");
@@ -132,7 +132,7 @@ function findMatches(){
         run=1;
       }
     }
-    if(run>=3)for(var k=0;k<run;k++)set.add(idx(r-SIZE-k,c));
+    if(run>=3)for(var k=0;k<run;k++)set.add(idx(SIZE-1-k,c));
   }
   return set;
 }
@@ -203,12 +203,13 @@ function updateHud(){
 }
 
 function showModal(win,text){
+  ended=true;
   document.getElementById("modalTitle").textContent=win?"Grand!":"Game over";
   document.getElementById("modalText").textContent=text;
   document.getElementById("overlay").classList.add("show");
 }
 
-function hideModal(){document.getElementById("overlay").classList.remove("show");}
+function hideModal(){ended=false;document.getElementById("overlay").classList.remove("show");}
 
 function processMatches(){
   var matches=findMatches();
@@ -231,12 +232,12 @@ function processMatches(){
 function endCheck(){
   if(score>=TARGET){showModal(true,"You reached "+TARGET+" points with "+moves+" moves left.");return true;}
   if(moves<=0){showModal(false,"Out of moves — score "+score+". Try again!");return true;}
-  if(!hasAnyMove()){setMsg("No moves — shuffling…");shuffleGrid();render();}
+  if(!hasAnyMove()){setMsg("No moves — shuffling…");shuffleGrid();render();if(!hasAnyMove()){showModal(false,"No valid moves left — score "+score+".");return true;}}
   return false;
 }
 
 function onCellClick(e){
-  if(busy||moves<=0)return;
+  if(busy||ended||moves<=0)return;
   var i=Number(e.currentTarget.dataset.i);
   if(selected==null){selected=i;render();setMsg("Now tap a neighbour.");return;}
   if(selected===i){selected=null;render();setMsg("Tap two neighbours to swap.");return;}
@@ -264,14 +265,14 @@ function onCellClick(e){
 
 function newGame(){
   hideModal();
-  score=0;moves=START_MOVES;selected=null;busy=false;
+  score=0;moves=START_MOVES;selected=null;busy=false;ended=false;
   createGrid();
   while(findMatches().size||!hasAnyMove())createGrid();
   updateHud();render();setMsg("Tap two neighbours to swap.");
 }
 
 document.getElementById("newBtn").onclick=newGame;
-document.getElementById("shuffleBtn").onclick=function(){if(busy)return;shuffleGrid();render();setMsg("Board shuffled.");};
+document.getElementById("shuffleBtn").onclick=function(){if(busy||ended)return;shuffleGrid();render();setMsg("Board shuffled.");};
 document.getElementById("modalBtn").onclick=newGame;
 newGame();
 })();

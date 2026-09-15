@@ -230,16 +230,20 @@ async function hmacSign(secret, message) {
 }
 
 async function gateSecret(env) {
-  return (await getSecret(env, "CHALLENGE_SECRET")) || (await getSecret(env, "GEMINI_API_KEY")) || "change-me-in-cloudflare-secrets";
+  return await getSecret(env, "CHALLENGE_SECRET");
 }
 
 async function makeGateCookie(env) {
+  const secret = await gateSecret(env);
+  if (!secret) return null;
   const exp = Math.floor(Date.now() / 1000) + GATE_MAX_AGE_SEC;
-  const sig = await hmacSign(await gateSecret(env), String(exp));
+  const sig = await hmacSign(secret, String(exp));
   return `${exp}.${sig}`;
 }
 
 async function hasValidGateCookie(request, env) {
+  const secret = await gateSecret(env);
+  if (!secret) return false;
   const raw = getCookie(request, GATE_COOKIE);
   if (!raw) return false;
   const dot = raw.lastIndexOf(".");
@@ -247,7 +251,7 @@ async function hasValidGateCookie(request, env) {
   const exp = Number(raw.slice(0, dot));
   const sig = raw.slice(dot + 1);
   if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return false;
-  const expected = await hmacSign(await gateSecret(env), String(exp));
+  const expected = await hmacSign(secret, String(exp));
   return sig === expected;
 }
 
@@ -452,6 +456,9 @@ async function handleAccessVerify(request, env) {
   });
 
   const cookieVal = await makeGateCookie(env);
+  if (!cookieVal) {
+    return json({ error: "Access challenge not fully configured. Set CHALLENGE_SECRET in Cloudflare secrets." }, 503);
+  }
   return new Response(JSON.stringify({ ok: true, return: returnPath }), {
     status: 200,
     headers: {
@@ -481,7 +488,7 @@ export default {
     if (isCloverGameHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveCloverGame(request, env);
     }
-    if (path === "/games/clover-match" || path === "/games/clover-match/") {
+    if (path === "/games/clover-match" || path === "/games/clover-match/" || path === "/games/clover-match/index.html") {
       return serveCloverGame(request, env);
     }
 
