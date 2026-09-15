@@ -115,6 +115,7 @@ header{text-align:center;margin-bottom:10px}
 .lb-tab{font:inherit;font-size:.72rem;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.2);color:var(--muted);cursor:pointer}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(232,197,71,.08)}
 .lb-empty{font-size:.78rem;color:var(--muted);margin:6px 0 0}
+.bank-stat{font-size:.72rem;color:var(--cyan);text-align:center;margin:0 0 8px}
 @media(max-width:380px){.diff-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -149,8 +150,8 @@ var DIFF={
 };
 
 var ROUNDS=["Cash Builder","Head-to-Head","Final Chase"];
-var LS_NAME="pursuit_player_name",LS_SCORES="pursuit_local_scores";
-var state={},timerId=null,audioCtx=null,musicOn=true,globalLb=[],lbTab="global";
+var LS_NAME="pursuit_player_name",LS_SCORES="pursuit_local_scores",LS_PLAYER_ID="pursuit_player_id";
+var state={},timerId=null,audioCtx=null,musicOn=true,globalLb=[],lbTab="global",bankTotal=0,questionCache=[];
 
 function $(id){return document.getElementById(id);}
 function setMsg(t){$("msg").textContent=t||"";}
@@ -194,16 +195,90 @@ function shuffle(arr){
   for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0;var t=a[i];a[i]=a[j];a[j]=t;}
   return a;
 }
-function pickQuestions(n){
+function getPlayerId(){
+  try{
+    var id=localStorage.getItem(LS_PLAYER_ID);
+    if(!id){id="p_"+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem(LS_PLAYER_ID,id);}
+    return id;
+  }catch(e){return "p_anon";}
+}
+function formatBankCount(n){
+  if(!n)return "743+";
+  if(n>=1e6)return (n/1e6).toFixed(1).replace(/\.0$/,"")+" million";
+  if(n>=1000)return Math.floor(n/1000)+"k+";
+  return String(n)+"+";
+}
+function localFallbackPick(n){
   if(!state.usedIds)state.usedIds=new Set();
   var pool=DIFF[state.diff].pool;
-  var bank=window.QUIZ_BANK.filter(function(q){return pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);});
-  if(bank.length<n){
-    bank=window.QUIZ_BANK.filter(function(q){return !state.usedIds.has(q.id);});
+  var bank=(window.QUIZ_BANK||[]).filter(function(q){return pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);});
+  if(bank.length<n)bank=(window.QUIZ_BANK||[]).filter(function(q){return !state.usedIds.has(q.id);});
+  if(questionCache.length){
+    bank=bank.concat(questionCache.filter(function(q){return pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);}));
   }
   var picked=shuffle(bank).slice(0,n);
-  picked.forEach(function(q){state.usedIds.add(q.id);});
+  picked.forEach(function(q){if(q.id)state.usedIds.add(q.id);});
   return picked;
+}
+function fetchQuestionsFromApi(n){
+  if(!state.usedIds)state.usedIds=new Set();
+  var pool=DIFF[state.diff].pool.join(",");
+  var exclude=Array.from(state.usedIds).join(",");
+  var url="/api/pursuit-questions?count="+n+"&pool="+encodeURIComponent(pool)+(exclude?"&exclude="+encodeURIComponent(exclude):"");
+  return fetch(url).then(function(r){return r.json();}).then(function(data){
+    if(data.total)bankTotal=data.total;
+    var qs=data.questions||[];
+    qs.forEach(function(q){if(q.id)state.usedIds.add(q.id);});
+    if(qs.length<n){
+      var extra=localFallbackPick(n-qs.length);
+      extra.forEach(function(q){if(q.id&&!state.usedIds.has(q.id))state.usedIds.add(q.id);});
+      qs=qs.concat(extra).slice(0,n);
+    }
+    questionCache=questionCache.concat(qs);
+    return qs;
+  }).catch(function(){
+    return localFallbackPick(n);
+  });
+}
+function sendFeedback(questionId,correct){
+  if(!questionId)return;
+  fetch("/api/pursuit-feedback",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({questionId:questionId,correct:!!correct})}).catch(function(){});
+}
+function loadRemoteMemory(){
+  return fetch("/api/pursuit-memory?playerId="+encodeURIComponent(getPlayerId())).then(function(r){return r.json();}).then(function(data){
+    if(data.memory){
+      if(data.memory.name)saveName(data.memory.name);
+      if(data.memory.level)state.level=data.memory.level;
+    }
+  }).catch(function(){});
+}
+function saveRemoteMemory(won){
+  var payload={
+    playerId:getPlayerId(),
+    name:state.playerName||loadName(),
+    level:state.level||1,
+    gamesPlayed:1,
+    wins:won?1:0,
+    bestPot:state.pot||0,
+    preferredDiff:state.diff||"standard"
+  };
+  fetch("/api/pursuit-memory?playerId="+encodeURIComponent(getPlayerId())).then(function(r){return r.json();}).then(function(data){
+    var m=data.memory||{};
+    payload.gamesPlayed=(m.gamesPlayed||0)+1;
+    payload.wins=(m.wins||0)+(won?1:0);
+    payload.bestPot=Math.max(m.bestPot||0,state.pot||0);
+    payload.level=Math.max(m.level||1,state.level||1);
+    return fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  }).catch(function(){
+    fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).catch(function(){});
+  });
+}
+function fetchBankStats(){
+  fetch("/api/pursuit-stats").then(function(r){return r.json();}).then(function(data){
+    bankTotal=data.total||bankTotal;
+    var el=$("bankStat");
+    if(el)el.textContent="Live question bank: "+formatBankCount(bankTotal)+" · updates twice daily";
+  }).catch(function(){});
 }
 
 function loadName(){try{return localStorage.getItem(LS_NAME)||"";}catch(e){return "";}}
@@ -336,6 +411,7 @@ function answer(i){
     else b.classList.add("dim");
   });
   var ok=i===correct;
+  sendFeedback(q.id,ok);
   if(ok){sfxCorrect();handleCorrect();}
   else{sfxWrong();handleWrong();}
   setTimeout(function(){nextAfterQuestion(ok);},1400);
@@ -423,11 +499,7 @@ function startHeadToHead(){
   state.trackSteps=7;
   state.pStep=Math.min(Math.floor(state.pot/5000)+1,3);
   state.cStep=0;
-  state.questions=pickQuestions(6);
-  state.qIndex=0;
-  updateHud();
-  setMsg("You start "+state.pStep+" steps ahead!");
-  askCurrent();
+  beginRound(6,"You start "+state.pStep+" steps ahead!",askCurrent);
 }
 
 function winHeadToHead(){
@@ -436,6 +508,7 @@ function winHeadToHead(){
 
 function loseHeadToHead(){
   submitScore(false);
+  saveRemoteMemory(false);
   showModal("Caught!","The chaser caught you. You built "+formatScore(state.pot)+". Better luck next time.",function(){showMenu();});
 }
 
@@ -444,34 +517,40 @@ function startFinal(){
   state.trackSteps=7;
   state.pStep=state.trackSteps;
   state.cStep=state.trackSteps;
-  state.questions=pickQuestions(10);
-  state.qIndex=0;
   state.timerMax=DIFF[state.diff].time;
-  updateHud();
-  setMsg("Final Chase! Keep your lead!");
-  askCurrent();
+  beginRound(10,"Final Chase! Keep your lead!",askCurrent);
 }
 
 function winFinal(){
   submitScore(true);
   state.level++;
+  saveRemoteMemory(true);
   showModal("Grand prize!","You won "+formatScore(state.pot)+"! Level "+state.level+" unlocked.",function(){showMenu();});
 }
 
 function loseFinal(){
   submitScore(false);
+  saveRemoteMemory(false);
   showModal("Chaser wins","So close! The chaser caught you in the Final Chase. You built "+formatScore(state.pot)+".",function(){showMenu();});
+}
+
+function beginRound(questionCount,msg,next){
+  setMsg("Loading questions…");
+  fetchQuestionsFromApi(questionCount).then(function(qs){
+    state.questions=qs;
+    state.qIndex=0;
+    updateHud();
+    setMsg(msg);
+    next();
+  });
 }
 
 function startCashBuilder(){
   initAudio();startMusic();
   state.round=0;state.phase="play";state.pot=0;state.qIndex=0;state.usedIds=new Set();
   state.playerName=(loadName()||"").trim();
-  state.questions=pickQuestions(8);
   state.timerMax=DIFF[state.diff].time;
-  updateHud();
-  setMsg("Beat the clock — £"+DIFF[state.diff].cash+" per correct answer!");
-  askCurrent();
+  beginRound(8,"Beat the clock — £"+DIFF[state.diff].cash+" per correct answer!",askCurrent);
 }
 
 function showMenu(){
@@ -484,12 +563,13 @@ function showMenu(){
     html+='<button type="button" class="diff-btn'+(state.diff===k?" selected":"")+'" data-d="'+k+'"><b>'+d.label+'</b><small>'+d.desc+'</small></button>';
   });
   html+='</div></div>';
-  html+='<div class="panel"><h2>Your name</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">Saved on this device and shown on the leaderboard.</p>';
+  html+='<p class="bank-stat" id="bankStat">Live question bank: loading…</p>';
+  html+='<div class="panel"><h2>Your name</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">Saved on this device + cloud memory (via MCP/KV). Shown on the leaderboard.</p>';
   html+='<input type="text" class="name-input" id="playerName" maxlength="20" placeholder="Enter your name" autocomplete="nickname" value="'+escapeHtml(loadName())+'"/></div>';
   html+='<div class="panel" id="lbPanel"><h2>Leaderboard</h2>';
   html+='<div class="lb-tabs"><button type="button" class="lb-tab active" data-tab="global">Global</button><button type="button" class="lb-tab" data-tab="local">This device</button></div>';
   html+='<div class="lb-body"><p class="lb-empty">Loading scores…</p></div></div>';
-  html+='<div class="panel"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No question repeats within the same game.</span></p></div>';
+  html+='<div class="panel"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No repeats per game · bank grows daily with AI current-events questions.</span></p></div>';
   $("screen").innerHTML=html;
   document.querySelectorAll(".diff-btn").forEach(function(b){
     b.onclick=function(){state.diff=b.dataset.d;document.querySelectorAll(".diff-btn").forEach(function(x){x.classList.remove("selected");});b.classList.add("selected");};
@@ -502,6 +582,8 @@ function showMenu(){
   });
   renderLeaderboardPanel();
   fetchGlobalLeaderboard();
+  fetchBankStats();
+  loadRemoteMemory();
   $("controls").innerHTML=
     '<button type="button" class="btn" id="startBtn">Start game</button>'+
     '<button type="button" class="btn secondary" id="soundBtn">'+(musicOn?"🔊 Sound on":"🔇 Sound off")+'</button>';
@@ -517,7 +599,7 @@ function showMenu(){
 }
 
 state.diff="standard";state.level=1;
-showMenu();
+loadRemoteMemory().finally(showMenu);
 document.body.addEventListener("click",function once(){initAudio();startMusic();document.body.removeEventListener("click",once);},{once:true});
 })();
 </script>

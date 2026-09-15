@@ -64,8 +64,18 @@ if (!html.includes("usedIds") || !html.includes("pursuit-leaderboard")) {
   console.error("FAIL: index.html missing no-repeat or leaderboard logic");
   process.exit(1);
 }
+if (!html.includes("pursuit-questions") || !html.includes("pursuit-memory")) {
+  console.error("FAIL: index.html missing cloud question bank or memory API");
+  process.exit(1);
+}
 if (!html.includes("playerName") || !html.includes("localStorage")) {
   console.error("FAIL: index.html missing name persistence");
+  process.exit(1);
+}
+
+const server = readFileSync(join(dir, "../../server.js"), "utf8");
+if (!server.includes("pursuit-store") || !server.includes("scheduled")) {
+  console.error("FAIL: server.js missing pursuit store or cron refresh");
   process.exit(1);
 }
 
