@@ -11,6 +11,17 @@ Original UK studio-style quiz game (Cash Builder → Head-to-Head → Final Chas
 
 Workers & Pages → **portfolio1** → Settings → Domains → add `pursuit.tgollogly.dev`.
 
+### Deploy command (important — cron fix)
+
+This repo builds **three** Workers (`portfolio`, `test`, `portfolio1`) from one repo. Cron triggers must **only** attach to **portfolio1** (Free plan: 5 crons per account).
+
+| Worker | Deploy command |
+|--------|----------------|
+| **portfolio1** (production) | `bash scripts/deploy-portfolio1.sh` |
+| portfolio / test | `npx wrangler deploy` |
+
+If `portfolio1` builds fail after adding Pursuit, delete stray crons on **portfolio** and **test** (Triggers tab), then redeploy portfolio1.
+
 Bindings (in `wrangler.toml`):
 
 | Binding | Purpose |

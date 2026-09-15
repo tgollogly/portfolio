@@ -21,8 +21,9 @@ binding = "PURSUIT_DB"
 database_name = "pursuit-questions"
 database_id = "af4e6f9a-3527-42a7-8f04-9290c8f78117"
 
-[triggers]
-crons = ["0 6 * * *", "0 18 * * *"]
+# Cron triggers are NOT here — this file is shared by portfolio / test / portfolio1
+# Workers Builds. Crons are registered only on portfolio1 (see wrangler.portfolio1.toml
+# and scripts/deploy-portfolio1.sh) to stay within the account cron limit (5 on Free).
 
 [assets]
 directory = "."
