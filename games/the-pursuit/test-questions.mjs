@@ -38,5 +38,9 @@ if (!html.includes("noindex,nofollow")) {
   console.error("FAIL: index.html missing noindex");
   process.exit(1);
 }
+if (!html.includes("og:image") || !html.includes("og-preview.png")) {
+  console.error("FAIL: index.html missing Open Graph image tags");
+  process.exit(1);
+}
 
 console.log(`Question bank OK: ${bank.length} questions`, diffs);
