@@ -84,10 +84,12 @@ async function serveQuizGame(request, env, assetPath) {
   const asset = await env.ASSETS.fetch(new URL(assetPath || QUIZ_GAME_INDEX, request.url));
   if (!asset.ok) return asset;
   const headers = new Headers(asset.headers);
+  const isImage = assetPath?.endsWith(".png");
   if (assetPath?.endsWith(".js")) headers.set("Content-Type", "application/javascript; charset=utf-8");
+  else if (isImage) headers.set("Content-Type", "image/png");
   else headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
-  headers.set("Cache-Control", "public, max-age=3600");
+  if (!isImage) headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+  headers.set("Cache-Control", isImage ? "public, max-age=86400" : "public, max-age=3600");
   return new Response(asset.body, { status: asset.status, headers });
 }
 
@@ -500,7 +502,7 @@ export default {
     if (path === QUIZ_GAME_PREFIX || path === `${QUIZ_GAME_PREFIX}/`) {
       return serveQuizGame(request, env);
     }
-    if (path === `${QUIZ_GAME_PREFIX}/index.html` || path === `${QUIZ_GAME_PREFIX}/questions.js`) {
+    if (path === `${QUIZ_GAME_PREFIX}/index.html` || path === `${QUIZ_GAME_PREFIX}/questions.js` || path === `${QUIZ_GAME_PREFIX}/og-preview.png`) {
       return serveQuizGame(request, env, path);
     }
 
