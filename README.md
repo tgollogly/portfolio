@@ -60,9 +60,9 @@ Use Cloudflare MCP to manage **portfolio1** from Cursor — deploys, secrets, lo
 
 **Quick start**
 
-1. Open this repo in Cursor.
+1. Open this repo in Cursor with **File → Open Folder** (not a multi-root workspace).
 2. Run `/add-plugin cloudflare` (or install Cloudflare from the Cursor Marketplace).
-3. Restart Cursor if asked.
+3. Open **Customize → MCPs** and enable the Cloudflare servers (see troubleshooting if they are missing).
 4. Ask the agent to use Cloudflare (e.g. “Check deploy status for portfolio1”).
 5. Sign in with Cloudflare OAuth when the browser opens.
 
