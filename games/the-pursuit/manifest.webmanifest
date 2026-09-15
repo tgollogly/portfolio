@@ -1,0 +1,16 @@
+{
+  "name": "The Pursuit — UK Quiz Challenge",
+  "short_name": "Pursuit",
+  "description": "Cash Builder, Head-to-Head and Final Chase. Original fan-made quiz game.",
+  "start_url": "/games/the-pursuit/",
+  "scope": "/games/the-pursuit/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070d18",
+  "theme_color": "#070d18",
+  "icons": [
+    { "src": "/games/the-pursuit/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/games/the-pursuit/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/games/the-pursuit/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

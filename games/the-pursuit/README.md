@@ -27,6 +27,14 @@ Workers & Pages → **portfolio1** → Settings → Domains → add `pursuit.tgo
 | Expert | 84% | Medium + Hard |
 | Legend | 93% | Hard + Expert |
 
+## iPhone Home Screen
+
+1. Open https://tgollogly.dev/games/the-pursuit/ in **Safari**
+2. Tap **Share** → **Add to Home Screen**
+3. The gold crosshair **Pursuit** icon appears on your home screen
+
+Regenerate icons: `python3 scripts/build-pursuit-icons.py`
+
 ## Test
 
 ```bash
