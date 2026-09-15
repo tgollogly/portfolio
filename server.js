@@ -13,6 +13,7 @@ import {
   getPlayerMemory,
   getPursuitStats,
   getQuestionCount,
+  maybeBackgroundPursuitRefresh,
   pickQuestionsFromDb,
   recordQuestionFeedback,
   refreshQuestionsWithAi,
@@ -534,8 +535,16 @@ async function ensurePursuitBank(env, requestUrl) {
   }
 }
 
-async function handlePursuitQuestionsGet(request, env) {
+function queuePursuitBackgroundRefresh(ctx, env, requestUrl) {
+  if (!ctx?.waitUntil) return;
+  ctx.waitUntil(
+    maybeBackgroundPursuitRefresh(env, requestUrl, { geminiFn: gemini, getKeyFn: getKey }).catch(() => {})
+  );
+}
+
+async function handlePursuitQuestionsGet(request, env, ctx) {
   await ensurePursuitBank(env, request.url);
+  queuePursuitBackgroundRefresh(ctx, env, request.url);
   const url = new URL(request.url);
   const count = Math.min(48, Math.max(1, parseInt(url.searchParams.get("count") || "24", 10)));
   const pool = (url.searchParams.get("pool") || "easy,medium,hard,expert")
@@ -555,8 +564,9 @@ async function handlePursuitQuestionsGet(request, env) {
   return jsonGet({ questions, total: stats.total, source: questions.length ? "d1" : "fallback" });
 }
 
-async function handlePursuitStatsGet(request, env) {
+async function handlePursuitStatsGet(request, env, ctx) {
   await ensurePursuitBank(env, request.url);
+  queuePursuitBackgroundRefresh(ctx, env, request.url);
   const stats = await getPursuitStats(env);
   return jsonGet(stats);
 }
@@ -623,7 +633,7 @@ export default {
       )
     );
   },
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -658,12 +668,12 @@ export default {
     }
     if (path === "/api/pursuit-questions") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handlePursuitQuestionsGet(request, env);
+      if (request.method === "GET") return handlePursuitQuestionsGet(request, env, ctx);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/pursuit-stats") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handlePursuitStatsGet(request, env);
+      if (request.method === "GET") return handlePursuitStatsGet(request, env, ctx);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/pursuit-feedback") {
