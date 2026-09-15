@@ -97,10 +97,18 @@ def draw_icon(size: int) -> Image.Image:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    game_root = OUT.parent
     for size, name in ((180, "apple-touch-icon.png"), (192, "icon-192.png"), (512, "icon-512.png")):
         path = OUT / name
-        draw_icon(size).save(path, "PNG", optimize=True)
+        img = draw_icon(size)
+        img.save(path, "PNG", optimize=True)
         print("Wrote", path)
+        if name == "apple-touch-icon.png":
+            img.save(game_root / "apple-touch-icon.png", "PNG", optimize=True)
+            print("Wrote", game_root / "apple-touch-icon.png")
+    for size, name in ((32, "favicon-32.png"), (16, "favicon-16.png")):
+        draw_icon(size).save(game_root / name, "PNG", optimize=True)
+        print("Wrote", game_root / name)
 
 
 if __name__ == "__main__":

@@ -46,5 +46,9 @@ if (!html.includes("apple-touch-icon") || !html.includes("manifest.webmanifest")
   console.error("FAIL: index.html missing PWA / home screen icon tags");
   process.exit(1);
 }
+if (!html.includes("/games/the-pursuit/apple-touch-icon.png")) {
+  console.error("FAIL: apple-touch-icon must live beside index (iOS requirement)");
+  process.exit(1);
+}
 
 console.log(`Question bank OK: ${bank.length} questions`, diffs);
