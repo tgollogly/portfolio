@@ -12,6 +12,10 @@ compatibility_flags = ["nodejs_compat"]
 # Access challenge (Facebook-linked abuse): set TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY
 # from Cloudflare Turnstile. Toggle in server.js: ACCESS_CHALLENGE_ENABLED, CHALLENGE_NI_GEO.
 
+[[kv_namespaces]]
+binding = "PURSUIT_KV"
+id = "3959b665a51148bea2e6a518f58c2d5f"
+
 [assets]
 directory = "."
 binding = "ASSETS"

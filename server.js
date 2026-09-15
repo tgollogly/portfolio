@@ -71,6 +71,8 @@ const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-
 const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
+const PURSUIT_LB_KEY = "pursuit:leaderboard";
+const PURSUIT_LB_MAX = 100;
 
 function isQuizGameHost(hostname) {
   return QUIZ_GAME_HOSTS.has(hostname);
@@ -517,6 +519,12 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
       if (request.method === "GET") return handleJobs(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-leaderboard") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitLeaderboardGet(env);
+      if (request.method === "POST") return handlePursuitScorePost(request, env);
+      return new Response("GET or POST only", { status: 405, headers: corsGet() });
     }
     if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
@@ -1117,7 +1125,62 @@ async function gemini(prompt, key) {
   const e = new Error(lastErr); e.busyAll = true; throw e;
 }
 
+function sanitizePursuitName(name) {
+  return String(name || "")
+    .replace(/[^\w\s\-'.]/gi, "")
+    .trim()
+    .slice(0, 20);
+}
+
+async function handlePursuitLeaderboardGet(env) {
+  if (!env.PURSUIT_KV) return jsonGet({ entries: [] });
+  const raw = await env.PURSUIT_KV.get(PURSUIT_LB_KEY);
+  let entries = [];
+  if (raw) {
+    try {
+      entries = JSON.parse(raw);
+      if (!Array.isArray(entries)) entries = [];
+    } catch {
+      entries = [];
+    }
+  }
+  entries.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.at || 0) - (a.at || 0));
+  return jsonGet({ entries: entries.slice(0, 50) });
+}
+
+async function handlePursuitScorePost(request, env) {
+  if (!env.PURSUIT_KV) return json({ ok: false, error: "leaderboard unavailable" }, 503);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const name = sanitizePursuitName(body.name);
+  if (!name) return json({ error: "name required" }, 400);
+  const score = Math.max(0, Math.min(999999, Math.floor(Number(body.score) || 0)));
+  const difficulty = String(body.difficulty || "standard").slice(0, 20);
+  const won = Boolean(body.won);
+  const entry = { name, score, difficulty, won, at: Date.now() };
+  const raw = await env.PURSUIT_KV.get(PURSUIT_LB_KEY);
+  let entries = [];
+  if (raw) {
+    try {
+      entries = JSON.parse(raw);
+      if (!Array.isArray(entries)) entries = [];
+    } catch {
+      entries = [];
+    }
+  }
+  entries.push(entry);
+  entries.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.at || 0) - (a.at || 0));
+  entries = entries.slice(0, PURSUIT_LB_MAX);
+  await env.PURSUIT_KV.put(PURSUIT_LB_KEY, JSON.stringify(entries));
+  const rank = entries.findIndex((e) => e.at === entry.at && e.name === entry.name && e.score === entry.score) + 1;
+  return json({ ok: true, rank: rank || null });
+}
+
 function cors() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
-function corsGet() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
+function corsGet() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
 function json(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...cors(), "Content-Type": "application/json" } }); }
-function jsonGet(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...corsGet(), "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } }); }
+function jsonGet(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...corsGet(), "Content-Type": "application/json", "Cache-Control": "public, max-age=60" } }); }

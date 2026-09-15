@@ -8,13 +8,23 @@ const src = readFileSync(join(dir, "questions.js"), "utf8");
 const fn = new Function("window", src + "; return window.QUIZ_BANK;");
 const bank = fn({});
 
-if (!Array.isArray(bank) || bank.length < 80) {
-  console.error("FAIL: expected 80+ questions, got", bank?.length);
+if (!Array.isArray(bank) || bank.length < 200) {
+  console.error("FAIL: expected 200+ questions, got", bank?.length);
   process.exit(1);
 }
 
+const ids = new Set();
 const diffs = { easy: 0, medium: 0, hard: 0, expert: 0 };
 for (const q of bank) {
+  if (!q.id || typeof q.id !== "string") {
+    console.error("FAIL: missing question id", q.q);
+    process.exit(1);
+  }
+  if (ids.has(q.id)) {
+    console.error("FAIL: duplicate question id", q.id);
+    process.exit(1);
+  }
+  ids.add(q.id);
   if (!q.q || !Array.isArray(q.o) || q.o.length !== 4) {
     console.error("FAIL: invalid question shape", q);
     process.exit(1);
@@ -48,6 +58,14 @@ if (!html.includes("apple-touch-icon") || !html.includes("manifest.webmanifest")
 }
 if (!html.includes("/games/the-pursuit/apple-touch-icon.png")) {
   console.error("FAIL: apple-touch-icon must live beside index (iOS requirement)");
+  process.exit(1);
+}
+if (!html.includes("usedIds") || !html.includes("pursuit-leaderboard")) {
+  console.error("FAIL: index.html missing no-repeat or leaderboard logic");
+  process.exit(1);
+}
+if (!html.includes("playerName") || !html.includes("localStorage")) {
+  console.error("FAIL: index.html missing name persistence");
   process.exit(1);
 }
 
