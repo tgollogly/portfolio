@@ -5,6 +5,22 @@ import {
   sanitizeAiOutput,
   sanitizeJsonValues,
 } from "./lib/privacy-guardrails.js";
+import {
+  addLeaderboardEntry,
+  ensureSchema,
+  expandProceduralQuestions,
+  getLeaderboard,
+  getPlayerMemory,
+  getPursuitStats,
+  getQuestionCount,
+  pickQuestionsFromDb,
+  recordQuestionFeedback,
+  refreshQuestionsWithAi,
+  savePlayerMemory,
+  sanitizePlayerId,
+  sanitizePursuitName,
+  seedIfEmpty,
+} from "./lib/pursuit-store.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -71,6 +87,7 @@ const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-
 const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
+const PURSUIT_SEED_PATH = `${QUIZ_GAME_PREFIX}/questions.js`;
 
 function isQuizGameHost(hostname) {
   return QUIZ_GAME_HOSTS.has(hostname);
@@ -490,7 +507,122 @@ function redirectChallenge(request, path) {
   return Response.redirect(`${new URL(request.url).origin}/access-challenge?r=${r}`, 302);
 }
 
+async function loadPursuitSeedBank(env, requestUrl) {
+  const asset = await env.ASSETS.fetch(new URL(PURSUIT_SEED_PATH, requestUrl));
+  if (!asset.ok) return [];
+  const text = await asset.text();
+  try {
+    const fn = new Function("window", `${text}; return window.QUIZ_BANK;`);
+    const bank = fn({});
+    return Array.isArray(bank) ? bank : [];
+  } catch {
+    return [];
+  }
+}
+
+async function ensurePursuitBank(env, requestUrl) {
+  if (!env.PURSUIT_DB) return;
+  await ensureSchema(env);
+  const count = await getQuestionCount(env);
+  if (count === 0) {
+    const seed = await loadPursuitSeedBank(env, requestUrl);
+    if (seed.length) await seedIfEmpty(env, seed);
+  }
+  const afterSeed = await getQuestionCount(env);
+  if (afterSeed > 0 && afterSeed < 10000) {
+    await expandProceduralQuestions(env, 10000);
+  }
+}
+
+async function handlePursuitQuestionsGet(request, env) {
+  await ensurePursuitBank(env, request.url);
+  const url = new URL(request.url);
+  const count = Math.min(48, Math.max(1, parseInt(url.searchParams.get("count") || "24", 10)));
+  const pool = (url.searchParams.get("pool") || "easy,medium,hard,expert")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const exclude = (url.searchParams.get("exclude") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  let questions = await pickQuestionsFromDb(env, { count, difficulties: pool, excludeIds: exclude });
+  if (!questions.length) {
+    const seed = await loadPursuitSeedBank(env, request.url);
+    questions = seed.filter((q) => pool.includes(q.d) && !exclude.includes(q.id)).slice(0, count);
+  }
+  const stats = await getPursuitStats(env);
+  return jsonGet({ questions, total: stats.total, source: questions.length ? "d1" : "fallback" });
+}
+
+async function handlePursuitStatsGet(request, env) {
+  await ensurePursuitBank(env, request.url);
+  const stats = await getPursuitStats(env);
+  return jsonGet(stats);
+}
+
+async function handlePursuitFeedbackPost(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  await recordQuestionFeedback(env, String(body.questionId || ""), Boolean(body.correct));
+  return json({ ok: true });
+}
+
+async function handlePursuitMemoryGet(request, env) {
+  const url = new URL(request.url);
+  const playerId = sanitizePlayerId(url.searchParams.get("playerId"));
+  if (!playerId) return jsonGet({ error: "playerId required" }, 400);
+  const memory = await getPlayerMemory(env, playerId);
+  return jsonGet({ memory });
+}
+
+async function handlePursuitMemoryPost(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const playerId = sanitizePlayerId(body.playerId);
+  if (!playerId) return json({ error: "playerId required" }, 400);
+  const memory = await savePlayerMemory(env, playerId, body);
+  return json({ ok: true, memory });
+}
+
+async function handlePursuitRefreshPost(request, env) {
+  const secret = await getSecret(env, "PURSUIT_REFRESH_SECRET");
+  const auth = request.headers.get("Authorization") || "";
+  const cron = request.headers.get("CF-Scheduled") === "true";
+  if (!cron && secret && auth !== `Bearer ${secret}`) {
+    return json({ error: "unauthorized" }, 401);
+  }
+  await ensurePursuitBank(env, request.url);
+  const key = await getKey(env);
+  const ai = key ? await refreshQuestionsWithAi(env, gemini, key) : { ok: false, error: "no ai key" };
+  const total = await getQuestionCount(env);
+  let expand = null;
+  if (total < 10_000_000) {
+    expand = await expandProceduralQuestions(env, Math.min(total + 5000, 10_000_000));
+  }
+  return json({ ai, expand, total: await getQuestionCount(env) });
+}
+
 export default {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      handlePursuitRefreshPost(
+        new Request("https://internal/api/pursuit-refresh", {
+          method: "POST",
+          headers: { "CF-Scheduled": "true" },
+        }),
+        env
+      )
+    );
+  },
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -517,6 +649,38 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
       if (request.method === "GET") return handleJobs(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-leaderboard") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitLeaderboardGet(env);
+      if (request.method === "POST") return handlePursuitScorePost(request, env);
+      return new Response("GET or POST only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-questions") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitQuestionsGet(request, env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-stats") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitStatsGet(request, env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-feedback") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+      if (request.method === "POST") return handlePursuitFeedbackPost(request, env);
+      return new Response("POST only", { status: 405, headers: cors() });
+    }
+    if (path === "/api/pursuit-memory") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitMemoryGet(request, env);
+      if (request.method === "POST") return handlePursuitMemoryPost(request, env);
+      return new Response("GET or POST only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-refresh") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+      if (request.method === "POST") return handlePursuitRefreshPost(request, env);
+      return new Response("POST only", { status: 405, headers: cors() });
     }
     if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
@@ -1117,7 +1281,31 @@ async function gemini(prompt, key) {
   const e = new Error(lastErr); e.busyAll = true; throw e;
 }
 
+async function handlePursuitLeaderboardGet(env) {
+  const entries = await getLeaderboard(env);
+  entries.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.at || 0) - (a.at || 0));
+  return jsonGet({ entries: entries.slice(0, 50) });
+}
+
+async function handlePursuitScorePost(request, env) {
+  if (!env.PURSUIT_KV) return json({ ok: false, error: "leaderboard unavailable" }, 503);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const name = sanitizePursuitName(body.name);
+  if (!name) return json({ error: "name required" }, 400);
+  const score = Math.max(0, Math.min(999999, Math.floor(Number(body.score) || 0)));
+  const difficulty = String(body.difficulty || "standard").slice(0, 20);
+  const won = Boolean(body.won);
+  const entry = { name, score, difficulty, won, at: Date.now() };
+  const rank = await addLeaderboardEntry(env, entry);
+  return json({ ok: true, rank: rank || null });
+}
+
 function cors() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
-function corsGet() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
+function corsGet() { return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }; }
 function json(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...cors(), "Content-Type": "application/json" } }); }
-function jsonGet(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...corsGet(), "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } }); }
+function jsonGet(obj, status = 200) { return new Response(JSON.stringify(obj), { status, headers: { ...corsGet(), "Content-Type": "application/json", "Cache-Control": "public, max-age=60" } }); }
