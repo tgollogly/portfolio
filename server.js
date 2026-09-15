@@ -67,19 +67,25 @@ WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships
 
 const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-finder.js"]);
 
-// Original match-three demo — clover.tgollogly.dev (see games/clover-match/)
-const CLOVER_GAME_HOST = "clover.tgollogly.dev";
-const CLOVER_GAME_ASSET = "/games/clover-match/index.html";
+// Original UK quiz-chaser demo — pursuit.tgollogly.dev (see games/the-pursuit/)
+const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
+const QUIZ_GAME_PREFIX = "/games/the-pursuit";
+const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
 
-function isCloverGameHost(hostname) {
-  return hostname === CLOVER_GAME_HOST;
+function isQuizGameHost(hostname) {
+  return QUIZ_GAME_HOSTS.has(hostname);
 }
 
-async function serveCloverGame(request, env) {
-  const asset = await env.ASSETS.fetch(new URL(CLOVER_GAME_ASSET, request.url));
+function isQuizGamePath(path) {
+  return path === QUIZ_GAME_PREFIX || path.startsWith(`${QUIZ_GAME_PREFIX}/`);
+}
+
+async function serveQuizGame(request, env, assetPath) {
+  const asset = await env.ASSETS.fetch(new URL(assetPath || QUIZ_GAME_INDEX, request.url));
   if (!asset.ok) return asset;
   const headers = new Headers(asset.headers);
-  headers.set("Content-Type", "text/html; charset=utf-8");
+  if (assetPath?.endsWith(".js")) headers.set("Content-Type", "application/javascript; charset=utf-8");
+  else headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
   headers.set("Cache-Control", "public, max-age=3600");
   return new Response(asset.body, { status: asset.status, headers });
@@ -267,11 +273,11 @@ function getCookie(request, name) {
 
 function shouldApplyChallenge(request, url, path) {
   if (!ACCESS_CHALLENGE_ENABLED) return false;
-  if (isCloverGameHost(url.hostname)) return false;
+  if (isQuizGameHost(url.hostname)) return false;
   if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
   if (path === "/access-challenge" || path === "/api/access-verify") return false;
   if (path.startsWith("/api/")) return false;
-  if (path.startsWith("/games/clover-match")) return false;
+  if (isQuizGamePath(path) || path.startsWith("/games/clover-match")) return false;
   if (!isDocumentPath(path)) return false;
   return isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request);
 }
@@ -485,11 +491,17 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    if (isCloverGameHost(url.hostname)) {
-      if (path === "/" || path === "/index.html") return serveCloverGame(request, env);
+    if (isQuizGameHost(url.hostname)) {
+      if (path === "/" || path === "/index.html") return serveQuizGame(request, env);
     }
-    if (path === "/games/clover-match" || path === "/games/clover-match/" || path === "/games/clover-match/index.html") {
-      return serveCloverGame(request, env);
+    if (path === "/games/clover-match" || path === "/games/clover-match/" || path.startsWith("/games/clover-match/")) {
+      return Response.redirect(`${url.origin}${QUIZ_GAME_PREFIX}/`, 301);
+    }
+    if (path === QUIZ_GAME_PREFIX || path === `${QUIZ_GAME_PREFIX}/`) {
+      return serveQuizGame(request, env);
+    }
+    if (path === `${QUIZ_GAME_PREFIX}/index.html` || path === `${QUIZ_GAME_PREFIX}/questions.js`) {
+      return serveQuizGame(request, env, path);
     }
 
     if (JOB_FINDER_PATHS.has(path)) {
@@ -533,7 +545,7 @@ export default {
       headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
-    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isCloverGameHost(url.hostname) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
       const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
       if (vpnHit) {
         return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {
