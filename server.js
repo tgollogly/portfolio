@@ -60,6 +60,24 @@ WHY HIRE HIM: he brings a rare mix for a junior candidate — he genuinely ships
 
 const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-finder.js"]);
 
+// Original match-three demo — clover.tgollogly.dev (see games/clover-match/)
+const CLOVER_GAME_HOST = "clover.tgollogly.dev";
+const CLOVER_GAME_ASSET = "/games/clover-match/index.html";
+
+function isCloverGameHost(hostname) {
+  return hostname === CLOVER_GAME_HOST;
+}
+
+async function serveCloverGame(request, env) {
+  const asset = await env.ASSETS.fetch(new URL(CLOVER_GAME_ASSET, request.url));
+  if (!asset.ok) return asset;
+  const headers = new Headers(asset.headers);
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+  headers.set("Cache-Control", "public, max-age=3600");
+  return new Response(asset.body, { status: asset.status, headers });
+}
+
 // ===== TEMPORARY ACCESS CHALLENGE (Facebook + NI/Belfast) =====
 // Set ACCESS_CHALLENGE_ENABLED false to disable entirely.
 const ACCESS_CHALLENGE_ENABLED = true;
@@ -238,9 +256,11 @@ function getCookie(request, name) {
 
 function shouldApplyChallenge(request, url, path) {
   if (!ACCESS_CHALLENGE_ENABLED) return false;
+  if (isCloverGameHost(url.hostname)) return false;
   if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
   if (path === "/access-challenge" || path === "/api/access-verify") return false;
   if (path.startsWith("/api/")) return false;
+  if (path.startsWith("/games/clover-match")) return false;
   if (!isDocumentPath(path)) return false;
   return isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request);
 }
@@ -451,6 +471,13 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (isCloverGameHost(url.hostname)) {
+      if (path === "/" || path === "/index.html") return serveCloverGame(request, env);
+    }
+    if (path === "/games/clover-match" || path === "/games/clover-match/") {
+      return serveCloverGame(request, env);
+    }
+
     if (JOB_FINDER_PATHS.has(path)) {
       const auth = await requireJobFinderAuth(request, env);
       if (!auth.ok) return auth.response;
@@ -488,7 +515,7 @@ export default {
       headers.set("Content-Disposition", 'attachment; filename="Thomas-Gollogly.vcf"');
       return new Response(asset.body, { status: asset.status, headers });
     }
-    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isCloverGameHost(url.hostname) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
       const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
       if (vpnHit) {
         return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {

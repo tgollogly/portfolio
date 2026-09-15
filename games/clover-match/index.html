@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
+<meta name="googlebot" content="noindex,nofollow"/>
+<title>Clover Match · Original Irish puzzle</title>
+<meta name="description" content="An original match-three puzzle with an Irish theme. Not affiliated with any commercial match-three games."/>
+<style>
+:root{
+  --bg:#0d3d2a;--bg2:#145c3a;--panel:#1a6b44;--gold:#f4c430;--cream:#fef9e7;
+  --line:rgba(255,255,255,.15);--text:#fef9e7;--muted:rgba(254,249,231,.75);
+  --tile:min(11vw,52px);--gap:3px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:linear-gradient(165deg,var(--bg),#062318 55%,#0a281c);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
+body{display:flex;flex-direction:column;align-items:center;padding:12px 10px 24px}
+header{text-align:center;max-width:420px;width:100%;margin-bottom:10px}
+h1{margin:0;font-size:clamp(1.35rem,4.5vw,1.75rem);letter-spacing:.02em;color:var(--gold)}
+.sub{margin:6px 0 0;font-size:.82rem;color:var(--muted);line-height:1.4}
+.stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 10px;width:100%;max-width:420px}
+.stat{flex:1;min-width:88px;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center}
+.stat b{display:block;font-size:1.25rem;color:var(--gold)}
+.stat span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.board-wrap{position:relative;background:var(--panel);border:3px solid rgba(244,196,48,.35);border-radius:16px;padding:8px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:min(100vw - 20px,420px)}
+#board{display:grid;grid-template-columns:repeat(8,var(--tile));grid-template-rows:repeat(8,var(--tile));gap:var(--gap);margin:0 auto}
+.cell{width:var(--tile);height:var(--tile);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:clamp(1.1rem,4.2vw,1.65rem);cursor:pointer;user-select:none;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(0,0,0,.12));border:2px solid transparent;transition:transform .12s,border-color .12s,box-shadow .12s}
+.cell.selected{border-color:var(--gold);box-shadow:0 0 0 2px rgba(244,196,48,.35);transform:scale(1.06)}
+.cell.matching{animation:pop .35s ease forwards}
+.cell.falling{animation:drop .28s ease}
+@keyframes pop{50%{transform:scale(1.2);opacity:.5}100%{transform:scale(0);opacity:0}}
+@keyframes drop{from{transform:translateY(-120%)}to{transform:translateY(0)}}
+.t0{background:linear-gradient(145deg,#2d8a4e,#1e6b38)}
+.t1{background:linear-gradient(145deg,#3a7f4a,#245c32)}
+.t2{background:linear-gradient(145deg,#c9a227,#8b6914)}
+.t3{background:linear-gradient(145deg,#5c7a8a,#3d5563)}
+.t4{background:linear-gradient(145deg,#8b4513,#5c2e0a)}
+.t5{background:linear-gradient(145deg,#6b4c9a,#4a3270)}
+.controls{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;max-width:420px;width:100%}
+button{font:inherit;border:none;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--gold);color:#1a2e1a}
+button.secondary{background:rgba(255,255,255,.12);color:var(--cream);border:1px solid var(--line)}
+button:active{transform:scale(.98)}
+#msg{min-height:1.4em;text-align:center;font-size:.9rem;color:var(--gold);margin-top:8px;max-width:420px}
+.legal{max-width:420px;margin-top:16px;font-size:.72rem;color:var(--muted);line-height:1.45;text-align:center}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:20px;z-index:20}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:22px 20px;max-width:320px;text-align:center}
+.modal h2{margin:0 0 8px;color:var(--gold)}
+.modal p{margin:0 0 16px;font-size:.92rem;color:var(--cream)}
+@media (max-width:360px){:root{--tile:10vw}}
+</style>
+</head>
+<body>
+<header>
+  <h1>☘️ Clover Match</h1>
+  <p class="sub">Swap neighbours to line up three or more Irish charms. Original puzzle — not Candy Crush or any commercial game.</p>
+</header>
+<div class="stats">
+  <div class="stat"><b id="score">0</b><span>Score</span></div>
+  <div class="stat"><b id="moves">25</b><span>Moves</span></div>
+  <div class="stat"><b id="target">1200</b><span>Target</span></div>
+</div>
+<div class="board-wrap"><div id="board" aria-label="Match-three game board"></div></div>
+<p id="msg">Tap two neighbours to swap.</p>
+<div class="controls">
+  <button type="button" id="newBtn">New game</button>
+  <button type="button" class="secondary" id="shuffleBtn">Shuffle</button>
+</div>
+<p class="legal">Fan-made demo on tgollogly.dev. Match-three is a common game mechanic; artwork and name here are original. Hidden from search engines.</p>
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 id="modalTitle">Grand!</h2>
+    <p id="modalText">You hit the target score.</p>
+    <button type="button" id="modalBtn">Play again</button>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+var TYPES=["🍀","🎻","🌈","🥔","🪙","☘️"];
+var SIZE=8,TARGET=1200,START_MOVES=25;
+var grid=[],selected=null,busy=false,score=0,moves=START_MOVES;
+var board=document.getElementById("board");
+var scoreEl=document.getElementById("score");
+var movesEl=document.getElementById("moves");
+var msgEl=document.getElementById("msg");
+
+function randType(){return (Math.random()*TYPES.length)|0;}
+function idx(r,c){return r*SIZE+c;}
+function inBounds(r,c){return r>=0&&r<SIZE&&c>=0&&c<SIZE;}
+
+function wouldMatchAt(r,c,t,gr){
+  var g=gr||grid;
+  var n=0,h=0;
+  for(var cc=c-1;cc>=0&&g[idx(r,cc)]===t;cc--)n++;
+  for(var cc=c+1;cc<SIZE&&g[idx(r,cc)]===t;cc++)n++;
+  if(n>=2)return true;
+  n=0;
+  for(var rr=r-1;rr>=0&&g[idx(rr,c)]===t;rr--)n++;
+  for(var rr=r+1;rr<SIZE&&g[idx(rr,c)]===t;rr++)n++;
+  return n>=2;
+}
+
+function createGrid(){
+  grid=new Array(SIZE*SIZE);
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){
+    var t;do{t=randType();}while(wouldMatchAt(r,c,t));
+    grid[idx(r,c)]=t;
+  }
+}
+
+function findMatches(){
+  var set=new Set();
+  for(var r=0;r<SIZE;r++){
+    var run=1;
+    for(var c=1;c<SIZE;c++){
+      if(grid[idx(r,c)]===grid[idx(r,c-1)]&&grid[idx(r,c)]!=null)run++;
+      else{
+        if(run>=3)for(var k=0;k<run;k++)set.add(idx(r,c-1-k));
+        run=1;
+      }
+    }
+    if(run>=3)for(var k=0;k<run;k++)set.add(idx(r,SIZE-1-k));
+  }
+  for(var c=0;c<SIZE;c++){
+    var run=1;
+    for(var r=1;r<SIZE;r++){
+      if(grid[idx(r,c)]===grid[idx(r-1,c)]&&grid[idx(r,c)]!=null)run++;
+      else{
+        if(run>=3)for(var k=0;k<run;k++)set.add(idx(r-1-k,c));
+        run=1;
+      }
+    }
+    if(run>=3)for(var k=0;k<run;k++)set.add(idx(r-SIZE-k,c));
+  }
+  return set;
+}
+
+function swapCells(a,b){
+  var t=grid[a];grid[a]=grid[b];grid[b]=t;
+}
+
+function hasAnyMove(){
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){
+    var i=idx(r,c);
+    if(c+1<SIZE){swapCells(i,idx(r,c+1));var m=findMatches().size;swapCells(i,idx(r,c+1));if(m)return true;}
+    if(r+1<SIZE){swapCells(i,idx(r+1,c));var m2=findMatches().size;swapCells(i,idx(r+1,c));if(m2)return true;}
+  }
+  return false;
+}
+
+function shuffleGrid(){
+  var guard=0;
+  do{
+    var vals=grid.slice();
+    for(var i=vals.length-1;i>0;i--){
+      var j=(Math.random()*(i+1))|0;var t=vals[i];vals[i]=vals[j];vals[j]=t;
+    }
+    grid=vals;
+  }while((findMatches().size||!hasAnyMove())&&++guard<80);
+}
+
+function applyGravity(){
+  for(var c=0;c<SIZE;c++){
+    var col=[];
+    for(var r=SIZE-1;r>=0;r--)if(grid[idx(r,c)]!=null)col.push(grid[idx(r,c)]);
+    for(var r=SIZE-1,i=0;r>=0;r--,i++)grid[idx(r,c)]=i<col.length?col[i]:null;
+  }
+}
+
+function fillEmpty(){
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){
+    var i=idx(r,c);
+    if(grid[i]==null){
+      var t;do{t=randType();}while(wouldMatchAt(r,c,t));
+      grid[i]=t;
+    }
+  }
+}
+
+function render(highlight){
+  board.innerHTML="";
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){
+    var i=idx(r,c);
+    var el=document.createElement("button");
+    el.type="button";
+    el.className="cell t"+(grid[i]%6);
+    if(highlight&&highlight.has(i))el.classList.add("matching");
+    if(selected===i)el.classList.add("selected");
+    el.textContent=TYPES[grid[i]];
+    el.dataset.i=String(i);
+    el.addEventListener("click",onCellClick);
+    board.appendChild(el);
+  }
+}
+
+function setMsg(t){msgEl.textContent=t;}
+
+function updateHud(){
+  scoreEl.textContent=String(score);
+  movesEl.textContent=String(moves);
+}
+
+function showModal(win,text){
+  document.getElementById("modalTitle").textContent=win?"Grand!":"Game over";
+  document.getElementById("modalText").textContent=text;
+  document.getElementById("overlay").classList.add("show");
+}
+
+function hideModal(){document.getElementById("overlay").classList.remove("show");}
+
+function processMatches(){
+  var matches=findMatches();
+  if(!matches.size)return Promise.resolve(false);
+  render(matches);
+  score+=matches.size*10;
+  if(matches.size>=5)score+=matches.size*5;
+  updateHud();
+  return new Promise(function(res){
+    setTimeout(function(){
+      matches.forEach(function(i){grid[i]=null;});
+      applyGravity();
+      fillEmpty();
+      render();
+      setTimeout(function(){processMatches().then(function(chained){res(chained);});},120);
+    },320);
+  });
+}
+
+function endCheck(){
+  if(score>=TARGET){showModal(true,"You reached "+TARGET+" points with "+moves+" moves left.");return true;}
+  if(moves<=0){showModal(false,"Out of moves — score "+score+". Try again!");return true;}
+  if(!hasAnyMove()){setMsg("No moves — shuffling…");shuffleGrid();render();}
+  return false;
+}
+
+function onCellClick(e){
+  if(busy||moves<=0)return;
+  var i=Number(e.currentTarget.dataset.i);
+  if(selected==null){selected=i;render();setMsg("Now tap a neighbour.");return;}
+  if(selected===i){selected=null;render();setMsg("Tap two neighbours to swap.");return;}
+  var r1=(selected/SIZE)|0,c1=selected%SIZE,r2=(i/SIZE)|0,c2=i%SIZE;
+  var adj=(Math.abs(r1-r2)+Math.abs(c1-c2))===1;
+  if(!adj){selected=i;render();setMsg("Pick an adjacent tile.");return;}
+  busy=true;
+  swapCells(selected,i);
+  var m=findMatches();
+  if(!m.size){
+    swapCells(selected,i);
+    selected=null;busy=false;render();setMsg("That swap makes no match.");
+    return;
+  }
+  selected=null;
+  moves--;
+  updateHud();
+  render();
+  setMsg("Lovely!");
+  processMatches().then(function(){
+    busy=false;
+    if(!endCheck())setMsg("Tap two neighbours to swap.");
+  });
+}
+
+function newGame(){
+  hideModal();
+  score=0;moves=START_MOVES;selected=null;busy=false;
+  createGrid();
+  while(findMatches().size||!hasAnyMove())createGrid();
+  updateHud();render();setMsg("Tap two neighbours to swap.");
+}
+
+document.getElementById("newBtn").onclick=newGame;
+document.getElementById("shuffleBtn").onclick=function(){if(busy)return;shuffleGrid();render();setMsg("Board shuffled.");};
+document.getElementById("modalBtn").onclick=newGame;
+newGame();
+})();
+</script>
+</body>
+</html>
