@@ -227,10 +227,11 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   position:fixed;top:0;left:0;right:0;z-index:2000;display:flex;flex-wrap:wrap;align-items:center;
   justify-content:center;gap:10px 16px;padding:14px 44px 14px 20px;text-align:center;
   color:#fff;font-weight:600;border-bottom:2px solid rgba(255,255,255,.22);
-  animation:alertFlash 1.25s ease-in-out infinite
+  opacity:1;animation:alertFlash 1.25s ease-in-out infinite
 }
 .top-alert[hidden],.alert-show-btn[hidden]{display:none!important}
-.top-alert.is-dismissed{display:none!important}
+.top-alert.is-dismissed,.top-alert.is-updating{display:none!important}
+.top-alert:not(.buy):not(.hold):not(.watch){display:none!important}
 .top-alert-dismiss{
   position:absolute;top:50%;right:10px;transform:translateY(-50%);z-index:2;
   display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;
@@ -277,8 +278,8 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 body.alert-active{padding-top:76px}
 .btn-push.optional{opacity:.85;font-size:.82rem;padding:10px 14px}
 @keyframes alertFlash{
-  0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1);opacity:1}
-  50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.12);opacity:.94}
+  0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1)}
+  50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.1)}
 }
 @keyframes alertIconPop{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -291,8 +292,8 @@ body.alert-active{padding-top:76px}
 </style>
 </head>
 <body>
-<div id="topAlert" class="top-alert buy" hidden role="alert" aria-live="assertive">
-  <span class="top-alert-icon" id="topAlertIcon" aria-hidden="true">✓</span>
+<div id="topAlert" class="top-alert is-updating" hidden role="alert" aria-live="polite">
+  <span class="top-alert-icon" id="topAlertIcon" aria-hidden="true">●</span>
   <div class="top-alert-body">
     <strong id="topAlertTitle">Fuel alert</strong>
     <span id="topAlertDetail">Checking live prices…</span>
@@ -499,7 +500,7 @@ body.alert-active{padding-top:76px}
       (acc.highConfidence?"✓ ":"")+"Confidence "+acc.score+"%"+
       (acc.highConfidence?" · high accuracy tier":"")+
       '</div>':"";
-    var banner=g.savingsHeadline?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
+    var banner=(signal.verdict==="buy"&&g.savingsHeadline)?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
     var table="";
     if(g.savingsTable&&g.savingsTable.length){
       table='<div class="savings-table">'+g.savingsTable.map(function(row){
@@ -556,15 +557,15 @@ body.alert-active{padding-top:76px}
   }
 
   function getAlertHideState(){
-    try{return JSON.parse(sessionStorage.getItem(ALERT_HIDE_KEY)||"null")}catch(e){return null}
+    try{return JSON.parse(localStorage.getItem(ALERT_HIDE_KEY)||"null")}catch(e){return null}
   }
 
   function saveAlertHidden(key){
-    try{sessionStorage.setItem(ALERT_HIDE_KEY,JSON.stringify({key:key,dismissed:true}))}catch(e){}
+    try{localStorage.setItem(ALERT_HIDE_KEY,JSON.stringify({key:key,dismissed:true}))}catch(e){}
   }
 
   function clearAlertHidden(){
-    try{sessionStorage.removeItem(ALERT_HIDE_KEY)}catch(e){}
+    try{localStorage.removeItem(ALERT_HIDE_KEY)}catch(e){}
   }
 
   function isAlertHidden(alert){
@@ -577,8 +578,10 @@ body.alert-active{padding-top:76px}
     var showBtn=$("alertShowBtn");
     document.body.classList.remove("alert-active");
     el.classList.remove("is-dismissed");
+    el.classList.remove("is-updating");
     if(!alert||!alert.active||!alert.mode){
       el.hidden=true;
+      el.classList.add("is-updating");
       showBtn.hidden=true;
       return;
     }
@@ -599,8 +602,10 @@ body.alert-active{padding-top:76px}
     var alert=data.buyAlert;
     var el=$("topAlert");
     lastAlertData=alert;
+    el.hidden=true;
+    el.classList.add("is-updating");
     document.body.classList.remove("alert-active");
-    if(!alert||!alert.active||!alert.mode){el.hidden=true;$("alertShowBtn").hidden=true;return}
+    if(!alert||!alert.active||!alert.mode){$("alertShowBtn").hidden=true;return}
     var key=alertFingerprint(alert);
     if(key!==lastAlertKey){
       var st=getAlertHideState();

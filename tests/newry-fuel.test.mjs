@@ -289,6 +289,8 @@ export function runNewryFuelTests() {
   s.assert("html hold alert meta", html.includes("topAlertHold"));
   s.assert("html alert dismiss", html.includes("topAlertDismiss") && html.includes("alertShowBtn"));
   s.assert("html alert hide copy", html.includes("Hide alert bar"));
+  s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
+  s.assert("html alert updating guard", html.includes("is-updating"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));
