@@ -57,6 +57,64 @@ const CV_HIDDEN = true;
 
 const CV_BLOCKED_PATHS = new Set(["/cv.html", "/Thomas-Gollogly-CV.pdf"]);
 
+const ROBOTS_TAG = "noindex, nofollow, noarchive, nosnippet, noimageindex";
+
+const ROBOTS_TXT_BODY = `# Block all crawlers site-wide
+User-agent: *
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+`;
+
+function setRobotsHeaders(headers) {
+  headers.set("X-Robots-Tag", ROBOTS_TAG);
+}
+
+function isHtmlLikePath(path, contentType = "") {
+  if (contentType.includes("text/html")) return true;
+  if (path === "/" || path.endsWith(".html")) return true;
+  return isDocumentPath(path);
+}
+
+function withRobotsPolicy(response, path) {
+  if (!response.ok) return response;
+  const ct = response.headers.get("Content-Type") || "";
+  if (!isHtmlLikePath(path, ct)) return response;
+  const headers = new Headers(response.headers);
+  setRobotsHeaders(headers);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+function serveRobotsTxt() {
+  return new Response(ROBOTS_TXT_BODY, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+      "X-Robots-Tag": ROBOTS_TAG,
+    },
+  });
+}
+
 function isCvBlockedPath(path) {
   if (!CV_HIDDEN) return false;
   if (CV_BLOCKED_PATHS.has(path)) return true;
@@ -146,6 +204,7 @@ async function serveBettystownAsset(request, env, assetPath) {
   else if (isPng) headers.set("Content-Type", "image/png");
   else if (isMp3) headers.set("Content-Type", "audio/mpeg");
   headers.set("Cache-Control", isHtml ? "public, max-age=300" : "public, max-age=86400");
+  if (isHtml) setRobotsHeaders(headers);
   return new Response(asset.body, { status: asset.status, headers });
 }
 
@@ -194,13 +253,12 @@ async function serveBettystownIndex(request, env) {
     html = html.replaceAll("https://tgollogly.dev/sites/bettystown/", "/bettystown/");
   }
 
-  return new Response(html, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=300",
-    },
+  const headers = new Headers({
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=300",
   });
+  setRobotsHeaders(headers);
+  return new Response(html, { status: 200, headers });
 }
 
 async function serveBettystownWeather(request, env, assetPath) {
@@ -235,7 +293,7 @@ async function serveQuizGame(request, env, assetPath) {
   else if (isImage) headers.set("Content-Type", "image/png");
   else if (isManifest) headers.set("Content-Type", "application/manifest+json; charset=utf-8");
   else headers.set("Content-Type", "text/html; charset=utf-8");
-  if (!isImage && !isManifest) headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+  if (!isImage && !isManifest) setRobotsHeaders(headers);
   headers.set("Cache-Control", isImage || isManifest ? "public, max-age=86400" : "public, max-age=3600");
   return new Response(asset.body, { status: asset.status, headers });
 }
@@ -917,6 +975,8 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (path === "/robots.txt") return serveRobotsTxt();
+
     if (isBettystownHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveBettystownWeather(request, env);
       if (path === "/manifest.webmanifest") return serveBettystownManifest("subdomain");
@@ -1065,7 +1125,7 @@ export default {
     if (shouldApplyChallenge(request, url, path) && !(await hasValidGateCookie(request, env))) {
       return redirectChallenge(request, path);
     }
-    return env.ASSETS.fetch(request); // everything else = your website files
+    return withRobotsPolicy(await env.ASSETS.fetch(request), path);
   }
 };
 
