@@ -14,6 +14,7 @@ import {
   analyzeBuySignal,
   buildBuyGuide,
   buildBuyAlertState,
+  buildSharePreviewMeta,
   buildSavingsTable,
   analyzeNewsSentiment,
   analyzeHeadlineDirection,
@@ -191,6 +192,14 @@ export function runNewryFuelTests() {
   s.assert("buy alert items", buyAlert.items.length === 2);
   s.assert("buy alert inactive", buildBuyAlertState({ alertWorthy: false, signals: { heating: { verdict: "wait" } } }).active === false);
 
+  const share = buildSharePreviewMeta(
+    { signals: { heating: { current: 107 }, diesel: { current: 176.9 } } },
+    "https://tgollogly.dev",
+    "path"
+  );
+  s.assert("share meta diesel", share.description.includes("176.9p/L"));
+  s.assert("share meta og image", share.ogImage.includes("og-preview.png"));
+
   const server = readFileSync(join(root, "server.js"), "utf8");
   s.assert("server newry host", server.includes("newry.tgollogly.dev"));
   s.assert("server newry path", server.includes("/newry-fuel/"));
@@ -207,6 +216,11 @@ export function runNewryFuelTests() {
   s.assert("html push btn", html.includes("pushBtn"));
   s.assert("html buy flash", html.includes("buyFlash") && html.includes("buy-flash"));
   s.assert("html green banner copy", html.includes("green flashing banner"));
+  s.assert("html og image", html.includes("og:image") && html.includes("og-preview.png"));
+  s.assert("html twitter card", html.includes("twitter:card"));
+  s.assert("html apple touch 180", html.includes("apple-touch-icon") && html.includes("180x180"));
+  s.assert("og preview exists", readFileSync(join(root, "sites/newry-fuel/og-preview.png")).length > 5000);
+  s.assert("server share meta inject", server.includes("injectNewryFuelShareMeta"));
   s.assert("html charts split", html.includes("heatingChart") && html.includes("dieselChart"));
   s.assert("html buy guide", html.includes("buy-guide"));
   s.assert("html savings banner", html.includes("savings-banner"));
