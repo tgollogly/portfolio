@@ -88,13 +88,96 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .meta{font-size:.86rem;color:var(--muted);margin-top:8px}
 .reasons{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
 .reasons li{font-size:.84rem;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.6);color:var(--slate)}
+.buy-guide{margin-top:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,247,237,.95),rgba(255,255,255,.85));border:1px solid rgba(234,88,12,.15)}
+.buy-guide .when{font-size:1.05rem;font-weight:700;color:var(--ink);margin:0 0 8px}
+.buy-guide .when.buy{color:var(--buy)}.buy-guide .when.wait{color:var(--wait)}
+.buy-guide .summary{font-size:.92rem;color:var(--slate);margin:0 0 12px;line-height:1.45}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+.stat .lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:4px}
+.stat .val{font-size:1.05rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums}
+.stat .val.good{color:var(--buy)}.stat .val.warn{color:var(--wait)}
+.stat .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.savings-banner{margin-top:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(5,150,105,.12),rgba(255,255,255,.9));border:1px solid rgba(5,150,105,.25);font-size:1rem;font-weight:600;color:#065f46}
+.accuracy-pill{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border-radius:999px;font-size:.78rem;font-weight:700;background:rgba(15,23,42,.06);color:var(--slate)}
+.accuracy-pill.high{background:rgba(5,150,105,.15);color:#065f46}
+.savings-table{margin-top:12px;display:grid;gap:8px}
+.savings-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:.86rem}
+.savings-row strong{color:var(--buy)}
+.when-card{margin-top:24px;background:linear-gradient(135deg,rgba(255,247,237,.98),rgba(254,243,199,.88));border-color:rgba(234,88,12,.2)}
+.when-headline{font-size:1.15rem;font-weight:700;color:var(--ink);margin:8px 0 6px;line-height:1.35}
+.when-crowd{font-size:.95rem;color:var(--slate);margin:0 0 14px;line-height:1.45}
+.when-grid{display:grid;gap:10px;margin-top:12px}
+@media(min-width:640px){.when-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+.when-window{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.85);border:1px solid var(--line);position:relative}
+.when-window.best{border-color:rgba(5,150,105,.45);background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(255,255,255,.92));box-shadow:0 0 0 1px rgba(5,150,105,.12)}
+.when-window .when-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:4px}
+.when-window .when-date{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.when-window .when-price{font-size:1.35rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums}
+.when-window .when-note{font-size:.8rem;color:var(--slate);margin-top:6px;line-height:1.35}
+.when-window .when-badge{position:absolute;top:10px;right:10px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:rgba(5,150,105,.15);color:#047857}
+.six-month{margin-top:14px;padding:12px 16px;border-radius:14px;background:rgba(15,23,42,.04);font-size:.92rem;font-weight:600;color:var(--slate)}
+.indicators-card{margin-top:24px;background:linear-gradient(145deg,rgba(15,23,42,.97),rgba(30,41,59,.92));border-color:rgba(255,255,255,.08);color:#e2e8f0}
+.indicators-card .card-kicker{color:#fbbf24}
+.indicators-card h2{color:#f8fafc;font-family:var(--display)}
+.indicators-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
+.ind-bias{font-size:1.1rem;font-weight:700;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.08);animation:fadeSlide .6s var(--ease) both}
+.ind-bias.up{color:#fca5a5;background:rgba(220,38,38,.15)}.ind-bias.down{color:#6ee7b7;background:rgba(5,150,105,.15)}.ind-bias.steady{color:#cbd5e1}
+.ind-grid{display:grid;gap:10px}
+@media(min-width:640px){.ind-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.ind-grid{grid-template-columns:repeat(3,1fr)}}
+.ind-item{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);animation:fadeSlide .55s var(--ease) both;transition:transform .3s var(--ease),background .3s}
+.ind-item:hover{transform:translateY(-2px);background:rgba(255,255,255,.09)}
+.ind-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ind-label{font-size:.78rem;font-weight:600;color:#94a3b8}
+.ind-dir{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px}
+.ind-dir.up{background:rgba(248,113,113,.2);color:#fca5a5}.ind-dir.down{background:rgba(52,211,153,.2);color:#6ee7b7}
+.ind-dir.neutral,.ind-dir.steady{background:rgba(148,163,184,.15);color:#cbd5e1}.ind-dir.watch{background:rgba(251,191,36,.15);color:#fcd34d}
+.ind-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:6px}
+.ind-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#14b8a6,#38bdf8);width:0;animation:barGrow 1s var(--ease) forwards}
+.ind-fill.up{background:linear-gradient(90deg,#f97316,#ef4444)}.ind-fill.down{background:linear-gradient(90deg,#059669,#14b8a6)}
+.ind-detail{font-size:.76rem;color:#94a3b8;line-height:1.35}
+.ind-note{margin-top:14px;font-size:.82rem;color:#64748b;text-align:center}
+.card.reveal{animation:cardReveal .7s var(--ease) both}
+.price.counting{animation:pricePop .5s var(--ease)}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes barGrow{from{width:0}to{width:var(--w,50%)}}
+@keyframes cardReveal{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pricePop{0%{transform:scale(.92);opacity:.5}70%{transform:scale(1.02)}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.loading-shimmer{background:linear-gradient(90deg,rgba(255,255,255,.4) 25%,rgba(255,255,255,.8) 50%,rgba(255,255,255,.4) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+.news-card{margin-top:24px}
+.news-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.news-list li{font-size:.86rem;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.65);border-left:3px solid var(--orange)}
+.news-bias{font-size:.92rem;font-weight:600;margin:8px 0 0}
+.news-bias.rising{color:var(--wait)}.news-bias.falling{color:var(--buy)}.news-bias.neutral{color:var(--muted)}
+.outlook-card{margin-top:24px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(224,242,254,.85))}
+.outlook-grid{display:grid;gap:14px;margin-top:14px}
+@media(min-width:640px){.outlook-grid{grid-template-columns:1fr 1fr}}
+.outlook-panel{padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line)}
+.outlook-panel h3{font-family:var(--display);font-size:1.15rem;margin:0 0 8px}
+.trend-line{font-size:1rem;font-weight:700;margin:0 0 6px}
+.trend-line.up{color:var(--wait)}.trend-line.down{color:var(--buy)}.trend-line.steady,.trend-line.flat{color:var(--muted)}
+.pred-line{font-size:.92rem;font-weight:600;color:var(--slate);margin:0 0 4px}
+.news-verdict{font-size:1.35rem;font-weight:700;margin:10px 0 6px;line-height:1.25}
+.news-verdict.up{color:var(--wait)}.news-verdict.down{color:var(--buy)}.news-verdict.steady{color:var(--muted)}
+.news-list li{display:flex;gap:10px;align-items:flex-start}
+.news-tag{flex-shrink:0;font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.news-tag.up{background:rgba(220,38,38,.12);color:#b91c1c}
+.news-tag.down{background:rgba(5,150,105,.12);color:#047857}
+.news-tag.neutral{background:rgba(100,116,139,.12);color:#475569}
+.trend-pill{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;font-size:.82rem;font-weight:700;background:rgba(15,23,42,.06)}
+.trend-pill.up{background:rgba(220,38,38,.1);color:#b91c1c}
+.trend-pill.down{background:rgba(5,150,105,.1);color:#047857}
 .chart-card{margin-top:24px;padding:20px 22px 16px}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chart-head h2{font-family:var(--display);font-size:1.45rem;margin:0}
-.chart-wrap{position:relative;height:min(320px,55vw)}
+.chart-wrap{position:relative;height:min(260px,50vw)}
+.chart-note{font-size:.82rem;color:var(--muted);margin:0 0 10px;line-height:1.45}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend .dash i{background:transparent!important;border:2px dashed var(--muted);height:0;width:14px}
 .stations{margin-top:24px}
 .station{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .station:last-child{border-bottom:none}
@@ -129,16 +212,61 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 
 <section class="grid two" id="liveCards"></section>
 
-<section class="card chart-card" id="chartCard" hidden>
-  <div class="chart-head">
-    <h2>Price trend &amp; prediction</h2>
-    <span class="meta" id="chartHint">7-day forecast from recent movement</span>
+<section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
+  <div class="card-kicker">Prediction engine v2</div>
+  <div class="indicators-head">
+    <h2>6 signals · next few days &amp; weeks</h2>
+    <div class="ind-bias" id="indBias"></div>
   </div>
-  <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  <div class="ind-grid" id="indGrid"></div>
+  <p class="ind-note" id="indNote"></p>
+</section>
+
+<section class="card when-card" id="whenCard" hidden>
+  <div class="card-kicker">When to buy · before everyone else</div>
+  <h2 id="whenTitle">Buy timing</h2>
+  <p class="when-headline" id="whenHeadline"></p>
+  <p class="when-crowd" id="whenCrowd"></p>
+  <div class="when-grid" id="whenGrid"></div>
+  <p class="six-month" id="whenSixMonth"></p>
+</section>
+
+<section class="card outlook-card" id="outlookCard" hidden>
+  <div class="card-kicker">Live trend &amp; 7-day prediction</div>
+  <h2>Where prices are heading</h2>
+  <div class="outlook-grid" id="outlookGrid"></div>
+</section>
+
+<section class="card news-card" id="newsCard" hidden>
+  <div class="card-kicker">Fuel news · will prices go up or down?</div>
+  <h2>News price outlook</h2>
+  <div class="news-verdict" id="newsVerdict"></div>
+  <p class="news-bias" id="newsBias"></p>
+  <ul class="news-list" id="newsList"></ul>
+  <p class="meta" id="newsSources"></p>
+</section>
+
+<section class="card chart-card" id="heatingChartCard" hidden>
+  <div class="chart-head"><h2>🛢️ Heating oil trend</h2></div>
+  <p class="chart-note" id="heatingChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
+  <div class="chart-wrap"><canvas id="heatingChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#ea580c"></i> Heating oil (NI quotes)</span>
-    <span><i style="background:#0284c7"></i> Diesel near Newry</span>
-    <span><i style="background:#94a3b8"></i> UK diesel average (weekly)</span>
+    <span><i style="background:#ea580c"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#059669"></i> Target buy</span>
+    <span><i style="background:#94a3b8"></i> Average</span>
+  </div>
+</section>
+
+<section class="card chart-card" id="dieselChartCard" hidden>
+  <div class="chart-head"><h2>⛽ Diesel trend (near Newry)</h2></div>
+  <p class="chart-note" id="dieselChartNote">Solid = live readings · purple dashed = 7-day prediction · green = buy target</p>
+  <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
+  <div class="legend">
+    <span><i style="background:#0284c7"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#059669"></i> Target buy</span>
+    <span><i style="background:#94a3b8"></i> Average</span>
   </div>
 </section>
 
@@ -168,86 +296,272 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   var VAPID_API="/api/newry-fuel/vapid-public";
   var SUB_API="/api/newry-fuel/push/subscribe";
   var REFRESH=15*60*1000;
-  var chart=null;
+  var heatingChart=null;
+  var dieselChart=null;
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function fmtP(v){return Number(v).toFixed(1)+"p"}
+  function fmtMoney(v){return v==null?"—":"£"+Number(v).toFixed(2)}
 
-  function signalCard(kind, signal, extra){
+  function whenToBuyWindowHtml(w, isBest){
+    if(!w) return "";
+    return '<div class="when-window'+(isBest?" best":"")+'">'+
+      (isBest?'<span class="when-badge">Best window</span>':"")+
+      '<div class="when-lbl">'+esc(w.label||("Day "+w.day))+'</div>'+
+      (w.dateLabel?'<div class="when-date">'+esc(w.dateLabel)+'</div>':"")+
+      '<div class="when-price">'+fmtP(w.pricePpl!=null?w.pricePpl:w.estimate)+'/L</div>'+
+      (w.vsNow!=null&&w.vsNow!==0?'<div class="when-note">'+(w.vsNow<0?"↓ "+fmtP(Math.abs(w.vsNow))+" cheaper vs today":"↑ "+fmtP(w.vsNow)+" vs today")+'</div>':"")+
+      (w.note?'<div class="when-note">'+esc(w.note)+'</div>':"")+
+    '</div>';
+  }
+
+  function renderWhenToBuy(data){
+    var hSig=data.signals&&data.signals.heating;
+    var dSig=data.signals&&data.signals.diesel;
+    var hWhen=hSig&&hSig.guide&&hSig.guide.whenToBuy;
+    var dWhen=dSig&&dSig.guide&&dSig.guide.whenToBuy;
+    if(!hWhen&&!dWhen){$("whenCard").hidden=true;return}
+    $("whenCard").hidden=false;
+    var primary=(hWhen&&hSig.verdict!=="unknown")?{sig:hSig,when:hWhen,kind:"heating"}:{sig:dSig,when:dWhen,kind:"diesel"};
+    if(!primary.when) primary={sig:dSig,when:dWhen,kind:"diesel"};
+    var w=primary.when;
+    $("whenTitle").textContent=primary.kind==="heating"?"🛢️ Heating oil — when to buy":"⛽ Diesel — when to buy";
+    $("whenHeadline").textContent=w.headline||"Watch for dips";
+    $("whenCrowd").textContent=w.buyBeforeCrowd||"";
+    var bestDay=w.bestWindow&&w.bestWindow.day;
+    var grid=(w.windows||[]).slice(0,6).map(function(win){
+      return whenToBuyWindowHtml(win,win.day===bestDay);
+    }).join("");
+    if(hWhen&&dWhen&&hSig.verdict!=="unknown"&&dSig.verdict!=="unknown"){
+      var alt=primary.kind==="heating"?dWhen:hWhen;
+      grid+='<div class="when-window"><div class="when-lbl">Also · '+(primary.kind==="heating"?"diesel":"heating")+'</div><div class="when-date">'+esc(alt.bestWindow.dateLabel)+'</div><div class="when-price">'+fmtP(alt.bestWindow.pricePpl)+'/L</div><div class="when-note">'+esc(alt.headline)+'</div></div>';
+    }
+    $("whenGrid").innerHTML=grid;
+    $("whenSixMonth").textContent=w.sixMonthOutlook||"";
+  }
+
+  function buyGuideHtml(signal, kind){
+    var g=signal&&signal.guide;
+    if(!g) return "";
+    var whenCls=signal.verdict==="buy"?"buy":signal.verdict==="wait"?"wait":"";
+    var avgVal=g.savingsVsAveragePpl;
+    var avgCls=avgVal>0?"good":avgVal<-0.5?"warn":"";
+    var acc=g.accuracy;
+    var accHtml=acc?'<div class="accuracy-pill'+(acc.highConfidence?" high":"")+'">'+
+      (acc.highConfidence?"✓ ":"")+"Confidence "+acc.score+"%"+
+      (acc.highConfidence?" · high accuracy tier":"")+
+      '</div>':"";
+    var banner=g.savingsHeadline?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
+    var table="";
+    if(g.savingsTable&&g.savingsTable.length){
+      table='<div class="savings-table">'+g.savingsTable.map(function(row){
+        return '<div class="savings-row"><span>'+esc(row.label)+' fill</span><strong>Save £'+row.savePounds.toFixed(2)+'</strong></div>';
+      }).join("")+'</div>';
+    }
+    return '<div class="buy-guide">'+
+      '<p class="when '+whenCls+'">⏱ '+esc(g.timing)+'</p>'+
+      banner+
+      '<p class="summary">'+esc(g.summary)+'</p>'+
+      accHtml+
+      (acc&&acc.note?'<p class="meta">'+esc(acc.note)+'</p>':"")+
+      '<div class="stats-row">'+
+        '<div class="stat"><div class="lbl">Buy at about</div><div class="val good">'+fmtP(g.targetPricePpl)+'/L</div></div>'+
+        '<div class="stat"><div class="lbl">Right now</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
+        (g.savingsVsNowPpl>0?'<div class="stat"><div class="lbl">Cheaper if you wait</div><div class="val good">'+fmtP(g.savingsVsNowPpl)+'/L</div><div class="sub">'+g.savingsVsNowPct+'% less per litre</div></div>':"")+
+        (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl>0?'<div class="stat"><div class="lbl">Cheaper than avg</div><div class="val good">'+fmtP(g.savingsVsAveragePpl)+'/L</div><div class="sub">Avg was '+fmtP(g.averagePpl)+'/L</div></div>':"")+
+        (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl<0?'<div class="stat"><div class="lbl">Above average</div><div class="val warn">'+fmtP(Math.abs(g.savingsVsAveragePpl))+'/L more</div><div class="sub">Avg '+fmtP(g.averagePpl)+'/L</div></div>':"")+
+        '<div class="stat"><div class="lbl">Predicted low</div><div class="val">'+fmtP(g.forecastLowPpl)+'/L</div><div class="sub">~day '+g.forecastLowDay+'</div></div>'+
+        (g.whenToBuy&&g.whenToBuy.tomorrow?'<div class="stat"><div class="lbl">Tomorrow</div><div class="val">'+fmtP(g.whenToBuy.tomorrow.pricePpl)+'/L</div><div class="sub">'+esc(g.whenToBuy.tomorrow.dateLabel)+'</div></div>':"")+
+        (g.whenToBuy&&g.whenToBuy.sixMonth?'<div class="stat"><div class="lbl">6 months</div><div class="val">'+fmtP(g.whenToBuy.sixMonth.pricePpl)+'/L</div><div class="sub">'+esc(g.whenToBuy.sixMonth.dateLabel)+'</div></div>':"")+
+      '</div>'+
+      table+
+      (g.newsNote?'<p class="meta">📰 '+esc(g.newsNote)+'</p>':"")+
+    '</div>';
+  }
+
+  function trendPill(snapshot){
+    if(!snapshot) return "";
+    return '<span class="trend-pill '+esc(snapshot.direction)+'">'+esc(snapshot.label)+'</span>';
+  }
+
+  function animateValue(el, end, suffix, duration){
+    if(!el||!Number.isFinite(end)) return;
+    var start=parseFloat(el.dataset.val)||end;
+    var t0=performance.now();
+    function frame(t){
+      var p=Math.min(1,(t-t0)/duration);
+      var eased=1-Math.pow(1-p,3);
+      var v=start+(end-start)*eased;
+      el.innerHTML=v.toFixed(1)+(suffix||"")+'<small>/litre</small>';
+      if(p<1) requestAnimationFrame(frame);
+      else el.dataset.val=String(end);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function renderIndicators(data){
+    var trends=data.trends||{};
+    var ind=(trends.diesel&&trends.diesel.indicators)||(trends.heating&&trends.heating.indicators);
+    if(!ind||!ind.indicators||!ind.indicators.length){$("indicatorsCard").hidden=true;return}
+    $("indicatorsCard").hidden=false;
+    var bias=ind.nearTermBias||"steady";
+    var biasEl=$("indBias");
+    biasEl.className="ind-bias "+bias;
+    biasEl.textContent=bias==="up"?"↑ Next 1–14 days: likely UP":bias==="down"?"↓ Next 1–14 days: likely DOWN":"→ Next 1–14 days: steady";
+    $("indGrid").innerHTML=ind.indicators.map(function(item,i){
+      var score=Math.min(100,Math.max(0,item.score||0));
+      return '<div class="ind-item" style="animation-delay:'+(0.05+i*0.06)+'s">'+
+        '<div class="ind-top"><span class="ind-label">'+esc(item.label)+'</span><span class="ind-dir '+esc(item.direction)+'">'+esc(item.direction)+'</span></div>'+
+        '<div class="ind-bar"><div class="ind-fill '+esc(item.direction)+'" style="--w:'+score+'%"></div></div>'+
+        '<div class="ind-detail">'+esc(item.detail)+'</div></div>';
+    }).join("");
+    $("indNote").textContent=ind.accuracyNote||"";
+  }
+
+  function outlookPanel(title, icon, trend, prediction){
+    if(!trend&&!prediction) return "";
+    var tDir=trend&&trend.direction||"flat";
+    var pDir=prediction&&prediction.direction||"steady";
+    return '<div class="outlook-panel">'+
+      '<h3>'+icon+' '+esc(title)+'</h3>'+
+      (trend?'<p class="trend-line '+tDir+'">'+esc(trend.label)+'</p>':"")+
+      (prediction?'<p class="pred-line '+pDir+'">'+esc(prediction.headline)+'</p><p class="meta">'+esc(prediction.detail)+'</p>':"")+
+    '</div>';
+  }
+
+  function signalCard(kind, signal, extra, trend){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
-    var reasons=(signal.reasons||[]).map(function(r){return "<li>"+esc(r)+"</li>"}).join("");
-    return '<article class="card '+cls+'" style="animation-delay:'+(kind==="heating"?0:0.06)+'s">'+
+    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
-      '<div class="price">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
-      '<div class="meta">Confidence '+signal.confidence+'% · '+signal.percentile+'th percentile · 7d avg '+(signal.ma7!=null?fmtP(signal.ma7):"—")+'</div>'+
+      buyGuideHtml(signal,kind)+
       (extra||"")+
-      (reasons?'<ul class="reasons">'+reasons+'</ul>':"")+
     '</article>';
   }
 
-  function renderChart(data){
-    $("chartCard").hidden=false;
-    var ctx=$("priceChart").getContext("2d");
-    var h=(data.chart&&data.chart.heating)||[];
-    var d=(data.chart&&data.chart.dieselLocal)||[];
-    var uk=(data.chart&&data.chart.dieselUk)||[];
-    var labels=[]; var map={};
-    function add(series,key){
-      series.forEach(function(p){
-        var lb=p.label||p.t;
-        if(!map[lb]){map[lb]={};labels.push(lb)}
-        map[lb][key]=p.heatingPpl||p.dieselLocalPpl||p.dieselUkAvgPpl;
-      });
+  function buildFuelChart(canvasId, trendPack, signal, color, noteId){
+    if(!window.Chart) return;
+    var cardId=canvasId==="heatingChart"?"heatingChartCard":"dieselChartCard";
+    $(cardId).hidden=false;
+    var ctx=$(canvasId).getContext("2d");
+    var series=(trendPack&&trendPack.series)||[];
+    var labels=series.map(function(p){return p.label});
+    var past=series.map(function(p){return p.price});
+    var g=signal&&signal.guide;
+    var fc=(signal&&signal.forecast)||[];
+    var fcLabels=fc.map(function(f){return "+"+f.day+"d"});
+    var allLabels=labels.concat(fcLabels);
+    var trendData=past.concat(fc.map(function(){return null}));
+    var forecastData=[];
+    var bandLow=[];
+    var bandHigh=[];
+    var i;
+    for(i=0;i<labels.length-1;i++){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
+    if(past.length){forecastData.push(past[past.length-1]);bandLow.push(past[past.length-1]);bandHigh.push(past[past.length-1])}
+    for(i=0;i<fc.length;i++){
+      if(i===0) continue;
+      forecastData.push(fc[i].estimate);
+      bandLow.push(fc[i].low!=null?fc[i].low:fc[i].estimate);
+      bandHigh.push(fc[i].high!=null?fc[i].high:fc[i].estimate);
     }
-    add(h,"heating");add(d,"diesel");add(uk,"uk");
-    labels.sort();
-    var tail=labels.slice(-24);
-    var heating=tail.map(function(l){return map[l].heating??null});
-    var diesel=tail.map(function(l){return map[l].diesel??null});
-    var ukLine=tail.map(function(l){return map[l].uk??null});
-    var fc=(data.signals&&data.signals.heating&&data.signals.heating.forecast)||[];
-    if(fc.length){
-      for(var i=0;i<fc.length;i++){
-        tail.push("+"+fc[i].day+"d");
-        heating.push(fc[i].estimate);
-        diesel.push(null);ukLine.push(null);
-      }
-    }
-    if(chart) chart.destroy();
-    chart=new Chart(ctx,{
+    while(forecastData.length<allLabels.length){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
+    var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
+    var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
+    var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
+    if(chartRef) chartRef.destroy();
+    var chart=new Chart(ctx,{
       type:"line",
       data:{
-        labels:tail,
+        labels:allLabels,
         datasets:[
-          {label:"Heating oil",data:heating,borderColor:"#ea580c",backgroundColor:"rgba(234,88,12,.12)",tension:.35,fill:true,spanGaps:true},
-          {label:"Diesel local",data:diesel,borderColor:"#0284c7",backgroundColor:"rgba(2,132,199,.08)",tension:.35,fill:false,spanGaps:true},
-          {label:"UK diesel avg",data:ukLine,borderColor:"#94a3b8",borderDash:[6,4],tension:.2,fill:false,spanGaps:true}
+          {label:"Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false,animation:{duration:900,easing:"easeOutQuart"}},
+          {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
+          {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
+          {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
+          {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
+          {label:"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
+        plugins:{
+          legend:{display:true,position:"bottom",labels:{boxWidth:10,font:{size:11}}},
+          tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+(c.parsed.y!=null?fmtP(c.parsed.y)+"/L":"—")}}}
+        },
         scales:{
-          y:{title:{display:true,text:"pence / litre"},grid:{color:"rgba(15,23,42,.06)"}},
-          x:{ticks:{maxRotation:45,minRotation:0,font:{size:10}},grid:{display:false}}
+          y:{title:{display:true,text:"pence per litre"},grid:{color:"rgba(15,23,42,.06)"}},
+          x:{ticks:{maxRotation:45,minRotation:0,font:{size:9},maxTicksLimit:14},grid:{display:false}}
         }
       }
     });
+    if(canvasId==="heatingChart") heatingChart=chart; else dieselChart=chart;
+    if(noteId){
+      var pred=trendPack&&trendPack.prediction;
+      $(noteId).textContent=
+        "Solid = real weekly + live readings · Purple dashed = 7-day prediction · Green = buy target"+
+        (pred?" · Forecast: "+pred.headline:"");
+    }
+  }
+
+  function renderCharts(data){
+    var hSig=data.signals&&data.signals.heating;
+    var dSig=data.signals&&data.signals.diesel;
+    var trends=data.trends||{};
+    if(hSig&&hSig.current!=null){
+      buildFuelChart("heatingChart",trends.heating,hSig,"#ea580c","heatingChartNote");
+    }
+    if(dSig&&dSig.current!=null){
+      buildFuelChart("dieselChart",trends.diesel,dSig,"#0284c7","dieselChartNote");
+    }
   }
 
   function render(data){
     $("error").hidden=true;
     var cards="";
+    var trends=data.trends||{};
     cards+=signalCard("heating",data.signals&&data.signals.heating,
-      data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"");
+      data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"",
+      trends.heating);
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,
-      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"");
+      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"",
+      trends.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
-    renderChart(data);
+    document.querySelectorAll(".price[data-price]").forEach(function(el){
+      animateValue(el,parseFloat(el.dataset.price),"p",650);
+    });
+    renderIndicators(data);
+    renderWhenToBuy(data);
+
+    if(trends.heating||trends.diesel){
+      $("outlookCard").hidden=false;
+      $("outlookGrid").innerHTML=
+        outlookPanel("Heating oil","🛢️",trends.heating&&trends.heating.snapshot,trends.heating&&trends.heating.prediction)+
+        outlookPanel("Diesel near Newry","⛽",trends.diesel&&trends.diesel.snapshot,trends.diesel&&trends.diesel.prediction);
+    }
+
+    if(data.news&&data.news.sentiment){
+      $("newsCard").hidden=false;
+      var s=data.news.sentiment;
+      var dir=s.priceDirection||"steady";
+      $("newsVerdict").className="news-verdict "+dir;
+      $("newsVerdict").textContent=s.outlookHeadline||"News outlook";
+      $("newsBias").className="news-bias "+s.bias;
+      $("newsBias").textContent=s.outlookDetail||s.summary;
+      var tagged=s.tagged||[];
+      $("newsList").innerHTML=tagged.length?tagged.slice(0,6).map(function(h){
+        return '<li><span class="news-tag '+esc(h.direction)+'">'+esc(h.icon)+" "+esc(h.tag)+'</span><span>'+esc(h.title)+'</span></li>';
+      }).join(""):(s.relevant||[]).slice(0,5).map(function(h){
+        return "<li><span class='news-tag neutral'>→ Watch</span><span>"+esc(h)+"</span></li>";
+      }).join("")||"<li class='meta'>No fuel-specific headlines in the last fetch.</li>";
+      $("newsSources").textContent=(data.news.sources||[]).join(" · ");
+    }
+
+    renderCharts(data);
     if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
       $("stationsCard").hidden=false;
       $("stationList").innerHTML=data.diesel.stations.map(function(s){
@@ -335,10 +649,14 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     });
   }
 
-  fetchPrices();
-  setInterval(fetchPrices,REFRESH);
-  initPush();
-  maybeAutoDial();
+  function boot(){
+    fetchPrices();
+    setInterval(fetchPrices,REFRESH);
+    initPush();
+    maybeAutoDial();
+  }
+  if(window.Chart) boot();
+  else window.addEventListener("load", boot);
 })();
 </script>
 </body>
