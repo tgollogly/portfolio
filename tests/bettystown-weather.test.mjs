@@ -6,6 +6,7 @@ import {
   BETTYSTOWN,
   buildDailyRows,
   buildForecastResponse,
+  pickBestDaysChronological,
   forecastUrl,
   scoreWalkDay,
   validateForecastResponse,
@@ -73,9 +74,15 @@ export function runBettystownWeatherTests() {
 
   const rows = buildDailyRows(samplePayload);
   s.assert("daily rows count", rows.length === 2);
-  s.assert("sorted by score", rows[0].walkScore >= rows[1].walkScore);
+  s.assert("forecast chronological", rows[0].date <= rows[1].date);
+
+  const best = pickBestDaysChronological(rows);
+  if (best.length >= 2) {
+    s.assert("best days chronological", best[0].date <= best[1].date);
+  }
 
   const body = buildForecastResponse(samplePayload, { fetchedAt: 1 });
+  s.assert("bestDays chronological", body.bestDays.every((d, i, arr) => i === 0 || arr[i - 1].date <= d.date));
   s.assert("response ok", body.ok === true);
   s.assert("has current", body.current.temp === 16);
   s.assert("has forecast", body.forecast.length === 2);
