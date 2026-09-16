@@ -176,6 +176,10 @@ export function runBettystownWeatherTests() {
   s.assert("html alerts bar", html.includes("alertsBar"));
   s.assert("html fluid blobs", html.includes("blobDrift"));
   s.assert("html patterns row", html.includes("patternsRow"));
+  s.assert("html music toggle", html.includes("musicToggle"));
+  s.assert("html three little birds", html.includes("Three Little Birds"));
+  s.assert("html tomorrow not doubled", !html.includes("Tomorrow · Tomorrow"));
+  s.assert("server audio route", server.includes("three-little-birds.mp3"));
   s.assert("html og image", html.includes("assets/og/bettystown-weather.png"));
   s.assert("html og secure url", html.includes("og:image:secure_url"));
   s.assert("html manifest path", html.includes("/bettystown/manifest.webmanifest"));

@@ -123,6 +123,7 @@ const BETTYSTOWN_PATH_ASSETS = new Map([
   ["/bettystown/favicon-32.png", `${BETTYSTOWN_PREFIX}/favicon-32.png`],
   ["/bettystown/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
   ["/bettystown/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
+  ["/bettystown/audio/three-little-birds.mp3", `${BETTYSTOWN_PREFIX}/audio/three-little-birds.mp3`],
 ]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
@@ -139,9 +140,11 @@ async function serveBettystownAsset(request, env, assetPath) {
   const isHtml = assetPath.endsWith(".html");
   const isManifest = assetPath.endsWith(".webmanifest");
   const isPng = assetPath.endsWith(".png");
+  const isMp3 = assetPath.endsWith(".mp3");
   if (isHtml) headers.set("Content-Type", "text/html; charset=utf-8");
   else if (isManifest) headers.set("Content-Type", "application/manifest+json; charset=utf-8");
   else if (isPng) headers.set("Content-Type", "image/png");
+  else if (isMp3) headers.set("Content-Type", "audio/mpeg");
   headers.set("Cache-Control", isHtml ? "public, max-age=300" : "public, max-age=86400");
   return new Response(asset.body, { status: asset.status, headers });
 }

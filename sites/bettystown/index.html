@@ -195,6 +195,21 @@ tr:hover td{background:rgba(248,252,255,.8)}
 .mini-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--sun));transition:width .8s cubic-bezier(.34,1.4,.64,1)}
 .foot{text-align:center;padding:24px 20px;font-size:.78rem;color:var(--muted)}
 
+.music-host{position:fixed;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1}
+.music-toggle{
+  position:fixed;bottom:22px;right:18px;z-index:50;
+  display:flex;align-items:center;gap:8px;padding:12px 16px;
+  border-radius:999px;border:1px solid var(--line);
+  background:var(--card);backdrop-filter:var(--glass);
+  box-shadow:0 8px 32px rgba(0,119,182,.18);
+  font-family:inherit;font-size:.82rem;font-weight:600;color:var(--sea);
+  cursor:pointer;transition:transform .3s cubic-bezier(.34,1.4,.64,1),box-shadow .3s;
+  animation:fadeUp .8s .3s ease both;
+}
+.music-toggle:hover{transform:scale(1.05);box-shadow:var(--shadow)}
+.music-toggle.playing{border-color:#a7f3d0;background:linear-gradient(135deg,rgba(209,250,229,.92),rgba(255,255,255,.88))}
+.music-toggle .note{font-size:1.15rem;line-height:1}
+
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
@@ -271,6 +286,15 @@ tr:hover td{background:rgba(248,252,255,.8)}
 </footer>
 </div>
 
+<div id="ytMusicHost" class="music-host" aria-hidden="true"></div>
+<audio id="bgMusic" class="music-host" loop playsinline preload="auto" autoplay muted>
+  <source src="/bettystown/audio/three-little-birds.mp3" type="audio/mpeg"/>
+</audio>
+<button type="button" class="music-toggle" id="musicToggle" aria-label="Toggle Three Little Birds" title="Three Little Birds — Bob Marley">
+  <span class="note" id="musicIcon">🔇</span>
+  <span id="musicLabel">Music off</span>
+</button>
+
 <script>
 (function(){
   var API="/api/bettystown-weather";
@@ -321,7 +345,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
     });
     el.innerHTML=
       '<div class="tomorrow-head">'+
-        '<div><h2>Tomorrow · '+esc(t.label)+'</h2>'+
+        '<div><h2>'+esc(t.label)+'</h2>'+
         '<div class="tomorrow-verdict">'+esc(ex.headline)+'</div></div>'+
         '<div class="big-icon">'+esc(t.icon)+'</div>'+
       '</div>'+
@@ -453,6 +477,103 @@ tr:hover td{background:rgba(248,252,255,.8)}
 
   fetchWeather();
   setInterval(fetchWeather, REFRESH_MS);
+})();
+
+(function initMusic(){
+  var YT_ID="HNBCVM4KbUM";
+  var MUTE_KEY="bettystown_music_muted";
+  var btn=document.getElementById("musicToggle");
+  var icon=document.getElementById("musicIcon");
+  var label=document.getElementById("musicLabel");
+  var audio=document.getElementById("bgMusic");
+  var player=null;
+  var ytReady=false;
+  var mode=null;
+  var muted=true;
+  try{muted=localStorage.getItem(MUTE_KEY)!=="0"}catch(e){}
+
+  function setUi(){
+    if(muted){
+      icon.textContent="🔇";
+      label.textContent="Music off";
+      btn.classList.remove("playing");
+      btn.setAttribute("aria-label","Play Three Little Birds");
+    }else{
+      icon.textContent="🎵";
+      label.textContent="Three Little Birds";
+      btn.classList.add("playing");
+      btn.setAttribute("aria-label","Mute Three Little Birds");
+    }
+  }
+
+  function saveMute(){
+    try{localStorage.setItem(MUTE_KEY,muted?"1":"0")}catch(e){}
+  }
+
+  function tryAudio(){
+    if(!audio||mode==="yt") return;
+    audio.muted=muted;
+    var p=audio.play();
+    if(p&&p.catch)p.catch(function(){});
+  }
+
+  function initYT(){
+    if(ytReady||mode==="audio") return;
+    if(!window.YT||!window.YT.Player){
+      var s=document.createElement("script");
+      s.src="https://www.youtube.com/iframe_api";
+      document.head.appendChild(s);
+      window.onYouTubeIframeAPIReady=initYT;
+      return;
+    }
+    mode="yt";
+    player=new YT.Player("ytMusicHost",{
+      videoId:YT_ID,
+      playerVars:{autoplay:1,loop:1,playlist:YT_ID,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1},
+      events:{
+        onReady:function(e){
+          ytReady=true;
+          if(muted)e.target.mute(); else e.target.unMute();
+          e.target.playVideo();
+        },
+        onStateChange:function(e){
+          if(e.data===YT.PlayerState.ENDED) e.target.playVideo();
+        }
+      }
+    });
+  }
+
+  if(audio){
+    audio.addEventListener("canplaythrough",function(){
+      if(mode==="yt") return;
+      mode="audio";
+      tryAudio();
+    },{once:true});
+    audio.addEventListener("error",function(){
+      if(mode!=="audio") initYT();
+    },{once:true});
+    audio.load();
+    setTimeout(function(){if(!mode)initYT()},2500);
+  }else{
+    initYT();
+  }
+
+  btn.addEventListener("click",function(){
+    muted=!muted;
+    saveMute();
+    setUi();
+    if(mode==="audio"&&audio){
+      audio.muted=muted;
+      if(!muted) tryAudio();
+    }else if(mode==="yt"&&player&&ytReady){
+      if(muted) player.mute(); else{player.unMute();player.playVideo();}
+    }else if(!mode){
+      initYT();
+    }
+  });
+
+  setUi();
+  if(!muted&&mode==="audio") tryAudio();
 })();
 </script>
 </body>
