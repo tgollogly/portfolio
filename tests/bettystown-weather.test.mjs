@@ -11,6 +11,7 @@ import {
   detectDrySunnySpells,
   detectHeatEvents,
   explainWalkDay,
+  formatDayMeta,
   pickBestDaysChronological,
   forecastUrl,
   scoreWalkDay,
@@ -27,6 +28,10 @@ export function runBettystownWeatherTests() {
   s.assert("coords ireland", BETTYSTOWN.latitude > 53 && BETTYSTOWN.longitude < 0);
   s.assert("wmo clear", wmoInfo(0).icon === "☀️");
   s.assert("wmo unknown fallback", wmoInfo(999).label === "Unknown");
+
+  const todayMeta = formatDayMeta("2026-09-16", new Date("2026-09-16T15:00:00"));
+  s.assert("formatDayMeta today", todayMeta.label === "Today" && todayMeta.relative === "today");
+  s.assert("formatDayMeta dateLong", todayMeta.dateLong.includes("September"));
 
   const perfect = scoreWalkDay({
     tempMax: 18,
@@ -108,6 +113,8 @@ export function runBettystownWeatherTests() {
   s.assert("has bestDays", Array.isArray(body.bestDays));
   s.assert("validation pass", validateForecastResponse(body).ok === true);
   s.assert("response has tomorrow", body.tomorrow != null || body.forecast.length <= 1);
+  s.assert("response has today meta", body.today != null || body.forecast.length === 0);
+  s.assert("forecast rows have dateLong", body.forecast.every((d) => d.dateLong && d.dateShort));
   s.assert("response has alerts array", Array.isArray(body.alerts));
   s.assert("response has drySpells", Array.isArray(body.drySpells));
   s.assert("response has heatEvents", Array.isArray(body.heatEvents));
@@ -179,7 +186,10 @@ export function runBettystownWeatherTests() {
   s.assert("html music toggle", html.includes("musicToggle"));
   s.assert("html three little birds", html.includes("Three Little Birds"));
   s.assert("html tomorrow not doubled", !html.includes("Tomorrow · Tomorrow"));
-  s.assert("html artistic typography", html.includes("text-art") && html.includes("Cormorant"));
+  s.assert("html site typography", html.includes("Fraunces") && html.includes("Inter"));
+  s.assert("html portfolio accent", html.includes("--accent:#2f39c9"));
+  s.assert("html now date label", html.includes("nowDate") && html.includes("Right now"));
+  s.assert("html today forecast hint", html.includes("Today") && html.includes("full-day forecast"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html music loop guard", html.includes("watchLoop"));
