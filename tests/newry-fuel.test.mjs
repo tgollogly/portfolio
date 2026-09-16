@@ -139,6 +139,7 @@ export function runNewryFuelTests() {
   );
   s.assert("diesel hold explain", dieselHold.title.includes("hold off") && dieselHold.save50L > 2);
   s.assert("diesel hold lead", dieselHold.lead.includes("176.9"));
+
   const snap = buildTrendSnapshot(trend);
   s.assert("trend snapshot", snap && snap.label.includes("trend"));
 
