@@ -22,6 +22,7 @@ import {
   sanitizePlayerId,
   sanitizePursuitName,
   seedIfEmpty,
+  validateQuestion,
 } from "./lib/pursuit-store.js";
 
 // =====================================================================
@@ -551,7 +552,9 @@ async function handlePursuitQuestionsGet(request, env) {
   let questions = await pickQuestionsFromDb(env, { count, difficulties: pool, excludeIds: exclude });
   if (!questions.length) {
     const seed = await loadPursuitSeedBank(env, request.url);
-    questions = seed.filter((q) => pool.includes(q.d) && !exclude.includes(q.id)).slice(0, count);
+    questions = seed
+      .filter((q) => pool.includes(q.d) && !exclude.includes(q.id) && validateQuestion(q))
+      .slice(0, count);
   }
   const stats = await getPursuitStats(env);
   const publicQs = questions.map((q) => publicQuestion(q));
