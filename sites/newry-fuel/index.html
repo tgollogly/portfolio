@@ -172,6 +172,8 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .ind-fill.up{background:linear-gradient(90deg,#f97316,#ef4444)}.ind-fill.down{background:linear-gradient(90deg,#059669,#14b8a6)}
 .ind-detail{font-size:.76rem;color:#94a3b8;line-height:1.35}
 .ind-note{margin-top:14px;font-size:.82rem;color:#64748b;text-align:center}
+.memory-note{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.25);font-size:.82rem;color:#ccfbf1;line-height:1.45}
+.memory-note strong{color:#5eead4}
 .card.reveal{animation:cardReveal .7s var(--ease) both}
 .price.counting{animation:pricePop .5s var(--ease)}
 @keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -323,11 +325,12 @@ body.alert-active{padding-top:76px}
 <section class="grid two" id="liveCards"></section>
 
 <section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
-  <div class="card-kicker">Prediction engine v2</div>
+  <div class="card-kicker">Prediction engine v3 · persistent memory</div>
   <div class="indicators-head">
     <h2>6 signals · next few days &amp; weeks</h2>
     <div class="ind-bias" id="indBias"></div>
   </div>
+  <p class="memory-note" id="memoryNote" hidden></p>
   <div class="ind-grid" id="indGrid"></div>
   <p class="ind-note" id="indNote"></p>
 </section>
@@ -661,11 +664,29 @@ body.alert-active{padding-top:76px}
     else note.textContent="Auto-checks every 15 min while open";
   }
 
+  function renderMemory(data){
+    var mem=data.memory;
+    var el=$("memoryNote");
+    if(!mem||(!mem.heating&&!mem.diesel)){el.hidden=true;return}
+    var h=mem.heating||{};
+    var d=mem.diesel||{};
+    var days=Math.max(h.days||0,d.days||0);
+    if(days<1){el.hidden=true;return}
+    el.hidden=false;
+    var acc=h.accuracyPct!=null?h.accuracyPct:d.accuracyPct;
+    var tracked=(h.tracked||0)+(d.tracked||0);
+    var txt="<strong>🧠 Price memory:</strong> "+days+" day"+(days>1?"s":"")+" of Newry readings stored";
+    if(acc!=null&&tracked>=5) txt+=" · past advice matched outcomes "+acc+"% of the time";
+    else if(mem.summary) txt+=" · "+mem.summary;
+    el.innerHTML=txt;
+  }
+
   function renderIndicators(data){
     var trends=data.trends||{};
     var ind=(trends.diesel&&trends.diesel.indicators)||(trends.heating&&trends.heating.indicators);
     if(!ind||!ind.indicators||!ind.indicators.length){$("indicatorsCard").hidden=true;return}
     $("indicatorsCard").hidden=false;
+    renderMemory(data);
     var bias=ind.nearTermBias||"steady";
     var biasEl=$("indBias");
     biasEl.className="ind-bias "+bias;
