@@ -203,8 +203,9 @@ export function runBettystownWeatherTests() {
   s.assert("html music toggle", html.includes("musicToggle"));
   s.assert("html three little birds", html.includes("Three Little Birds"));
   s.assert("html tomorrow not doubled", !html.includes("Tomorrow · Tomorrow"));
-  s.assert("html site typography", html.includes("Fraunces") && html.includes("Inter"));
-  s.assert("html portfolio accent", html.includes("--accent:#2f39c9"));
+  s.assert("html site typography", html.includes("Instrument Serif") && html.includes("Outfit"));
+  s.assert("html coastal palette", html.includes("--ocean:#0e7490") && html.includes("--sea-glass:#14b8a6"));
+  s.assert("html aurora layer", html.includes("auroraShift"));
   s.assert("html now date label", html.includes("nowDate") && html.includes("Right now"));
   s.assert("html today forecast hint", html.includes("Today") && html.includes("full-day forecast"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
