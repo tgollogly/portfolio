@@ -192,7 +192,7 @@ tr:hover td{background:#f8fcff}
     <div class="now-icon" id="nowIcon">🌤️</div>
   </section>
 
-  <h2 class="section-title"><span>⭐</span> Best days to visit</h2>
+  <h2 class="section-title"><span>⭐</span> Best days to visit <span style="font-weight:500;font-size:.85rem;color:var(--muted)">· soonest first</span></h2>
   <div class="best-grid" id="bestDays"></div>
 
   <h2 class="section-title"><span>📅</span> 14-day outlook</h2>
@@ -241,7 +241,7 @@ tr:hover td{background:#f8fcff}
 
     var best=$("bestDays");
     best.innerHTML="";
-    var picks=(data.bestDays||[]).slice(0,4);
+    var picks=(data.bestDays||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,4);
     if(!picks.length){
       best.innerHTML='<p class="hint">No standout warm dry days in the next fortnight — check the full outlook below.</p>';
     }
