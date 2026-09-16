@@ -204,7 +204,9 @@ export function runBettystownWeatherTests() {
   s.assert("health endpoint check", wf.includes("bettystown-health"));
 
   const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-  s.assert("ci auto deploy job", ci.includes("deploy:") && ci.includes("deploy-portfolio1.sh"));
+  s.assert("ci tests only no gh deploy", ci.includes("test:") && !/\n  deploy:/.test(ci));
+  const btReadme = readFileSync(join(root, "sites/bettystown/README.md"), "utf8");
+  s.assert("readme workers builds deploy", btReadme.includes("Workers Builds"));
 
   return s.summary();
 }
