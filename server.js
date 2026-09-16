@@ -46,6 +46,7 @@ import {
 import {
   buildFuelResponse,
   buildNewryFuelManifest,
+  buildSharePreviewMeta,
   getDebugSnapshot,
   runFuelAlerts,
   runNewryFuelHealthCheck,
@@ -202,11 +203,13 @@ const NEWRY_FUEL_ASSETS = new Map([
   ["/sw.js", `${NEWRY_FUEL_PREFIX}/sw.js`],
   ["/icons/icon-192.png", `${NEWRY_FUEL_PREFIX}/icons/icon-192.png`],
   ["/icons/icon-512.png", `${NEWRY_FUEL_PREFIX}/icons/icon-512.png`],
+  ["/og-preview.png", `${NEWRY_FUEL_PREFIX}/og-preview.png`],
 ]);
 const NEWRY_FUEL_PATH_ASSETS = new Map([
   ["/newry-fuel/apple-touch-icon.png", `${NEWRY_FUEL_PREFIX}/apple-touch-icon.png`],
   ["/newry-fuel/favicon-32.png", `${NEWRY_FUEL_PREFIX}/favicon-32.png`],
   ["/newry-fuel/sw.js", `${NEWRY_FUEL_PREFIX}/sw.js`],
+  ["/newry-fuel/og-preview.png", `${NEWRY_FUEL_PREFIX}/og-preview.png`],
   ["/newry-fuel/icons/icon-192.png", `${NEWRY_FUEL_PREFIX}/icons/icon-192.png`],
   ["/newry-fuel/icons/icon-512.png", `${NEWRY_FUEL_PREFIX}/icons/icon-512.png`],
 ]);
@@ -340,6 +343,48 @@ function serveNewryFuelManifest(mode) {
   });
 }
 
+async function getCachedFuelPayload(env) {
+  if (!env?.PURSUIT_KV) return null;
+  try {
+    const raw = await env.PURSUIT_KV.get("newry_fuel_snapshot_v1");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.payload || null;
+  } catch {
+    return null;
+  }
+}
+
+function injectNewryFuelShareMeta(html, meta) {
+  const esc = (s) =>
+    String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;");
+  const replacements = [
+    [/<title>[^<]*<\/title>/, `<title>${esc(meta.title)}</title>`],
+    [/<meta name="description" content="[^"]*"\/>/, `<meta name="description" content="${esc(meta.description)}"/>`],
+    [/<meta property="og:title" content="[^"]*"\/>/, `<meta property="og:title" content="${esc(meta.title)}"/>`],
+    [/<meta property="og:description" content="[^"]*"\/>/, `<meta property="og:description" content="${esc(meta.description)}"/>`],
+    [/<meta property="og:url" content="[^"]*"\/>/, `<meta property="og:url" content="${esc(meta.canonical)}"/>`],
+    [/<meta property="og:image" content="[^"]*"\/>/, `<meta property="og:image" content="${esc(meta.ogImage)}"/>`],
+    [
+      /<meta property="og:image:secure_url" content="[^"]*"\/>/,
+      `<meta property="og:image:secure_url" content="${esc(meta.ogImage)}"/>`,
+    ],
+    [/<meta property="og:image:alt" content="[^"]*"\/>/, `<meta property="og:image:alt" content="${esc(meta.ogImageAlt)}"/>`],
+    [/<meta name="twitter:title" content="[^"]*"\/>/, `<meta name="twitter:title" content="${esc(meta.title)}"/>`],
+    [/<meta name="twitter:description" content="[^"]*"\/>/, `<meta name="twitter:description" content="${esc(meta.description)}"/>`],
+    [/<meta name="twitter:image" content="[^"]*"\/>/, `<meta name="twitter:image" content="${esc(meta.ogImage)}"/>`],
+    [/<link rel="canonical" href="[^"]*"\/>/, `<link rel="canonical" href="${esc(meta.canonical)}"/>`],
+  ];
+  let out = html;
+  for (const [re, repl] of replacements) {
+    out = out.replace(re, repl);
+  }
+  return out;
+}
+
 async function serveNewryFuelIndex(request, env) {
   const asset = await env.ASSETS.fetch(new URL(NEWRY_FUEL_INDEX, request.url));
   if (!asset.ok) return asset;
@@ -360,6 +405,9 @@ async function serveNewryFuelIndex(request, env) {
   } else {
     html = html.replaceAll('"/newry-fuel/', '"/');
   }
+  const cached = await getCachedFuelPayload(env);
+  const shareMeta = buildSharePreviewMeta(cached, url.origin, isSubdomain ? "subdomain" : "path");
+  html = injectNewryFuelShareMeta(html, shareMeta);
   const headers = new Headers({
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "public, max-age=300",
