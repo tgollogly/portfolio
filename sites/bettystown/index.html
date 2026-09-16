@@ -293,7 +293,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
     <div>
       <div class="now-kicker">Right now · live</div>
       <div class="now-date" id="nowDate">—</div>
-      <div class="now-temp" id="nowTemp">—°</div>
+      <div class="now-temp" id="nowTemp">—°C</div>
       <div class="now-meta" id="nowMeta">Fetching…</div>
     </div>
     <div class="now-icon" id="nowIcon">🌤️</div>
@@ -346,6 +346,12 @@ tr:hover td{background:rgba(248,252,255,.8)}
 
   function formatIrelandDate(ms, opts){
     return new Date(ms).toLocaleDateString("en-IE", Object.assign({timeZone:TZ}, opts||{}));
+  }
+
+  function formatTempC(v){
+    var n=Number(v);
+    if(!Number.isFinite(n)) return "—°C";
+    return Math.round(n)+"°C";
   }
 
   function $(id){return document.getElementById(id)}
@@ -410,7 +416,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
         '<div class="big-icon">'+esc(t.icon)+'</div>'+
       '</div>'+
       '<div class="tomorrow-stats">'+
-        '<span><strong>'+Math.round(t.tempMax)+'°</strong> high · '+Math.round(t.tempMin)+'° low</span>'+
+        '<span><strong>'+formatTempC(t.tempMax)+'</strong> high · '+formatTempC(t.tempMin)+' low</span>'+
         '<span>Rain <strong>'+Math.round(t.rainProb||0)+'%</strong></span>'+
         '<span>Wind <strong>'+Math.round(t.windMax||0)+'</strong> km/h</span>'+
         '<span>Score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
@@ -448,9 +454,9 @@ tr:hover td{background:rgba(248,252,255,.8)}
     var c=data.current||{};
     var todayInfo=data.today||{};
     $("nowDate").textContent=todayInfo.dateLong||formatIrelandDate(data.fetchedAt,{weekday:"long",day:"numeric",month:"long"});
-    $("nowTemp").textContent=Math.round(c.temp)+"°";
+    $("nowTemp").textContent=formatTempC(c.temp);
     $("nowIcon").textContent=c.icon||"🌤️";
-    $("nowMeta").textContent=(c.summary||"—")+" · feels "+Math.round(c.feels||c.temp)+"° · wind "+Math.round(c.wind||0)+" km/h · humidity "+Math.round(c.humidity||0)+"%";
+    $("nowMeta").textContent=(c.summary||"—")+" · feels "+formatTempC(c.feels||c.temp)+" · wind "+Math.round(c.wind||0)+" km/h · humidity "+Math.round(c.humidity||0)+"%";
 
     var best=$("bestDays");
     best.innerHTML="";
@@ -471,7 +477,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
         (d.relative==="today"?'<span class="day-badge">Today\'s forecast</span>':'')+
         '<div class="score-pill '+d.walkTier+'">'+d.walkScore+' · '+tierLabel(d.walkTier)+'</div>'+
         '<div class="day-stats">'+
-          '<span><strong>'+Math.round(d.tempMax)+'°</strong> high</span>'+
+          '<span><strong>'+formatTempC(d.tempMax)+'</strong> high</span>'+
           '<span>Rain <strong>'+Math.round(d.rainProb||0)+'%</strong></span>'+
           '<span>Wind <strong>'+Math.round(d.windMax||0)+'</strong> km/h</span>'+
           (d.sunshineHours!=null?'<span>☀️ <strong>'+d.sunshineHours+'</strong>h sun</span>':'')+
@@ -491,7 +497,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
         '<td>'+dayCell+'</td>'+
         '<td>'+esc(d.icon)+' '+esc(d.summary)+
           (why?'<div class="row-why">'+esc(why)+'</div>':'')+'</td>'+
-        '<td>'+Math.round(d.tempMax)+'° / '+Math.round(d.tempMin)+'°</td>'+
+        '<td>'+formatTempC(d.tempMax)+' / '+formatTempC(d.tempMin)+'</td>'+
         '<td>'+Math.round(d.rainProb||0)+'% · '+((d.rainMm||0).toFixed(1))+'mm</td>'+
         '<td>'+Math.round(d.windMax||0)+' km/h</td>'+
         '<td><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';

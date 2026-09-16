@@ -12,6 +12,7 @@ import {
   detectHeatEvents,
   explainWalkDay,
   formatDayMeta,
+  formatTempC,
   ymdInTimeZone,
   addDaysYmd,
   dayDiffYmd,
@@ -31,6 +32,10 @@ export function runBettystownWeatherTests() {
   s.assert("coords ireland", BETTYSTOWN.latitude > 53 && BETTYSTOWN.longitude < 0);
   s.assert("wmo clear", wmoInfo(0).icon === "☀️");
   s.assert("wmo unknown fallback", wmoInfo(999).label === "Unknown");
+  s.assert("formatTempC value", formatTempC(13.2) === "13°C");
+  s.assert("formatTempC fallback", formatTempC(null) === "—°C");
+  const warmExplain = explainWalkDay({ tempMax: 20, tempMin: 12, rainProb: 5, rainMm: 0, windMax: 10, weatherCode: 1 });
+  s.assert("explain uses celsius", JSON.stringify(warmExplain).includes("°C"));
 
   const todayMeta = formatDayMeta("2026-09-16", new Date("2026-09-16T15:00:00Z"), "Europe/Dublin");
   s.assert("formatDayMeta today", todayMeta.label === "Today" && todayMeta.relative === "today");
@@ -204,6 +209,8 @@ export function runBettystownWeatherTests() {
   s.assert("html today forecast hint", html.includes("Today") && html.includes("full-day forecast"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
+  s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));
+  s.assert("html now temp celsius", html.includes('id="nowTemp">—°C</'));
   s.assert("html music loop guard", html.includes("watchLoop"));
   s.assert("server audio route", server.includes("three-little-birds.mp3"));
   s.assert("html og image", html.includes("assets/og/bettystown-weather.png"));
