@@ -229,8 +229,10 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   color:#fff;font-weight:600;border-bottom:2px solid rgba(255,255,255,.22);
   animation:alertFlash 1.25s ease-in-out infinite
 }
+.top-alert[hidden],.alert-show-btn[hidden]{display:none!important}
+.top-alert.is-dismissed{display:none!important}
 .top-alert-dismiss{
-  position:absolute;top:50%;right:10px;transform:translateY(-50%);
+  position:absolute;top:50%;right:10px;transform:translateY(-50%);z-index:2;
   display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;
   padding:0 8px;border:none;border-radius:10px;background:rgba(255,255,255,.22);color:#fff;
   font-family:inherit;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
@@ -549,8 +551,8 @@ body.alert-active{padding-top:76px}
   }
 
   function alertFingerprint(alert){
-    if(!alert) return "";
-    return (alert.mode||"")+"|"+(alert.message||"");
+    if(!alert||!alert.mode) return "";
+    return alert.mode;
   }
 
   function getAlertHideState(){
@@ -574,6 +576,7 @@ body.alert-active{padding-top:76px}
     var el=$("topAlert");
     var showBtn=$("alertShowBtn");
     document.body.classList.remove("alert-active");
+    el.classList.remove("is-dismissed");
     if(!alert||!alert.active||!alert.mode){
       el.hidden=true;
       showBtn.hidden=true;
@@ -581,6 +584,7 @@ body.alert-active{padding-top:76px}
     }
     if(isAlertHidden(alert)){
       el.hidden=true;
+      el.classList.add("is-dismissed");
       showBtn.hidden=false;
       showBtn.className="alert-show-btn "+alert.mode;
       showBtn.textContent=alert.mode==="buy"?"Show buy alert":alert.mode==="hold"?"Show hold alert":"Show watch alert";
@@ -914,12 +918,20 @@ body.alert-active{padding-top:76px}
   }
 
   function initAlertDismiss(){
-    $("topAlertDismiss").addEventListener("click",function(){
-      if(!lastAlertKey||!lastAlertData||!lastAlertData.active) return;
-      saveAlertHidden(lastAlertKey);
+    var dismissBtn=$("topAlertDismiss");
+    var showBtn=$("alertShowBtn");
+    if(!dismissBtn||!showBtn) return;
+    dismissBtn.addEventListener("click",function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(!lastAlertData||!lastAlertData.active||!lastAlertData.mode) return;
+      var key=alertFingerprint(lastAlertData);
+      lastAlertKey=key;
+      saveAlertHidden(key);
       applyTopAlertVisibility(lastAlertData);
     });
-    $("alertShowBtn").addEventListener("click",function(){
+    showBtn.addEventListener("click",function(e){
+      e.preventDefault();
       clearAlertHidden();
       if(lastAlertData&&lastAlertData.active) applyTopAlertVisibility(lastAlertData);
     });
