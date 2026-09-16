@@ -98,6 +98,17 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .stat .val{font-size:1.05rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums}
 .stat .val.good{color:var(--buy)}.stat .val.warn{color:var(--wait)}
 .stat .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.savings-banner{margin-top:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(5,150,105,.12),rgba(255,255,255,.9));border:1px solid rgba(5,150,105,.25);font-size:1rem;font-weight:600;color:#065f46}
+.accuracy-pill{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border-radius:999px;font-size:.78rem;font-weight:700;background:rgba(15,23,42,.06);color:var(--slate)}
+.accuracy-pill.high{background:rgba(5,150,105,.15);color:#065f46}
+.savings-table{margin-top:12px;display:grid;gap:8px}
+.savings-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:.86rem}
+.savings-row strong{color:var(--buy)}
+.news-card{margin-top:24px}
+.news-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.news-list li{font-size:.86rem;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.65);border-left:3px solid var(--orange)}
+.news-bias{font-size:.92rem;font-weight:600;margin:8px 0 0}
+.news-bias.rising{color:var(--wait)}.news-bias.falling{color:var(--buy)}.news-bias.neutral{color:var(--muted)}
 .chart-card{margin-top:24px;padding:20px 22px 16px}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chart-head h2{font-family:var(--display);font-size:1.45rem;margin:0}
@@ -140,6 +151,14 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 <div id="error" class="err" hidden></div>
 
 <section class="grid two" id="liveCards"></section>
+
+<section class="card news-card" id="newsCard" hidden>
+  <div class="card-kicker">Fuel news · early signal</div>
+  <h2>What the headlines say</h2>
+  <p class="news-bias" id="newsBias"></p>
+  <ul class="news-list" id="newsList"></ul>
+  <p class="meta" id="newsSources"></p>
+</section>
 
 <section class="card chart-card" id="heatingChartCard" hidden>
   <div class="chart-head"><h2>🛢️ Heating oil trend</h2></div>
@@ -203,28 +222,36 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     var g=signal&&signal.guide;
     if(!g) return "";
     var whenCls=signal.verdict==="buy"?"buy":signal.verdict==="wait"?"wait":"";
-    var saveLine="";
-    if(g.action==="buy_now"&&g.savingsVsAveragePpl>0){
-      saveLine=kind==="heating"
-        ?'<div class="sub">On a 900L fill: save ~'+fmtMoney(g.examples.heating900L)+' vs recent average</div>'
-        :'<div class="sub">On a 50L tank: save ~'+fmtMoney(g.examples.diesel50L)+' vs recent average</div>';
-    }else if(g.savingsVsNowPpl>0.3){
-      saveLine=kind==="heating"
-        ?'<div class="sub">If you wait: ~'+fmtMoney(g.examples.wait900L)+' saved on 900L</div>'
-        :'<div class="sub">If you wait: ~'+fmtMoney(g.examples.wait50L)+' saved on 50L</div>';
-    }
     var avgVal=g.savingsVsAveragePpl;
     var avgCls=avgVal>0?"good":avgVal<-0.5?"warn":"";
+    var acc=g.accuracy;
+    var accHtml=acc?'<div class="accuracy-pill'+(acc.highConfidence?" high":"")+'">'+
+      (acc.highConfidence?"✓ ":"")+"Confidence "+acc.score+"%"+
+      (acc.highConfidence?" · high accuracy tier":"")+
+      '</div>':"";
+    var banner=g.savingsHeadline?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
+    var table="";
+    if(g.savingsTable&&g.savingsTable.length){
+      table='<div class="savings-table">'+g.savingsTable.map(function(row){
+        return '<div class="savings-row"><span>'+esc(row.label)+' fill</span><strong>Save £'+row.savePounds.toFixed(2)+'</strong></div>';
+      }).join("")+'</div>';
+    }
     return '<div class="buy-guide">'+
       '<p class="when '+whenCls+'">⏱ '+esc(g.timing)+'</p>'+
+      banner+
       '<p class="summary">'+esc(g.summary)+'</p>'+
+      accHtml+
+      (acc&&acc.note?'<p class="meta">'+esc(acc.note)+'</p>':"")+
       '<div class="stats-row">'+
         '<div class="stat"><div class="lbl">Buy at about</div><div class="val good">'+fmtP(g.targetPricePpl)+'/L</div></div>'+
         '<div class="stat"><div class="lbl">Right now</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
-        (g.savingsVsNowPpl>0?'<div class="stat"><div class="lbl">Could save</div><div class="val good">'+fmtP(g.savingsVsNowPpl)+'/L</div><div class="sub">'+g.savingsVsNowPct+'% cheaper if you wait</div></div>':"")+
-        (g.savingsVsAveragePpl!=null?'<div class="stat"><div class="lbl">Vs recent avg</div><div class="val '+avgCls+'">'+(avgVal>=0?"+":"")+fmtP(avgVal)+'/L</div><div class="sub">Avg '+fmtP(g.averagePpl)+'/L</div></div>':"")+
+        (g.savingsVsNowPpl>0?'<div class="stat"><div class="lbl">Cheaper if you wait</div><div class="val good">'+fmtP(g.savingsVsNowPpl)+'/L</div><div class="sub">'+g.savingsVsNowPct+'% less per litre</div></div>':"")+
+        (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl>0?'<div class="stat"><div class="lbl">Cheaper than avg</div><div class="val good">'+fmtP(g.savingsVsAveragePpl)+'/L</div><div class="sub">Avg was '+fmtP(g.averagePpl)+'/L</div></div>':"")+
+        (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl<0?'<div class="stat"><div class="lbl">Above average</div><div class="val warn">'+fmtP(Math.abs(g.savingsVsAveragePpl))+'/L more</div><div class="sub">Avg '+fmtP(g.averagePpl)+'/L</div></div>':"")+
         '<div class="stat"><div class="lbl">Predicted low</div><div class="val">'+fmtP(g.forecastLowPpl)+'/L</div><div class="sub">~day '+g.forecastLowDay+'</div></div>'+
-      '</div>'+saveLine+
+      '</div>'+
+      table+
+      (g.newsNote?'<p class="meta">📰 '+esc(g.newsNote)+'</p>':"")+
     '</div>';
   }
 
@@ -307,6 +334,19 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,
       data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"");
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
+    if(data.news&&data.news.sentiment){
+      $("newsCard").hidden=false;
+      var s=data.news.sentiment;
+      $("newsBias").className="news-bias "+s.bias;
+      $("newsBias").textContent=s.summary;
+      $("newsList").innerHTML=(s.relevant||[]).slice(0,5).map(function(h){
+        return "<li>"+esc(h)+"</li>";
+      }).join("")||"<li class='meta'>No fuel-specific headlines in the last fetch.</li>";
+      $("newsSources").textContent=(data.news.sources||[]).join(" · ");
+    }
+    if(data.modelBacktest&&data.modelBacktest.highConfidenceAccuracy){
+      /* backtest shown per-card via accuracy pill */
+    }
     renderCharts(data);
     if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
       $("stationsCard").hidden=false;

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   NEWRY,
   SAFE_FUELS,
+  FUEL_NEWS_FEEDS,
   normalizePencePerLitre,
   formatPence,
   parseGovDieselCsv,
@@ -12,6 +13,10 @@ import {
   linearTrend,
   analyzeBuySignal,
   buildBuyGuide,
+  buildSavingsTable,
+  analyzeNewsSentiment,
+  backtestBuyModel,
+  computeModelConfidence,
   buildNewryFuelManifest,
   sanitizePushSubscription,
   buildSlackMessage,
@@ -58,6 +63,31 @@ export function runNewryFuelTests() {
   s.assert("wait guide savings", guide.savingsVsNowPpl > 0);
   s.assert("wait guide summary", guide.summary.includes("115") || guide.summary.includes("Wait"));
 
+  const news = analyzeNewsSentiment([
+    "Oil prices fall as demand drops",
+    "UK weather forecast",
+    "Diesel pump prices rise at forecourts",
+  ]);
+  s.assert("news fuel filter", news.relevant.length >= 2);
+  s.assert("news bias", news.bias === "falling" || news.bias === "rising" || news.bias === "neutral");
+
+  const savings = buildSavingsTable({ savingsPpl: 5, kind: "heating" });
+  s.assert("savings table 900L", savings.find((r) => r.litres === 900).savePounds === 45);
+
+  const conf = computeModelConfidence({
+    verdict: "buy",
+    pattern: { matchRate: 0.92, avgDistance: 0.1 },
+    news: { bias: "falling" },
+    backtest: { highConfidenceAccuracy: 80, highConfidenceSamples: 10 },
+  });
+  s.assert("confidence high tier", conf.score >= 95);
+  s.assert("confidence high flag", conf.highConfidence === true);
+
+  const csvLong = "Date,ULSP,ULSD\n01/01/2024,140,150\n08/01/2024,141,151\n15/01/2024,142,152\n22/01/2024,143,153\n29/01/2024,144,154\n05/02/2024,145,155\n12/02/2024,146,156\n19/02/2024,147,157\n26/02/2024,148,158\n05/03/2024,149,159\n12/03/2024,150,160\n19/03/2024,151,161\n26/03/2024,152,162\n02/04/2024,153,163\n09/04/2024,154,164\n16/04/2024,155,165\n23/04/2024,156,166\n30/04/2024,157,167\n07/05/2024,158,168\n14/05/2024,159,169\n21/05/2024,160,170\n28/05/2024,161,171\n04/06/2024,162,172\n11/06/2024,163,173\n18/06/2024,164,174\n25/06/2024,165,175\n02/07/2024,166,176\n09/07/2024,167,177\n16/07/2024,168,178\n23/07/2024,169,179\n30/07/2024,170,180\n";
+  const seriesLong = parseGovDieselCsv(csvLong + csvLong.replace(/2024/g, "2025"));
+  const bt = backtestBuyModel(seriesLong);
+  s.assert("backtest returns accuracy", bt.highConfidenceSamples >= 0);
+
   const manifest = buildNewryFuelManifest("path");
   s.assert("manifest path", manifest.start_url === "/newry-fuel/");
   s.assert("manifest subdomain", buildNewryFuelManifest("subdomain").start_url === "/");
@@ -97,6 +127,9 @@ export function runNewryFuelTests() {
   s.assert("html push btn", html.includes("pushBtn"));
   s.assert("html charts split", html.includes("heatingChart") && html.includes("dieselChart"));
   s.assert("html buy guide", html.includes("buy-guide"));
+  s.assert("html savings banner", html.includes("savings-banner"));
+  s.assert("html news card", html.includes("newsCard"));
+  s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
   s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
