@@ -363,9 +363,9 @@ function renderQuestion(q,opts){
   if(state.timerMax){
     html+='<div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>';
   }
-  html+='<p class="q-text" id="qText">'+q.q+'</p><div class="opts" id="opts">';
+  html+='<p class="q-text" id="qText">'+escapeHtml(q.q)+'</p><div class="opts" id="opts">';
   q.o.forEach(function(opt,i){
-    html+='<button type="button" class="opt" data-i="'+i+'">'+String.fromCharCode(65+i)+'. '+opt+'</button>';
+    html+='<button type="button" class="opt" data-i="'+i+'">'+String.fromCharCode(65+i)+'. '+escapeHtml(opt)+'</button>';
   });
   html+='</div></div>';
   if(state.round===1)html=renderTrack(0,0)+html;
@@ -400,9 +400,7 @@ function onTimeout(){
   setTimeout(nextAfterQuestion,false);
 }
 
-function answer(i){
-  clearTimer();
-  var q=state.currentQ,correct=q.a;
+function showAnswerResult(i,correct,ok){
   var btns=document.querySelectorAll(".opt");
   btns.forEach(function(b,idx){
     b.disabled=true;
@@ -410,11 +408,31 @@ function answer(i){
     else if(idx===i)b.classList.add("wrong");
     else b.classList.add("dim");
   });
-  var ok=i===correct;
-  sendFeedback(q.id,ok);
   if(ok){sfxCorrect();handleCorrect();}
   else{sfxWrong();handleWrong();}
   setTimeout(function(){nextAfterQuestion(ok);},1400);
+}
+function answer(i){
+  clearTimer();
+  var q=state.currentQ;
+  if(typeof q.a==="number"){
+    var ok=i===q.a;
+    sendFeedback(q.id,ok);
+    showAnswerResult(i,q.a,ok);
+    return;
+  }
+  fetch("/api/pursuit-check-answer",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({questionId:q.id,choice:i})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.error){setMsg("Could not verify answer.");showAnswerResult(i,i,false);return;}
+    sendFeedback(q.id,data.correct);
+    showAnswerResult(i,data.answer,data.correct);
+  }).catch(function(){
+    setMsg("Could not verify answer.");
+    showAnswerResult(i,i,false);
+  });
 }
 
 function handleCorrect(){

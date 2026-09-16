@@ -8,3 +8,6 @@ TURNSTILE_SECRET_KEY=your_turnstile_secret_key
 
 # Required when ACCESS_CHALLENGE_ENABLED is true in server.js (signs tg_gate cookies)
 CHALLENGE_SECRET=random_long_string_at_least_32_chars
+
+# Pursuit question refresh — required for POST /api/pursuit-refresh (cron uses scheduled() only)
+PURSUIT_REFRESH_SECRET=random_long_string_at_least_32_chars
