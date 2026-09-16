@@ -16,7 +16,7 @@ Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 ## One-time Cloudflare setup
 
 1. **Workers & Pages → portfolio1 → Settings → Domains** → add `bettystown.tgollogly.dev`
-2. Deploy: `bash scripts/deploy-portfolio1.sh`
+2. Deploy: merges to `main` auto-deploy **portfolio1** via GitHub Actions (needs `CLOUDFLARE_API_TOKEN` secret). Manual: `bash scripts/deploy-portfolio1.sh`
 
 No API keys — forecast from [Open-Meteo](https://open-meteo.com/) (free, CC BY 4.0).
 
