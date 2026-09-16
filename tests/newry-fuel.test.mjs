@@ -26,6 +26,7 @@ import {
   buildExtendedForecast,
   buildWhenToBuyTimeline,
   buildHoldOutlook,
+  pickNearTermBest,
   createEmptyFuelMemory,
   appendFuelMemory,
   flattenMemoryPrices,
@@ -87,7 +88,8 @@ export function runNewryFuelTests() {
     prices: [128, 126, 124, 123, 122, 121, 120],
   });
   s.assert("wait guide savings", guide.savingsVsNowPpl > 0);
-  s.assert("wait guide summary", guide.summary.includes("115") || guide.summary.includes("Wait"));
+  s.assert("wait guide summary matches target", guide.summary.includes(String(guide.targetPricePpl)));
+  s.assert("wait guide target equals savings math", guide.savingsVsNowPpl === Math.round((120 - guide.targetPricePpl) * 10) / 10);
 
   const news = analyzeNewsSentiment([
     "Oil prices fall as demand drops",
@@ -164,6 +166,35 @@ export function runNewryFuelTests() {
   });
   s.assert("extended forecast has 6mo", extFc.some((f) => f.day === 180));
   s.assert("extended forecast tomorrow", extFc.find((f) => f.day === 1).estimate > 0);
+
+  const extHold = buildExtendedForecast({
+    current: 107,
+    recent: [105, 106, 107],
+    trend: { slope: -0.1, intercept: 108 },
+    govSeries: seriesLong,
+    kind: "heating",
+  });
+  const holdGuide = buildBuyGuide({
+    current: 107,
+    verdict: "wait",
+    trend: { slope: -0.1, intercept: 108 },
+    forecast: [{ day: 3, estimate: 106.9 }, { day: 7, estimate: 107 }],
+    extendedForecast: extHold,
+    ma7: 106,
+    ma30: 101.6,
+    prices: [102, 104, 106, 107],
+    kind: "heating",
+  });
+  s.assert(
+    "hold guide summary uses near-term target not ma30",
+    holdGuide.summary.includes(String(holdGuide.targetPricePpl)) && !holdGuide.summary.includes("101.6")
+  );
+  s.assert(
+    "hold guide savings match target",
+    holdGuide.savingsVsNowPpl === Math.round((107 - holdGuide.targetPricePpl) * 10) / 10
+  );
+  const nearBest = pickNearTermBest(extHold);
+  s.assert("pickNearTermBest within 14d", nearBest && nearBest.day <= 14);
 
   const waitSignal = analyzeBuySignal({
     current: 120,
@@ -353,7 +384,7 @@ export function runNewryFuelTests() {
   s.assert("og preview exists", readFileSync(join(root, "sites/newry-fuel/og-preview.png")).length > 5000);
   s.assert("server share meta inject", server.includes("injectNewryFuelShareMeta"));
   s.assert("html charts split", html.includes("heatingChart") && html.includes("dieselChart"));
-  s.assert("html buy guide", html.includes("buy-guide"));
+  s.assert("html buy guide", html.includes("buy-guide") && html.includes("guide-hero"));
   s.assert("html savings banner", html.includes("savings-banner"));
   s.assert("html news card", html.includes("newsCard"));
   s.assert("html outlook card", html.includes("outlookCard"));
