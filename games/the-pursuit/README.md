@@ -20,7 +20,11 @@ This repo builds **three** Workers (`portfolio`, `test`, `portfolio1`) from one 
 | **portfolio1** (production) | `bash scripts/deploy-portfolio1.sh` |
 | portfolio / test | `npx wrangler deploy` |
 
+Set that command in **Workers & Pages → portfolio1 → Settings → Builds → Deploy command**.
+
 If `portfolio1` builds fail after adding Pursuit, delete stray crons on **portfolio** and **test** (Triggers tab), then redeploy portfolio1.
+
+**Backup cron (GitHub Actions):** workflow `pursuit-refresh.yml` runs at 06:00 & 18:00 UTC, imports RSS/trivia into D1, and re-attaches Worker schedules. Add repo secret `CLOUDFLARE_API_TOKEN` (Workers Edit + D1). Run it once with **Actions → Pursuit feed refresh + Cloudflare cron → Run workflow**.
 
 Bindings (in `wrangler.toml`):
 

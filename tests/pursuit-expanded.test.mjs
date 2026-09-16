@@ -139,6 +139,12 @@ s.assert("wrangler d1 binding", wrangler.includes("PURSUIT_DB"));
 s.assert("wrangler kv binding", wrangler.includes("PURSUIT_KV"));
 s.assert("wrangler crons", wrangler.includes("0 6 * * *"));
 
+const refreshWf = readFileSync(join(root, ".github/workflows/pursuit-refresh.yml"), "utf8");
+s.assert("gh refresh workflow 06:00", refreshWf.includes('"0 6 * * *"'));
+s.assert("gh refresh workflow 18:00", refreshWf.includes('"0 18 * * *"'));
+s.assert("gh refresh uses D1 execute", refreshWf.includes("d1 execute pursuit-questions"));
+s.assert("gh refresh registers triggers", refreshWf.includes("wrangler triggers deploy"));
+
 export function runPursuitExpandedTests() {
   return s.summary();
 }
