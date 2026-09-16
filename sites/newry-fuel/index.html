@@ -104,11 +104,42 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .savings-table{margin-top:12px;display:grid;gap:8px}
 .savings-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.65);font-size:.86rem}
 .savings-row strong{color:var(--buy)}
+.when-card{margin-top:24px;background:linear-gradient(135deg,rgba(255,247,237,.98),rgba(254,243,199,.88));border-color:rgba(234,88,12,.2)}
+.when-headline{font-size:1.15rem;font-weight:700;color:var(--ink);margin:8px 0 6px;line-height:1.35}
+.when-crowd{font-size:.95rem;color:var(--slate);margin:0 0 14px;line-height:1.45}
+.when-grid{display:grid;gap:10px;margin-top:12px}
+@media(min-width:640px){.when-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+.when-window{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.85);border:1px solid var(--line);position:relative}
+.when-window.best{border-color:rgba(5,150,105,.45);background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(255,255,255,.92));box-shadow:0 0 0 1px rgba(5,150,105,.12)}
+.when-window .when-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:4px}
+.when-window .when-date{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.when-window .when-price{font-size:1.35rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums}
+.when-window .when-note{font-size:.8rem;color:var(--slate);margin-top:6px;line-height:1.35}
+.when-window .when-badge{position:absolute;top:10px;right:10px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:rgba(5,150,105,.15);color:#047857}
+.six-month{margin-top:14px;padding:12px 16px;border-radius:14px;background:rgba(15,23,42,.04);font-size:.92rem;font-weight:600;color:var(--slate)}
 .news-card{margin-top:24px}
 .news-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
 .news-list li{font-size:.86rem;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.65);border-left:3px solid var(--orange)}
 .news-bias{font-size:.92rem;font-weight:600;margin:8px 0 0}
 .news-bias.rising{color:var(--wait)}.news-bias.falling{color:var(--buy)}.news-bias.neutral{color:var(--muted)}
+.outlook-card{margin-top:24px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(224,242,254,.85))}
+.outlook-grid{display:grid;gap:14px;margin-top:14px}
+@media(min-width:640px){.outlook-grid{grid-template-columns:1fr 1fr}}
+.outlook-panel{padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid var(--line)}
+.outlook-panel h3{font-family:var(--display);font-size:1.15rem;margin:0 0 8px}
+.trend-line{font-size:1rem;font-weight:700;margin:0 0 6px}
+.trend-line.up{color:var(--wait)}.trend-line.down{color:var(--buy)}.trend-line.steady,.trend-line.flat{color:var(--muted)}
+.pred-line{font-size:.92rem;font-weight:600;color:var(--slate);margin:0 0 4px}
+.news-verdict{font-size:1.35rem;font-weight:700;margin:10px 0 6px;line-height:1.25}
+.news-verdict.up{color:var(--wait)}.news-verdict.down{color:var(--buy)}.news-verdict.steady{color:var(--muted)}
+.news-list li{display:flex;gap:10px;align-items:flex-start}
+.news-tag{flex-shrink:0;font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.news-tag.up{background:rgba(220,38,38,.12);color:#b91c1c}
+.news-tag.down{background:rgba(5,150,105,.12);color:#047857}
+.news-tag.neutral{background:rgba(100,116,139,.12);color:#475569}
+.trend-pill{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;font-size:.82rem;font-weight:700;background:rgba(15,23,42,.06)}
+.trend-pill.up{background:rgba(220,38,38,.1);color:#b91c1c}
+.trend-pill.down{background:rgba(5,150,105,.1);color:#047857}
 .chart-card{margin-top:24px;padding:20px 22px 16px}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chart-head h2{font-family:var(--display);font-size:1.45rem;margin:0}
@@ -152,9 +183,25 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 
 <section class="grid two" id="liveCards"></section>
 
+<section class="card when-card" id="whenCard" hidden>
+  <div class="card-kicker">When to buy · before everyone else</div>
+  <h2 id="whenTitle">Buy timing</h2>
+  <p class="when-headline" id="whenHeadline"></p>
+  <p class="when-crowd" id="whenCrowd"></p>
+  <div class="when-grid" id="whenGrid"></div>
+  <p class="six-month" id="whenSixMonth"></p>
+</section>
+
+<section class="card outlook-card" id="outlookCard" hidden>
+  <div class="card-kicker">Live trend &amp; 7-day prediction</div>
+  <h2>Where prices are heading</h2>
+  <div class="outlook-grid" id="outlookGrid"></div>
+</section>
+
 <section class="card news-card" id="newsCard" hidden>
-  <div class="card-kicker">Fuel news · early signal</div>
-  <h2>What the headlines say</h2>
+  <div class="card-kicker">Fuel news · will prices go up or down?</div>
+  <h2>News price outlook</h2>
+  <div class="news-verdict" id="newsVerdict"></div>
   <p class="news-bias" id="newsBias"></p>
   <ul class="news-list" id="newsList"></ul>
   <p class="meta" id="newsSources"></p>
@@ -165,22 +212,22 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   <p class="chart-note" id="heatingChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
   <div class="chart-wrap"><canvas id="heatingChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#ea580c"></i> Past price</span>
-    <span class="dash"><i></i> Predicted</span>
-    <span><i style="background:#059669"></i> Target buy price</span>
-    <span><i style="background:#94a3b8"></i> Recent average</span>
+    <span><i style="background:#ea580c"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#059669"></i> Target buy</span>
+    <span><i style="background:#94a3b8"></i> Average</span>
   </div>
 </section>
 
 <section class="card chart-card" id="dieselChartCard" hidden>
   <div class="chart-head"><h2>⛽ Diesel trend (near Newry)</h2></div>
-  <p class="chart-note" id="dieselChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
+  <p class="chart-note" id="dieselChartNote">Solid = live readings · purple dashed = 7-day prediction · green = buy target</p>
   <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#0284c7"></i> Past price</span>
-    <span class="dash"><i></i> Predicted</span>
-    <span><i style="background:#059669"></i> Target buy price</span>
-    <span><i style="background:#94a3b8"></i> Recent average</span>
+    <span><i style="background:#0284c7"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#059669"></i> Target buy</span>
+    <span><i style="background:#94a3b8"></i> Average</span>
   </div>
 </section>
 
@@ -218,6 +265,43 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   function fmtP(v){return Number(v).toFixed(1)+"p"}
   function fmtMoney(v){return v==null?"—":"£"+Number(v).toFixed(2)}
 
+  function whenToBuyWindowHtml(w, isBest){
+    if(!w) return "";
+    return '<div class="when-window'+(isBest?" best":"")+'">'+
+      (isBest?'<span class="when-badge">Best window</span>':"")+
+      '<div class="when-lbl">'+esc(w.label||("Day "+w.day))+'</div>'+
+      (w.dateLabel?'<div class="when-date">'+esc(w.dateLabel)+'</div>':"")+
+      '<div class="when-price">'+fmtP(w.pricePpl!=null?w.pricePpl:w.estimate)+'/L</div>'+
+      (w.vsNow!=null&&w.vsNow!==0?'<div class="when-note">'+(w.vsNow<0?"↓ "+fmtP(Math.abs(w.vsNow))+" cheaper vs today":"↑ "+fmtP(w.vsNow)+" vs today")+'</div>':"")+
+      (w.note?'<div class="when-note">'+esc(w.note)+'</div>':"")+
+    '</div>';
+  }
+
+  function renderWhenToBuy(data){
+    var hSig=data.signals&&data.signals.heating;
+    var dSig=data.signals&&data.signals.diesel;
+    var hWhen=hSig&&hSig.guide&&hSig.guide.whenToBuy;
+    var dWhen=dSig&&dSig.guide&&dSig.guide.whenToBuy;
+    if(!hWhen&&!dWhen){$("whenCard").hidden=true;return}
+    $("whenCard").hidden=false;
+    var primary=(hWhen&&hSig.verdict!=="unknown")?{sig:hSig,when:hWhen,kind:"heating"}:{sig:dSig,when:dWhen,kind:"diesel"};
+    if(!primary.when) primary={sig:dSig,when:dWhen,kind:"diesel"};
+    var w=primary.when;
+    $("whenTitle").textContent=primary.kind==="heating"?"🛢️ Heating oil — when to buy":"⛽ Diesel — when to buy";
+    $("whenHeadline").textContent=w.headline||"Watch for dips";
+    $("whenCrowd").textContent=w.buyBeforeCrowd||"";
+    var bestDay=w.bestWindow&&w.bestWindow.day;
+    var grid=(w.windows||[]).slice(0,6).map(function(win){
+      return whenToBuyWindowHtml(win,win.day===bestDay);
+    }).join("");
+    if(hWhen&&dWhen&&hSig.verdict!=="unknown"&&dSig.verdict!=="unknown"){
+      var alt=primary.kind==="heating"?dWhen:hWhen;
+      grid+='<div class="when-window"><div class="when-lbl">Also · '+(primary.kind==="heating"?"diesel":"heating")+'</div><div class="when-date">'+esc(alt.bestWindow.dateLabel)+'</div><div class="when-price">'+fmtP(alt.bestWindow.pricePpl)+'/L</div><div class="when-note">'+esc(alt.headline)+'</div></div>';
+    }
+    $("whenGrid").innerHTML=grid;
+    $("whenSixMonth").textContent=w.sixMonthOutlook||"";
+  }
+
   function buyGuideHtml(signal, kind){
     var g=signal&&signal.guide;
     if(!g) return "";
@@ -249,39 +333,63 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
         (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl>0?'<div class="stat"><div class="lbl">Cheaper than avg</div><div class="val good">'+fmtP(g.savingsVsAveragePpl)+'/L</div><div class="sub">Avg was '+fmtP(g.averagePpl)+'/L</div></div>':"")+
         (g.savingsVsAveragePpl!=null&&g.savingsVsAveragePpl<0?'<div class="stat"><div class="lbl">Above average</div><div class="val warn">'+fmtP(Math.abs(g.savingsVsAveragePpl))+'/L more</div><div class="sub">Avg '+fmtP(g.averagePpl)+'/L</div></div>':"")+
         '<div class="stat"><div class="lbl">Predicted low</div><div class="val">'+fmtP(g.forecastLowPpl)+'/L</div><div class="sub">~day '+g.forecastLowDay+'</div></div>'+
+        (g.whenToBuy&&g.whenToBuy.tomorrow?'<div class="stat"><div class="lbl">Tomorrow</div><div class="val">'+fmtP(g.whenToBuy.tomorrow.pricePpl)+'/L</div><div class="sub">'+esc(g.whenToBuy.tomorrow.dateLabel)+'</div></div>':"")+
+        (g.whenToBuy&&g.whenToBuy.sixMonth?'<div class="stat"><div class="lbl">6 months</div><div class="val">'+fmtP(g.whenToBuy.sixMonth.pricePpl)+'/L</div><div class="sub">'+esc(g.whenToBuy.sixMonth.dateLabel)+'</div></div>':"")+
       '</div>'+
       table+
       (g.newsNote?'<p class="meta">📰 '+esc(g.newsNote)+'</p>':"")+
     '</div>';
   }
 
-  function signalCard(kind, signal, extra){
+  function trendPill(snapshot){
+    if(!snapshot) return "";
+    return '<span class="trend-pill '+esc(snapshot.direction)+'">'+esc(snapshot.label)+'</span>';
+  }
+
+  function outlookPanel(title, icon, trend, prediction){
+    if(!trend&&!prediction) return "";
+    var tDir=trend&&trend.direction||"flat";
+    var pDir=prediction&&prediction.direction||"steady";
+    return '<div class="outlook-panel">'+
+      '<h3>'+icon+' '+esc(title)+'</h3>'+
+      (trend?'<p class="trend-line '+tDir+'">'+esc(trend.label)+'</p>':"")+
+      (prediction?'<p class="pred-line '+pDir+'">'+esc(prediction.headline)+'</p><p class="meta">'+esc(prediction.detail)+'</p>':"")+
+    '</div>';
+  }
+
+  function signalCard(kind, signal, extra, trend){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
     return '<article class="card '+cls+'" style="animation-delay:'+(kind==="heating"?0:0.06)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
       '<div class="price">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
       (extra||"")+
     '</article>';
   }
 
-  function buildFuelChart(canvasId, history, signal, color, noteId){
+  function buildFuelChart(canvasId, trendPack, signal, color, noteId){
+    if(!window.Chart) return;
     var cardId=canvasId==="heatingChart"?"heatingChartCard":"dieselChartCard";
     $(cardId).hidden=false;
     var ctx=$(canvasId).getContext("2d");
-    var hist=(history||[]).slice(-20);
-    var labels=hist.map(function(p,i){return p.label||p.date||("Pt "+(i+1))});
-    var past=hist.map(function(p){return p.heatingPpl||p.dieselLocalPpl});
+    var series=(trendPack&&trendPack.series)||[];
+    var labels=series.map(function(p){return p.label});
+    var past=series.map(function(p){return p.price});
     var g=signal&&signal.guide;
     var fc=(signal&&signal.forecast)||[];
-    var forecastLabels=fc.map(function(f){return "Day +"+f.day});
-    var forecastData=fc.map(function(f){return f.estimate});
-    var allLabels=labels.concat(["Today"]).concat(forecastLabels);
-    var pastPadded=past.concat([signal.current]).concat(fc.map(function(){return null}));
-    var forecastPadded=labels.map(function(){return null}).concat([signal.current]).concat(forecastData);
+    var fcLabels=fc.map(function(f){return "+"+f.day+"d"});
+    var allLabels=labels.concat(fcLabels);
+    var trendData=past.concat(fc.map(function(){return null}));
+    var forecastData=[];
+    var i;
+    for(i=0;i<labels.length-1;i++) forecastData.push(null);
+    if(past.length) forecastData.push(past[past.length-1]);
+    for(i=1;i<fc.length;i++) forecastData.push(fc[i].estimate);
+    while(forecastData.length<allLabels.length) forecastData.push(null);
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
     var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
@@ -291,8 +399,8 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
       data:{
         labels:allLabels,
         datasets:[
-          {label:"Past",data:pastPadded,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:2,spanGaps:false},
-          {label:"Predicted",data:forecastPadded,borderColor:color,borderWidth:2,borderDash:[6,4],tension:.35,fill:false,pointRadius:3,spanGaps:false},
+          {label:"Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false},
+          {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false},
           {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
           {label:"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
         ]
@@ -300,53 +408,73 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
       options:{
         responsive:true,maintainAspectRatio:false,
         plugins:{
-          legend:{display:false},
+          legend:{display:true,position:"bottom",labels:{boxWidth:10,font:{size:11}}},
           tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+(c.parsed.y!=null?fmtP(c.parsed.y)+"/L":"—")}}}
         },
         scales:{
           y:{title:{display:true,text:"pence per litre"},grid:{color:"rgba(15,23,42,.06)"}},
-          x:{ticks:{maxRotation:40,minRotation:0,font:{size:10}},grid:{display:false}}
+          x:{ticks:{maxRotation:45,minRotation:0,font:{size:9},maxTicksLimit:14},grid:{display:false}}
         }
       }
     });
     if(canvasId==="heatingChart") heatingChart=chart; else dieselChart=chart;
-    if(g&&noteId){
-      $(noteId).textContent="Green line = buy at "+fmtP(g.targetPricePpl)+"/L · grey = recent average "+fmtP(g.averagePpl)+"/L · dashed = where price may go next week";
+    if(noteId){
+      var pred=trendPack&&trendPack.prediction;
+      $(noteId).textContent=
+        "Solid = real weekly + live readings · Purple dashed = 7-day prediction · Green = buy target"+
+        (pred?" · Forecast: "+pred.headline:"");
     }
   }
 
   function renderCharts(data){
     var hSig=data.signals&&data.signals.heating;
     var dSig=data.signals&&data.signals.diesel;
+    var trends=data.trends||{};
     if(hSig&&hSig.current!=null){
-      buildFuelChart("heatingChart",(data.chart&&data.chart.heating)||[],hSig,"#ea580c","heatingChartNote");
+      buildFuelChart("heatingChart",trends.heating,hSig,"#ea580c","heatingChartNote");
     }
     if(dSig&&dSig.current!=null){
-      buildFuelChart("dieselChart",(data.chart&&data.chart.dieselLocal)||[],dSig,"#0284c7","dieselChartNote");
+      buildFuelChart("dieselChart",trends.diesel,dSig,"#0284c7","dieselChartNote");
     }
   }
 
   function render(data){
     $("error").hidden=true;
     var cards="";
+    var trends=data.trends||{};
     cards+=signalCard("heating",data.signals&&data.signals.heating,
-      data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"");
+      data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"",
+      trends.heating);
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,
-      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"");
+      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"",
+      trends.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
+    renderWhenToBuy(data);
+
+    if(trends.heating||trends.diesel){
+      $("outlookCard").hidden=false;
+      $("outlookGrid").innerHTML=
+        outlookPanel("Heating oil","🛢️",trends.heating&&trends.heating.snapshot,trends.heating&&trends.heating.prediction)+
+        outlookPanel("Diesel near Newry","⛽",trends.diesel&&trends.diesel.snapshot,trends.diesel&&trends.diesel.prediction);
+    }
+
     if(data.news&&data.news.sentiment){
       $("newsCard").hidden=false;
       var s=data.news.sentiment;
+      var dir=s.priceDirection||"steady";
+      $("newsVerdict").className="news-verdict "+dir;
+      $("newsVerdict").textContent=s.outlookHeadline||"News outlook";
       $("newsBias").className="news-bias "+s.bias;
-      $("newsBias").textContent=s.summary;
-      $("newsList").innerHTML=(s.relevant||[]).slice(0,5).map(function(h){
-        return "<li>"+esc(h)+"</li>";
+      $("newsBias").textContent=s.outlookDetail||s.summary;
+      var tagged=s.tagged||[];
+      $("newsList").innerHTML=tagged.length?tagged.slice(0,6).map(function(h){
+        return '<li><span class="news-tag '+esc(h.direction)+'">'+esc(h.icon)+" "+esc(h.tag)+'</span><span>'+esc(h.title)+'</span></li>';
+      }).join(""):(s.relevant||[]).slice(0,5).map(function(h){
+        return "<li><span class='news-tag neutral'>→ Watch</span><span>"+esc(h)+"</span></li>";
       }).join("")||"<li class='meta'>No fuel-specific headlines in the last fetch.</li>";
       $("newsSources").textContent=(data.news.sources||[]).join(" · ");
     }
-    if(data.modelBacktest&&data.modelBacktest.highConfidenceAccuracy){
-      /* backtest shown per-card via accuracy pill */
-    }
+
     renderCharts(data);
     if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
       $("stationsCard").hidden=false;
@@ -435,10 +563,14 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     });
   }
 
-  fetchPrices();
-  setInterval(fetchPrices,REFRESH);
-  initPush();
-  maybeAutoDial();
+  function boot(){
+    fetchPrices();
+    setInterval(fetchPrices,REFRESH);
+    initPush();
+    maybeAutoDial();
+  }
+  if(window.Chart) boot();
+  else window.addEventListener("load", boot);
 })();
 </script>
 </body>

@@ -15,6 +15,14 @@ import {
   buildBuyGuide,
   buildSavingsTable,
   analyzeNewsSentiment,
+  analyzeHeadlineDirection,
+  buildLiveTrendSeries,
+  buildTrendSnapshot,
+  buildPredictionOutlook,
+  buildShortForecast,
+  buildExtendedForecast,
+  buildWhenToBuyTimeline,
+  computeSeasonalProfile,
   backtestBuyModel,
   computeModelConfidence,
   buildNewryFuelManifest,
@@ -70,6 +78,53 @@ export function runNewryFuelTests() {
   ]);
   s.assert("news fuel filter", news.relevant.length >= 2);
   s.assert("news bias", news.bias === "falling" || news.bias === "rising" || news.bias === "neutral");
+  s.assert("news price direction", ["down", "up", "steady"].includes(news.priceDirection));
+  s.assert("news outlook headline", news.outlookHeadline.includes("News says"));
+  s.assert("headline up", analyzeHeadlineDirection("Oil prices surge at pumps").direction === "up");
+  s.assert("headline down", analyzeHeadlineDirection("Fuel prices fall across UK").direction === "down");
+
+  const gov = [{ date: "2026-01-01", dieselPpl: 170 }, { date: "2026-01-08", dieselPpl: 172 }, { date: "2026-01-15", dieselPpl: 175 }];
+  const trend = buildLiveTrendSeries(gov, [], 182.9, "diesel", 182.9);
+  s.assert("trend series length", trend.length >= 4);
+  s.assert("trend has now", trend.some((p) => p.live));
+  const snap = buildTrendSnapshot(trend);
+  s.assert("trend snapshot", snap && snap.label.includes("trend"));
+
+  const pred = buildPredictionOutlook({
+    current: 180,
+    forecast: [{ day: 1, estimate: 181 }, { day: 7, estimate: 185 }],
+  });
+  s.assert("prediction up", pred.direction === "up" && pred.headline.includes("GO UP"));
+
+  const csvLong = "Date,ULSP,ULSD\n01/01/2024,140,150\n08/01/2024,141,151\n15/01/2024,142,152\n22/01/2024,143,153\n29/01/2024,144,154\n05/02/2024,145,155\n12/02/2024,146,156\n19/02/2024,147,157\n26/02/2024,148,158\n05/03/2024,149,159\n12/03/2024,150,160\n19/03/2024,151,161\n26/03/2024,152,162\n02/04/2024,153,163\n09/04/2024,154,164\n16/04/2024,155,165\n23/04/2024,156,166\n30/04/2024,157,167\n07/05/2024,158,168\n14/05/2024,159,169\n21/05/2024,160,170\n28/05/2024,161,171\n04/06/2024,162,172\n11/06/2024,163,173\n18/06/2024,164,174\n25/06/2024,165,175\n02/07/2024,166,176\n09/07/2024,167,177\n16/07/2024,168,178\n23/07/2024,169,179\n30/07/2024,170,180\n";
+  const seriesLong = parseGovDieselCsv(csvLong + csvLong.replace(/2024/g, "2025"));
+
+  const shortFc = buildShortForecast([100, 102, 104], linearTrend([100, 102, 104]));
+  s.assert("short forecast 7d", shortFc.length === 7 && shortFc[0].day === 1);
+
+  const extFc = buildExtendedForecast({
+    current: 180,
+    recent: [175, 178, 180],
+    trend: { slope: 0.5, intercept: 175 },
+    govSeries: seriesLong,
+    kind: "diesel",
+  });
+  s.assert("extended forecast has 6mo", extFc.some((f) => f.day === 180));
+  s.assert("extended forecast tomorrow", extFc.find((f) => f.day === 1).estimate > 0);
+
+  const seasonal = computeSeasonalProfile(seriesLong);
+  s.assert("seasonal profile", seasonal && seasonal.avgAll > 0);
+
+  const timeline = buildWhenToBuyTimeline({
+    current: 180,
+    verdict: "watch",
+    extendedForecast: extFc,
+    guide: { timing: "Wait", action: "watch" },
+    newsSentiment: { priceDirection: "down" },
+  });
+  s.assert("when to buy timeline", timeline && timeline.windows.length >= 5);
+  s.assert("when to buy 6mo outlook", timeline.sixMonthOutlook.includes("6-month"));
+  s.assert("buy signal has whenToBuy", buy.guide.whenToBuy && buy.guide.whenToBuy.headline.length > 5);
 
   const savings = buildSavingsTable({ savingsPpl: 5, kind: "heating" });
   s.assert("savings table 900L", savings.find((r) => r.litres === 900).savePounds === 45);
@@ -83,8 +138,6 @@ export function runNewryFuelTests() {
   s.assert("confidence high tier", conf.score >= 95);
   s.assert("confidence high flag", conf.highConfidence === true);
 
-  const csvLong = "Date,ULSP,ULSD\n01/01/2024,140,150\n08/01/2024,141,151\n15/01/2024,142,152\n22/01/2024,143,153\n29/01/2024,144,154\n05/02/2024,145,155\n12/02/2024,146,156\n19/02/2024,147,157\n26/02/2024,148,158\n05/03/2024,149,159\n12/03/2024,150,160\n19/03/2024,151,161\n26/03/2024,152,162\n02/04/2024,153,163\n09/04/2024,154,164\n16/04/2024,155,165\n23/04/2024,156,166\n30/04/2024,157,167\n07/05/2024,158,168\n14/05/2024,159,169\n21/05/2024,160,170\n28/05/2024,161,171\n04/06/2024,162,172\n11/06/2024,163,173\n18/06/2024,164,174\n25/06/2024,165,175\n02/07/2024,166,176\n09/07/2024,167,177\n16/07/2024,168,178\n23/07/2024,169,179\n30/07/2024,170,180\n";
-  const seriesLong = parseGovDieselCsv(csvLong + csvLong.replace(/2024/g, "2025"));
   const bt = backtestBuyModel(seriesLong);
   s.assert("backtest returns accuracy", bt.highConfidenceSamples >= 0);
 
@@ -129,6 +182,8 @@ export function runNewryFuelTests() {
   s.assert("html buy guide", html.includes("buy-guide"));
   s.assert("html savings banner", html.includes("savings-banner"));
   s.assert("html news card", html.includes("newsCard"));
+  s.assert("html outlook card", html.includes("outlookCard"));
+  s.assert("html news verdict", html.includes("newsVerdict"));
   s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
