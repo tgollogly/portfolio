@@ -203,65 +203,72 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .foot{text-align:center;padding:28px 0 8px;font-size:.76rem;color:var(--faint)}
 .foot a{color:var(--orange-deep)}
 .err{background:rgba(254,226,226,.9);border:1px solid #fecaca;color:#be123c;border-radius:16px;padding:14px 18px;margin-top:16px}
-.buy-flash{
+/* Fixed alert bar — stays pinned at top while page scrolls; pulses to flash attention */
+.top-alert{
   position:fixed;top:0;left:0;right:0;z-index:2000;display:flex;flex-wrap:wrap;align-items:center;
   justify-content:center;gap:10px 16px;padding:14px 20px;text-align:center;
-  background:linear-gradient(90deg,#047857 0%,#059669 45%,#10b981 100%);
-  color:#fff;font-weight:600;box-shadow:0 6px 32px rgba(5,150,105,.45);
-  animation:buyFlashPulse 1.4s ease-in-out infinite;border-bottom:2px solid rgba(255,255,255,.25)
+  color:#fff;font-weight:600;border-bottom:2px solid rgba(255,255,255,.22);
+  animation:alertFlash 1.25s ease-in-out infinite
 }
-.buy-flash-icon{
+.top-alert.buy{background:linear-gradient(90deg,#047857 0%,#059669 45%,#10b981 100%)}
+.top-alert.hold{background:linear-gradient(90deg,#991b1b 0%,#dc2626 45%,#ef4444 100%)}
+.top-alert.watch{background:linear-gradient(90deg,#b45309 0%,#d97706 45%,#f59e0b 100%)}
+.top-alert-icon{
   display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,.2);font-size:1.2rem;font-weight:800;animation:buyIconPop 1.4s ease-in-out infinite
+  background:rgba(255,255,255,.22);font-size:1.2rem;font-weight:800;
+  animation:alertIconPop 1.25s ease-in-out infinite
 }
-.buy-flash-body{flex:1;min-width:200px;max-width:520px;text-align:left}
-.buy-flash-body strong{display:block;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase}
-.buy-flash-body span{font-size:.88rem;opacity:.95;font-weight:500}
-.buy-flash-call{
+.top-alert-body{flex:1;min-width:200px;max-width:520px;text-align:left}
+.top-alert-body strong{display:block;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase}
+.top-alert-body span{font-size:.88rem;opacity:.95;font-weight:500;display:block;margin-top:2px}
+.top-alert-why{font-size:.78rem;opacity:.88;margin-top:4px;line-height:1.35;font-weight:500}
+.top-alert-how{font-size:.72rem;opacity:.75;margin-top:6px;font-style:italic}
+.why-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.65);border:1px solid var(--line)}
+.why-box .why-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:8px}
+.why-box ul{margin:0;padding:0 0 0 16px;font-size:.84rem;color:var(--slate);line-height:1.45}
+.why-box ul li{margin-bottom:4px}
+.top-alert-call{
   display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;
-  background:#fff;color:#047857;font-weight:700;font-size:.88rem;text-decoration:none;
+  background:#fff;font-weight:700;font-size:.88rem;text-decoration:none;
   box-shadow:0 4px 16px rgba(0,0,0,.15);transition:transform .2s var(--ease)
 }
-.buy-flash-call:hover{transform:scale(1.04)}
-body.buy-active{padding-top:72px}
-body.buy-active .buy-flash{animation:buyFlashPulse 1.4s ease-in-out infinite}
-.watch-flash{
-  position:fixed;top:0;left:0;right:0;z-index:1999;padding:10px 20px;text-align:center;
-  background:linear-gradient(90deg,#b45309,#d97706);color:#fff;font-size:.88rem;font-weight:600
-}
-body.watch-active:not(.buy-active){padding-top:44px}
+.top-alert.buy .top-alert-call{color:#047857}
+.top-alert.hold .top-alert-call{color:#b91c1c}
+.top-alert.watch .top-alert-call{color:#b45309}
+.top-alert-call:hover{transform:scale(1.04)}
+body.alert-active{padding-top:76px}
 .btn-push.optional{opacity:.85;font-size:.82rem;padding:10px 14px}
-@keyframes buyFlashPulse{
-  0%,100%{box-shadow:0 6px 32px rgba(5,150,105,.45);filter:brightness(1)}
-  50%{box-shadow:0 8px 48px rgba(16,185,129,.75);filter:brightness(1.1)}
+@keyframes alertFlash{
+  0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1);opacity:1}
+  50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.12);opacity:.94}
 }
-@keyframes buyIconPop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes alertIconPop{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media(prefers-reduced-motion:reduce){
-  .glow,.badge .dot,.buy-flash,.buy-flash-icon{animation:none}
+  .glow,.badge .dot,.top-alert,.top-alert-icon{animation:none}
   *{animation-duration:.01ms!important}
-  .buy-flash{filter:none;box-shadow:0 6px 32px rgba(5,150,105,.45)}
 }
 </style>
 </head>
 <body>
-<div id="buyFlash" class="buy-flash" hidden role="alert" aria-live="assertive">
-  <span class="buy-flash-icon" aria-hidden="true">✓</span>
-  <div class="buy-flash-body">
-    <strong id="buyFlashTitle">Buy now — prices in a good zone</strong>
-    <span id="buyFlashDetail">Call Safe Fuels before prices rise</span>
+<div id="topAlert" class="top-alert buy" hidden role="alert" aria-live="assertive">
+  <span class="top-alert-icon" id="topAlertIcon" aria-hidden="true">✓</span>
+  <div class="top-alert-body">
+    <strong id="topAlertTitle">Fuel alert</strong>
+    <span id="topAlertDetail">Checking live prices…</span>
+    <span class="top-alert-why" id="topAlertWhy" hidden></span>
+    <span class="top-alert-how" id="topAlertHow" hidden></span>
   </div>
-  <a class="buy-flash-call" id="buyFlashCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
+  <a class="top-alert-call" id="topAlertCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
 </div>
-<div id="watchFlash" class="watch-flash" hidden role="status">👀 Worth watching — prices look favourable. Check back soon.</div>
 <div class="glow" aria-hidden="true"></div>
 <div class="shell">
 <header class="hero">
   <div class="badge"><span class="dot"></span> Newry · BT35 · Northern Ireland</div>
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
-  <p class="subtitle">Live prices every day — a <strong>green flashing banner</strong> tells you when to buy (no setup needed). Usual supplier: <strong>Safe Fuels, Camlough</strong>.</p>
+  <p class="subtitle">Live prices every day — a <strong>fixed alert bar</strong> at the top flashes green (buy), red (hold), or amber (watch). No setup needed. Supplier: <strong>Safe Fuels, Camlough</strong>.</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
   <div class="toolbar">
     <button type="button" class="btn btn-push optional" id="pushBtn" hidden title="Optional — green banner works automatically">📱 Optional phone alerts</button>
@@ -463,36 +470,53 @@ body.watch-active:not(.buy-active){padding-top:44px}
     requestAnimationFrame(frame);
   }
 
-  function renderBuyFlash(data){
+  function renderTopAlert(data){
     var alert=data.buyAlert;
-    var buyEl=$("buyFlash");
-    var watchEl=$("watchFlash");
-    document.body.classList.remove("buy-active","watch-active");
-    watchEl.hidden=true;
-    if(alert&&alert.active){
-      buyEl.hidden=false;
-      $("buyFlashTitle").textContent=alert.message||"Buy now — good price zone";
-      $("buyFlashDetail").textContent=alert.detail||"Call Safe Fuels before prices rise";
-      document.body.classList.add("buy-active");
-      return;
+    var el=$("topAlert");
+    document.body.classList.remove("alert-active");
+    if(!alert||!alert.active||!alert.mode){el.hidden=true;return}
+    el.hidden=false;
+    el.className="top-alert "+alert.mode;
+    var icons={buy:"✓",hold:"✋",watch:"👀"};
+    $("topAlertIcon").textContent=icons[alert.mode]||"●";
+    $("topAlertTitle").textContent=alert.message||"Fuel alert";
+    $("topAlertDetail").textContent=alert.detail||"";
+    var whyEl=$("topAlertWhy");
+    var howEl=$("topAlertHow");
+    if(alert.why&&alert.why.length){
+      whyEl.hidden=false;
+      whyEl.textContent=alert.why.slice(0,2).join(" · ");
+    }else{whyEl.hidden=true}
+    if(alert.howWeKnow){
+      howEl.hidden=false;
+      howEl.textContent=alert.howWeKnow;
+    }else{howEl.hidden=true}
+    var call=$("topAlertCall");
+    if(alert.mode==="buy"){
+      call.textContent="📞 Call Safe Fuels";
+      call.href="tel:+442830830691";
+      call.hidden=false;
+    }else if(alert.mode==="hold"){
+      call.textContent="📞 Call anyway";
+      call.href="tel:+442830830691";
+      call.hidden=false;
+    }else{
+      call.hidden=true;
     }
-    buyEl.hidden=true;
-    var h=data.signals&&data.signals.heating;
-    var d=data.signals&&data.signals.diesel;
-    if((h&&h.verdict==="watch")||(d&&d.verdict==="watch")){
-      watchEl.hidden=false;
-      document.body.classList.add("watch-active");
-    }
+    document.body.classList.add("alert-active");
   }
 
   function scheduleRefresh(data){
     if(refreshTimer) clearInterval(refreshTimer);
-    var ms=(data&&data.buyAlert&&data.buyAlert.active)?REFRESH_BUY:REFRESH_IDLE;
+    var mode=data&&data.buyAlert&&data.buyAlert.mode;
+    var ms=mode==="buy"?REFRESH_BUY:REFRESH_IDLE;
     refreshTimer=setInterval(fetchPrices,ms);
     var note=$("refreshNote");
-    if(note) note.textContent=data&&data.buyAlert&&data.buyAlert.active
-      ? "Green alert on — checking every 5 min while open"
-      : "Auto-checks every 15 min while open";
+    if(!note) return;
+    if(mode==="buy") note.textContent="Buy alert flashing — checking every 5 min";
+    else if(mode==="hold") note.textContent="Hold alert on — checking every 15 min";
+    else if(mode==="watch") note.textContent="Watch alert on — checking every 15 min";
+    else note.textContent="Auto-checks every 15 min while open";
   }
 
   function renderIndicators(data){
@@ -525,6 +549,15 @@ body.watch-active:not(.buy-active){padding-top:44px}
     '</div>';
   }
 
+  function whyBoxHtml(signal){
+    var w=signal&&signal.why;
+    if(!w||!w.reasons||!w.reasons.length) return "";
+    return '<div class="why-box"><div class="why-title">How we know · '+
+      (signal.verdict==="wait"?"why hold":signal.verdict==="buy"?"why buy":"why watch")+
+      '</div><ul>'+w.reasons.slice(0,4).map(function(r){return "<li>"+esc(r)+"</li>"}).join("")+
+      '</ul></div>';
+  }
+
   function signalCard(kind, signal, extra, trend){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
@@ -535,6 +568,7 @@ body.watch-active:not(.buy-active){padding-top:44px}
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
+      whyBoxHtml(signal)+
       (extra||"")+
     '</article>';
   }
@@ -629,7 +663,7 @@ body.watch-active:not(.buy-active){padding-top:44px}
     document.querySelectorAll(".price[data-price]").forEach(function(el){
       animateValue(el,parseFloat(el.dataset.price),"p",650);
     });
-    renderBuyFlash(data);
+    renderTopAlert(data);
     renderIndicators(data);
     renderWhenToBuy(data);
     scheduleRefresh(data);
