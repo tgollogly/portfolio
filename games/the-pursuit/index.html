@@ -152,7 +152,48 @@ header{text-align:center;margin-bottom:10px}
   radial-gradient(ellipse 40% 30% at 15% 20%,rgba(78,205,196,.06),transparent),
   radial-gradient(ellipse 40% 30% at 85% 25%,rgba(232,197,71,.07),transparent),
   radial-gradient(ellipse 50% 40% at 50% 0%,rgba(157,2,8,.12),transparent 60%)}
-@media(max-width:380px){.diff-grid{grid-template-columns:1fr}}
+body.phase-menu .studio-lights{animation:lightsBreathe 6s ease-in-out infinite alternate}
+@keyframes lightsBreathe{from{opacity:.85}to{opacity:1}}
+body.phase-menu header{animation:headerDrop .7s cubic-bezier(.22,1,.36,1) both}
+body.phase-menu .logo{animation:logoGlow 3s ease-in-out infinite alternate}
+body.phase-menu .chip{animation:chipIn .55s cubic-bezier(.22,1,.36,1) both}
+body.phase-menu .chip:nth-child(1){animation-delay:.15s}
+body.phase-menu .chip:nth-child(2){animation-delay:.25s}
+body.phase-menu .chip:nth-child(3){animation-delay:.35s}
+@keyframes headerDrop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+@keyframes logoGlow{from{filter:drop-shadow(0 2px 8px rgba(232,197,71,.25))}to{filter:drop-shadow(0 4px 22px rgba(232,197,71,.55))}}
+@keyframes chipIn{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:1;transform:none}}
+.menu-screen{animation:menuScreenIn .45s ease both}
+@keyframes menuScreenIn{from{opacity:0}to{opacity:1}}
+.menu-hero{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.hero-round{text-align:center;padding:12px 6px;border-radius:14px;background:linear-gradient(165deg,rgba(15,26,46,.9),rgba(26,45,74,.6));border:1px solid rgba(232,197,71,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.05);animation:heroFloat 4s ease-in-out infinite}
+.hero-round:nth-child(2){animation-delay:.5s}
+.hero-round:nth-child(3){animation-delay:1s}
+.hero-round .ico{font-size:1.35rem;display:block;margin-bottom:4px}
+.hero-round b{display:block;font-size:.68rem;color:var(--gold);letter-spacing:.04em;text-transform:uppercase}
+.hero-round span{font-size:.6rem;color:var(--muted)}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.menu-panel{opacity:0;animation:panelRise .6s cubic-bezier(.22,1,.36,1) forwards}
+.menu-panel.d1{animation-delay:.08s}.menu-panel.d2{animation-delay:.16s}.menu-panel.d3{animation-delay:.24s}
+.menu-panel.d4{animation-delay:.32s}.menu-panel.d5{animation-delay:.4s}.menu-panel.d6{animation-delay:.48s}
+@keyframes panelRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.diff-btn{transition:transform .2s cubic-bezier(.22,1,.36,1),border-color .2s,box-shadow .2s,background .2s}
+.diff-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.diff-btn.selected{animation:diffSelect .35s ease;box-shadow:0 0 16px rgba(232,197,71,.2)}
+@keyframes diffSelect{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+.name-input{transition:border-color .25s,box-shadow .25s}
+.name-input:focus{box-shadow:0 0 0 3px rgba(232,197,71,.12)}
+body.phase-menu .controls{animation:controlsUp .65s cubic-bezier(.22,1,.36,1) .45s both}
+@keyframes controlsUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.btn-start{position:relative;overflow:hidden;min-width:160px;animation:ctaPulse 2.8s ease-in-out infinite}
+.btn-start::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:btnShimmer 2.8s ease-in-out infinite}
+@keyframes btnShimmer{0%,100%{left:-100%}50%{left:140%}}
+@keyframes ctaPulse{0%,100%{box-shadow:0 4px 16px rgba(232,197,71,.25)}50%{box-shadow:0 6px 28px rgba(232,197,71,.45)}}
+.btn-start:active{animation:none}
+.menu-msg{animation:msgFade .8s ease .55s both}
+@keyframes msgFade{from{opacity:0}to{opacity:1}}
+@media(max-width:380px){.diff-grid{grid-template-columns:1fr}.menu-hero{grid-template-columns:1fr;gap:6px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -742,6 +783,9 @@ function beginRound(questionCount,msg,next){
 }
 
 function startCashBuilder(){
+  document.body.classList.remove("phase-menu");
+  document.body.classList.add("phase-play");
+  var msgEl=$("msg");if(msgEl)msgEl.classList.remove("menu-msg");
   initAudio();startMusic();
   state.round=0;state.phase="play";state.pot=0;state.qIndex=0;state.usedIds=new Set();
   state.playerName=(loadName()||"").trim();
@@ -754,21 +798,31 @@ function startCashBuilder(){
 function showMenu(){
   stopMusic();clearTimer();
   state.phase="menu";state.round=-1;state.pot=0;
+  document.body.classList.add("phase-menu");
+  document.body.classList.remove("phase-play");
   mergeLevel(state.level);
-  var html='<div class="panel"><h2>Choose difficulty</h2><p style="font-size:.82rem;color:var(--muted);margin:0 0 8px">Sets chaser strength, question pool &amp; timer — like picking your opponent.</p><div class="diff-grid" id="diffGrid">';
+  updateHud();
+  var html='<div class="menu-screen">';
+  html+='<div class="menu-hero menu-panel d1">';
+  html+='<div class="hero-round"><span class="ico">💰</span><b>Cash Builder</b><span>Build your pot</span></div>';
+  html+='<div class="hero-round"><span class="ico">🏁</span><b>Head-to-Head</b><span>Beat the chaser</span></div>';
+  html+='<div class="hero-round"><span class="ico">🏆</span><b>Final Chase</b><span>Win the jackpot</span></div>';
+  html+='</div>';
+  html+='<p class="bank-stat menu-panel d1" id="bankStat">Live question bank: loading…</p>';
+  html+='<div class="panel menu-panel d2"><h2>Choose difficulty</h2><p style="font-size:.82rem;color:var(--muted);margin:0 0 8px">Sets chaser strength, question pool &amp; timer — like picking your opponent.</p><div class="diff-grid" id="diffGrid">';
   Object.keys(DIFF).forEach(function(k){
     var d=DIFF[k];
     html+='<button type="button" class="diff-btn'+(state.diff===k?" selected":"")+'" data-d="'+k+'"><b>'+d.label+'</b><small>'+d.desc+'</small></button>';
   });
   html+='</div></div>';
-  html+='<p class="bank-stat" id="bankStat">Live question bank: loading…</p>';
-  html+='<div class="panel"><h2>Today&apos;s news feeds</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">BBC RSS, Open Trivia DB &amp; Wikipedia — free sources, no login. New questions twice daily.</p><div id="feedPanel"><p class="lb-empty">Loading feeds…</p></div></div>';
-  html+='<div class="panel"><h2>Your name</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">Saved on this device + cloud memory (via MCP/KV). Shown on the leaderboard.</p>';
+  html+='<div class="panel menu-panel d3"><h2>Your name</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">Saved on this device + cloud memory. Shown on the leaderboard.</p>';
   html+='<input type="text" class="name-input" id="playerName" maxlength="20" placeholder="Enter your name" autocomplete="nickname" value="'+escapeHtml(loadName())+'"/></div>';
-  html+='<div class="panel" id="lbPanel"><h2>Leaderboard</h2>';
+  html+='<div class="panel menu-panel d4"><h2>Today&apos;s news feeds</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">BBC RSS, Open Trivia DB &amp; Wikipedia — new questions twice daily.</p><div id="feedPanel"><p class="lb-empty">Loading feeds…</p></div></div>';
+  html+='<div class="panel menu-panel d5" id="lbPanel"><h2>Leaderboard</h2>';
   html+='<div class="lb-tabs"><button type="button" class="lb-tab active" data-tab="global">Global</button><button type="button" class="lb-tab" data-tab="local">This device</button></div>';
   html+='<div class="lb-body"><p class="lb-empty">Loading scores…</p></div></div>';
-  html+='<div class="panel"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No repeats per game · bank grows from news feeds + AI twice daily.</span></p></div>';
+  html+='<div class="panel menu-panel d6"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No repeats per game · bank grows from news feeds + AI twice daily.</span></p></div>';
+  html+='</div>';
   $("screen").innerHTML=html;
   document.querySelectorAll(".diff-btn").forEach(function(b){
     b.onclick=function(){state.diff=b.dataset.d;document.querySelectorAll(".diff-btn").forEach(function(x){x.classList.remove("selected");});b.classList.add("selected");};
@@ -785,7 +839,7 @@ function showMenu(){
   fetchFeedPanel();
   loadRemoteMemory();
   $("controls").innerHTML=
-    '<button type="button" class="btn" id="startBtn">Start game</button>'+
+    '<button type="button" class="btn btn-start" id="startBtn">▶ Start game</button>'+
     '<button type="button" class="btn secondary" id="soundBtn">'+(musicOn?"🔊 Sound on":"🔇 Sound off")+'</button>';
   $("startBtn").onclick=function(){
     initAudio();
@@ -796,6 +850,7 @@ function showMenu(){
   };
   $("soundBtn").onclick=function(){musicOn=!musicOn;$("soundBtn").textContent=musicOn?"🔊 Sound on":"🔇 Sound off";if(musicOn)startMusic();else stopMusic();};
   setMsg("Enter your name, pick difficulty, then tap Start.");
+  $("msg").classList.add("menu-msg");
 }
 
 state.diff="standard";state.level=loadLevel();

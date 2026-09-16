@@ -85,6 +85,10 @@ if (!html.includes("clock-ring") || !html.includes("round-splash") || !html.incl
   console.error("FAIL: index.html missing TV-studio timer/chaser UI");
   process.exit(1);
 }
+if (!html.includes("menu-screen") || !html.includes("btn-start") || !html.includes("menu-panel")) {
+  console.error("FAIL: index.html missing animated menu UI");
+  process.exit(1);
+}
 if (!html.includes("isValidQuestion")) {
   console.error("FAIL: index.html missing client-side question validation");
   process.exit(1);
