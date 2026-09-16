@@ -26,6 +26,14 @@ import {
   buildExtendedForecast,
   buildWhenToBuyTimeline,
   buildHoldOutlook,
+  createEmptyFuelMemory,
+  appendFuelMemory,
+  flattenMemoryPrices,
+  migrateLegacyHistory,
+  recordFuelPrediction,
+  updateFuelMemoryOutcomes,
+  computeMemoryStats,
+  buildMemoryPayload,
   computeSeasonalProfile,
   buildPredictionIndicators,
   computeRsi,
@@ -157,6 +165,38 @@ export function runNewryFuelTests() {
   s.assert("when to buy 6mo outlook", timeline.sixMonthOutlook.includes("6-month"));
   s.assert("buy signal has whenToBuy", buy.guide.whenToBuy && buy.guide.whenToBuy.headline.length > 5);
   s.assert("buy has indicators", buy.predictionIndicators && buy.predictionIndicators.indicators.length === 6);
+
+  let mem = createEmptyFuelMemory();
+  mem = appendFuelMemory(mem, "heating", { at: "2026-01-01T06:00:00Z", date: "2026-01-01", price: 110 });
+  mem = appendFuelMemory(mem, "heating", { at: "2026-01-01T18:00:00Z", date: "2026-01-01", price: 108 });
+  mem = appendFuelMemory(mem, "heating", { at: "2026-01-02T06:00:00Z", date: "2026-01-02", price: 105 });
+  s.assert("memory daily rollup", mem.daily.heating.length === 2 && mem.daily.heating[0].low === 108);
+  s.assert("memory flatten", flattenMemoryPrices(mem, "heating").length >= 2);
+  mem = migrateLegacyHistory(createEmptyFuelMemory(), {
+    heating: [{ at: "2026-01-03T12:00:00Z", date: "2026-01-03", price: 112 }],
+    diesel: [],
+  });
+  s.assert("memory migrate legacy", mem.daily.heating.length === 1);
+  mem = recordFuelPrediction(mem, "heating", {
+    verdict: "wait",
+    current: 112,
+    guide: { targetPricePpl: 105 },
+  });
+  s.assert("memory record prediction", mem.predictions.length === 1);
+  mem = updateFuelMemoryOutcomes(mem, "heating", 104);
+  s.assert("memory outcomes pending", mem.outcomes.heating.tracked === 0);
+  mem.predictions[0].at = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+  mem = updateFuelMemoryOutcomes(mem, "heating", 104);
+  s.assert("memory outcomes scored", mem.outcomes.heating.tracked === 1 && mem.outcomes.heating.wins === 1);
+  const memStats = computeMemoryStats(mem, "heating");
+  s.assert("memory stats days", memStats.days >= 1);
+  s.assert("memory payload", buildMemoryPayload(mem).summary.length > 20);
+  const memConf = computeModelConfidence({
+    verdict: "wait",
+    pattern: { matchRate: 0.85 },
+    memoryStats: { days: 45, tracked: 8, accuracyPct: 75 },
+  });
+  s.assert("memory boosts confidence", memConf.score >= 60 && memConf.memoryNote.includes("45 days"));
   s.assert("buy forecast bands", buy.forecast[0].low != null && buy.forecast[0].high != null);
 
   const preds = buildPredictionIndicators({
@@ -291,6 +331,7 @@ export function runNewryFuelTests() {
   s.assert("html alert hide copy", html.includes("Hide alert bar"));
   s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
   s.assert("html alert updating guard", html.includes("is-updating"));
+  s.assert("html memory note", html.includes("memoryNote") && html.includes("persistent memory"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));
