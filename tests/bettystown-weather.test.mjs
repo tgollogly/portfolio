@@ -94,13 +94,13 @@ export function runBettystownWeatherTests() {
   s.assert("forecast url lat", forecastUrl().includes(String(BETTYSTOWN.latitude)));
 
   const pathManifest = buildBettystownManifest("path");
-  s.assert("manifest path start_url", pathManifest.start_url === "https://tgollogly.dev/bettystown/");
-  s.assert("manifest path scope", pathManifest.scope === "https://tgollogly.dev/bettystown/");
-  s.assert("manifest path not portfolio root", !pathManifest.start_url.endsWith("tgollogly.dev/"));
+  s.assert("manifest path start_url", pathManifest.start_url === "/bettystown/");
+  s.assert("manifest path scope", pathManifest.scope === "/bettystown/");
+  s.assert("manifest path not portfolio root", pathManifest.start_url !== "/");
 
   const subManifest = buildBettystownManifest("subdomain");
-  s.assert("manifest subdomain start_url", subManifest.start_url === "https://bettystown.tgollogly.dev/");
-  s.assert("manifest subdomain scope", subManifest.scope === "https://bettystown.tgollogly.dev/");
+  s.assert("manifest subdomain start_url", subManifest.start_url === "/");
+  s.assert("manifest subdomain scope", subManifest.scope === "/");
 
   const server = readFileSync(join(root, "server.js"), "utf8");
   s.assert("server bettystown host", server.includes("bettystown.tgollogly.dev"));
@@ -116,6 +116,7 @@ export function runBettystownWeatherTests() {
   s.assert("html og image", html.includes("assets/og/bettystown-weather.png"));
   s.assert("html og secure url", html.includes("og:image:secure_url"));
   s.assert("html manifest path", html.includes("/bettystown/manifest.webmanifest"));
+  s.assert("html apple touch path", html.includes("/bettystown/apple-touch-icon.png"));
   s.assert("html apple touch", html.includes("apple-touch-icon"));
   s.assert("html ios standalone", html.includes("apple-mobile-web-app-capable"));
   s.assert("og preview exists", readFileSync(join(root, "sites/bettystown/og-preview.png")).length > 1000);
@@ -123,6 +124,9 @@ export function runBettystownWeatherTests() {
   s.assert("server bettystown assets", server.includes("BETTYSTOWN_ASSETS"));
   s.assert("server dynamic manifest", server.includes("serveBettystownManifest"));
   s.assert("server manifest path route", server.includes("/bettystown/manifest.webmanifest"));
+  s.assert("server ios omit manifest", server.includes("isIosSafari"));
+  s.assert("server bettystown path assets", server.includes("BETTYSTOWN_PATH_ASSETS"));
+  s.assert("server legacy redirect", server.includes("/bettystown/`, 301"));
   s.assert("server preview bot bypass", server.includes("LINK_PREVIEW_BOT_RE"));
   s.assert("assets og png exists", readFileSync(join(root, "assets/og/bettystown-weather.png")).length > 1000);
 
