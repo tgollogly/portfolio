@@ -531,13 +531,12 @@ async function ensurePursuitBank(env, requestUrl) {
     const seed = await loadPursuitSeedBank(env, requestUrl);
     if (seed.length) await seedIfEmpty(env, seed);
   }
-  const afterSeed = await getQuestionCount(env);
-  if (afterSeed > 0 && afterSeed < 10000) {
-    await expandProceduralQuestions(env, 10000);
-  }
+  // Procedural expansion runs on cron refresh only — not on player API requests
+  // (inserting thousands of rows here caused Worker timeouts / 500 errors).
 }
 
 async function handlePursuitQuestionsGet(request, env) {
+  try {
   await ensurePursuitBank(env, request.url);
   const url = new URL(request.url);
   const count = Math.min(48, Math.max(1, parseInt(url.searchParams.get("count") || "24", 10)));
@@ -559,12 +558,30 @@ async function handlePursuitQuestionsGet(request, env) {
   const stats = await getPursuitStats(env);
   const publicQs = questions.map((q) => publicQuestion(q));
   return jsonGet({ questions: publicQs, total: stats.total, source: questions.length ? "d1" : "fallback" });
+  } catch (err) {
+    console.error("pursuit-questions error:", err);
+    const seed = await loadPursuitSeedBank(env, request.url).catch(() => []);
+    const url = new URL(request.url);
+    const pool = (url.searchParams.get("pool") || "easy,medium").split(",").map((s) => s.trim());
+    const count = Math.min(48, Math.max(1, parseInt(url.searchParams.get("count") || "24", 10)));
+    const questions = seed
+      .filter((q) => pool.includes(q.d) && validateQuestion(q))
+      .slice(0, count)
+      .map((q) => publicQuestion(q));
+    return jsonGet({ questions, total: seed.length, source: "fallback", error: "db_unavailable" });
+  }
 }
 
 async function handlePursuitStatsGet(request, env) {
+  try {
   await ensurePursuitBank(env, request.url);
   const stats = await getPursuitStats(env);
   return jsonGet(stats);
+  } catch (err) {
+    console.error("pursuit-stats error:", err);
+    const seed = await loadPursuitSeedBank(env, request.url).catch(() => []);
+    return jsonGet({ total: seed.length, bySource: { seed: seed.length }, lastRefresh: null, scalable: true, error: "db_unavailable" });
+  }
 }
 
 async function handlePursuitCheckAnswerPost(request, env) {
