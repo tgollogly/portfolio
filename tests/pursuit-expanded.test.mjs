@@ -118,6 +118,8 @@ s.assert("kv empty", JSON.parse(kvStore.get(PURSUIT_LB_KEY)).length === 0);
 
 const server = readFileSync(join(root, "server.js"), "utf8");
 s.assert("server pursuit-mcp", server.includes("/api/pursuit-mcp"));
+s.assert("server mcp guardrails", server.includes("pursuit-mcp-guardrails"));
+s.assert("server runMcpWithGuardrails", server.includes("runMcpWithGuardrails"));
 s.assert("server pursuit-feeds", server.includes("/api/pursuit-feeds"));
 s.assert("server lb delete", server.includes("handlePursuitLeaderboardReset"));
 s.assert("server no CF-Scheduled", !server.includes("CF-Scheduled"));

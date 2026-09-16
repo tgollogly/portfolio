@@ -26,13 +26,18 @@ import {
   validateQuestion,
 } from "./lib/pursuit-store.js";
 import {
-  PURSUIT_MCP_TOOLS,
   RSS_FEEDS,
   fetchRssHeadlines,
   generateFeedQuestions,
   getCachedHeadlines,
   refreshQuestionsFromFeeds,
 } from "./lib/pursuit-news-feeds.js";
+import {
+  MCP_SCOPE,
+  PURSUIT_MCP_TOOLS,
+  getMcpGuardrailManifest,
+  runMcpWithGuardrails,
+} from "./lib/pursuit-mcp-guardrails.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -641,17 +646,37 @@ async function handlePursuitFeedsGet(request, env) {
 }
 
 async function handlePursuitMcpGet() {
-  return jsonGet({
-    name: "pursuit-quiz",
-    version: "1.0",
-    description: "Public read-only MCP-style tools for The Pursuit quiz bank. No auth required for GET and read tools.",
-    tools: PURSUIT_MCP_TOOLS,
-    endpoints: {
-      manifest: "GET /api/pursuit-mcp",
-      invoke: "POST /api/pursuit-mcp",
-      feeds: "GET /api/pursuit-feeds",
-    },
-  });
+  return jsonGet(getMcpGuardrailManifest());
+}
+
+async function executePursuitMcpTool(tool, sanitizedArgs, env, requestUrl) {
+  switch (tool) {
+    case "get_stats": {
+      await ensurePursuitBank(env, requestUrl);
+      return getPursuitStats(env);
+    }
+    case "get_feeds":
+      return {
+        rss: RSS_FEEDS,
+        extras: ["opentdb", "wikipedia"],
+        authRequired: false,
+      };
+    case "get_headlines": {
+      const feed = RSS_FEEDS.find((f) => f.id === sanitizedArgs.feed) || RSS_FEEDS[0];
+      const headlines = await fetchRssHeadlines(feed.url, fetch, sanitizedArgs.limit);
+      return { feed: feed.id, headlines };
+    }
+    case "sample_questions": {
+      const preview = await generateFeedQuestions(fetch, { otdbAmount: 10 });
+      return {
+        count: preview.questions.length,
+        questions: preview.questions.slice(0, sanitizedArgs.limit).map((q) => publicQuestion(q)),
+        errors: preview.errors,
+      };
+    }
+    default:
+      return null;
+  }
 }
 
 async function handlePursuitMcpPost(request, env) {
@@ -664,43 +689,32 @@ async function handlePursuitMcpPost(request, env) {
   const tool = String(body.tool || body.name || "").trim();
   const args = body.arguments || body.args || {};
 
-  switch (tool) {
-    case "get_stats": {
-      await ensurePursuitBank(env, request.url);
-      const stats = await getPursuitStats(env);
-      return json({ tool, result: stats });
-    }
-    case "get_feeds":
-      return json({
-        tool,
-        result: {
-          rss: RSS_FEEDS,
-          extras: ["opentdb", "wikipedia"],
-          authRequired: false,
-        },
-      });
-    case "get_headlines": {
-      const feedId = String(args.feed || "bbc_news");
-      const limit = Math.min(15, Math.max(1, Number(args.limit) || 8));
-      const feed = RSS_FEEDS.find((f) => f.id === feedId) || RSS_FEEDS[0];
-      const headlines = await fetchRssHeadlines(feed.url, fetch, limit);
-      return json({ tool, result: { feed: feed.id, headlines } });
-    }
-    case "sample_questions": {
-      const limit = Math.min(10, Math.max(1, Number(args.limit) || 5));
-      const preview = await generateFeedQuestions(fetch, { otdbAmount: 10 });
-      return json({
-        tool,
-        result: {
-          count: preview.questions.length,
-          questions: preview.questions.slice(0, limit).map((q) => publicQuestion(q)),
-          errors: preview.errors,
-        },
-      });
-    }
-    default:
-      return json({ error: "unknown tool", available: PURSUIT_MCP_TOOLS.map((t) => t.name) }, 400);
+  const guarded = await runMcpWithGuardrails(
+    tool,
+    args,
+    { scope: MCP_SCOPE.PUBLIC_READ, authenticated: false },
+    (sanitizedArgs) => executePursuitMcpTool(tool, sanitizedArgs, env, request.url)
+  );
+
+  if (guarded.blocked) {
+    return json(
+      {
+        error: "guardrail_blocked",
+        guardrail: guarded.guardrail,
+        hook: guarded.hook,
+        reason: guarded.reason,
+        field: guarded.field,
+        available: PURSUIT_MCP_TOOLS.map((t) => t.name),
+      },
+      guarded.reason === "unknown_tool" ? 400 : 403
+    );
   }
+
+  return json({
+    tool,
+    guardrails: { hooks: guarded.hooks, scope: guarded.scope, risk: guarded.risk },
+    result: guarded.result,
+  });
 }
 
 async function handlePursuitFeedbackPost(request, env) {

@@ -4,6 +4,7 @@
  * Usage: node tests/run-all.mjs
  */
 import { runAiSafetyMatrixTests } from "./ai-safety-matrix.test.mjs";
+import { runMcpGuardrailsTests } from "./mcp-guardrails.test.mjs";
 import { runPursuitExpandedTests } from "./pursuit-expanded.test.mjs";
 import { evaluateResults } from "./harness.mjs";
 import { createSuite } from "./harness.mjs";
@@ -40,6 +41,7 @@ function runLegacyPursuitSuite() {
 
 const suites = [
   runAiSafetyMatrixTests(),
+  runMcpGuardrailsTests(),
   runPursuitExpandedTests(),
   runLegacyPrivacySuite(),
   runLegacyPursuitSuite(),

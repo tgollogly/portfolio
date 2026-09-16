@@ -42,8 +42,25 @@ Questions are **not** bundled in the browser anymore. The Worker serves them fro
 | `GET /api/pursuit-questions?count=24&pool=easy,medium&exclude=id1,id2` | Random questions for a game |
 | `GET /api/pursuit-stats` | Total count, sources, last AI & feed refresh |
 | `GET /api/pursuit-feeds` | BBC RSS sources, cached headlines, stats (no auth) |
-| `GET /api/pursuit-mcp` | Public MCP-style tool manifest (no auth) |
-| `POST /api/pursuit-mcp` | Invoke read-only tools: `get_stats`, `get_feeds`, `get_headlines`, `sample_questions` |
+| `GET /api/pursuit-mcp` | MCP manifest + **guardrails** policy (no auth) |
+| `POST /api/pursuit-mcp` | Invoke read-only tools via **MCP Guardrail gateway** |
+
+### MCP Guardrails (Agent Guardrails)
+
+The Pursuit MCP server uses **programmatic guardrails** at the gateway layer (`lib/pursuit-mcp-guardrails.js`):
+
+| Layer | Term | What it does |
+|-------|------|--------------|
+| **Tool-level restrictions** | Scope enforcement | Only `public_read` tools exposed; admin/write tools blocklisted |
+| **Action guardrails** | Pre-execution authorization | `preToolHook` evaluates tool + scope before execution |
+| **Content guardrails** | Payload inspection | Regex + AI privacy checks on all argument strings (SQL/XSS/path/PII) |
+| **Programmatic guardrails** | Schema validation | Deterministic JSON schema per tool — no prompt-only rules |
+| **Post-tool hook** | Output sanitization | Strips answer indices, redacts sensitive output |
+
+Public tools: `get_stats`, `get_feeds`, `get_headlines`, `sample_questions`.  
+Blocked from MCP: `reset_leaderboard`, `run_sql`, `insert_questions`, etc.
+
+Works alongside **Cloudflare MCP** (`Cloudflare-bindings` KV/D1) — use Cloudflare MCP for infra; use `/api/pursuit-mcp` for quiz data with guardrails.
 | `POST /api/pursuit-feedback` | `{ questionId, correct }` — self-improvement stats |
 | `POST /api/pursuit-refresh` | Cron / admin: feeds + AI + procedural expansion |
 

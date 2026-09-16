@@ -103,6 +103,10 @@ if (!server.includes("pursuit-mcp") || !server.includes("pursuit-news-feeds")) {
   console.error("FAIL: server.js missing news feeds or MCP endpoints");
   process.exit(1);
 }
+if (!server.includes("pursuit-mcp-guardrails") || !server.includes("runMcpWithGuardrails")) {
+  console.error("FAIL: server.js missing MCP guardrail gateway");
+  process.exit(1);
+}
 if (!server.includes("pursuit-store") || !server.includes("scheduled")) {
   console.error("FAIL: server.js missing pursuit store or cron refresh");
   process.exit(1);
