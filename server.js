@@ -39,6 +39,7 @@ import {
   runMcpWithGuardrails,
 } from "./lib/pursuit-mcp-guardrails.js";
 import {
+  buildBettystownManifest,
   getBettystownForecast,
   runBettystownHealthCheck,
 } from "./lib/bettystown-weather.js";
@@ -139,8 +140,46 @@ async function serveBettystownAsset(request, env, assetPath) {
   return new Response(asset.body, { status: asset.status, headers });
 }
 
+function bettystownManifestHref(request) {
+  return isBettystownHost(new URL(request.url).hostname)
+    ? "/manifest.webmanifest"
+    : "/bettystown/manifest.webmanifest";
+}
+
+function serveBettystownManifest(mode) {
+  const body = JSON.stringify(buildBettystownManifest(mode), null, 2);
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/manifest+json; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+
+async function serveBettystownIndex(request, env) {
+  const asset = await env.ASSETS.fetch(new URL(BETTYSTOWN_INDEX, request.url));
+  if (!asset.ok) return asset;
+  const manifestHref = bettystownManifestHref(request);
+  const html = (await asset.text()).replace(
+    /<link rel="manifest" href="[^"]*"\/>/,
+    `<link rel="manifest" href="${manifestHref}"/>`
+  );
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
+    },
+  });
+}
+
 async function serveBettystownWeather(request, env, assetPath) {
-  return serveBettystownAsset(request, env, assetPath || BETTYSTOWN_INDEX);
+  const path = assetPath || BETTYSTOWN_INDEX;
+  if (path === BETTYSTOWN_INDEX || path.endsWith("/index.html")) {
+    return serveBettystownIndex(request, env);
+  }
+  return serveBettystownAsset(request, env, path);
 }
 
 function bettystownAssetPath(path) {
@@ -851,11 +890,18 @@ export default {
 
     if (isBettystownHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveBettystownWeather(request, env);
+      if (path === "/manifest.webmanifest") return serveBettystownManifest("subdomain");
       const btAsset = bettystownAssetPath(path);
       if (btAsset) return serveBettystownAsset(request, env, btAsset);
     }
     if (path === "/bettystown" || path === "/bettystown/") {
       return serveBettystownWeather(request, env);
+    }
+    if (path === "/bettystown/manifest.webmanifest") {
+      return serveBettystownManifest("path");
+    }
+    if (path === `${BETTYSTOWN_PREFIX}/manifest.webmanifest`) {
+      return serveBettystownManifest("path");
     }
     if (path.startsWith(`${BETTYSTOWN_PREFIX}/`)) {
       return serveBettystownAsset(request, env, path);
