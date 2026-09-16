@@ -287,6 +287,8 @@ export function runNewryFuelTests() {
   s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));
+  s.assert("html alert dismiss", html.includes("topAlertDismiss") && html.includes("alertShowBtn"));
+  s.assert("html alert hide copy", html.includes("Hide alert bar"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));

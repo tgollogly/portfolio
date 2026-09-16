@@ -225,10 +225,27 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 /* Fixed alert bar — stays pinned at top while page scrolls; pulses to flash attention */
 .top-alert{
   position:fixed;top:0;left:0;right:0;z-index:2000;display:flex;flex-wrap:wrap;align-items:center;
-  justify-content:center;gap:10px 16px;padding:14px 20px;text-align:center;
+  justify-content:center;gap:10px 16px;padding:14px 44px 14px 20px;text-align:center;
   color:#fff;font-weight:600;border-bottom:2px solid rgba(255,255,255,.22);
   animation:alertFlash 1.25s ease-in-out infinite
 }
+.top-alert-dismiss{
+  position:absolute;top:50%;right:10px;transform:translateY(-50%);
+  display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;
+  padding:0 8px;border:none;border-radius:10px;background:rgba(255,255,255,.22);color:#fff;
+  font-family:inherit;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;transition:background .2s var(--ease),transform .2s var(--ease)
+}
+.top-alert-dismiss:hover{background:rgba(255,255,255,.35);transform:translateY(-50%) scale(1.04)}
+.alert-show-btn{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);color:var(--slate);font-family:inherit;
+  font-size:.78rem;font-weight:600;cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s
+}
+.alert-show-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.08)}
+.alert-show-btn.buy{border-color:rgba(5,150,105,.35);color:#047857}
+.alert-show-btn.hold{border-color:rgba(220,38,38,.35);color:#b91c1c}
+.alert-show-btn.watch{border-color:rgba(217,119,6,.35);color:#b45309}
 .top-alert.buy{background:linear-gradient(90deg,#047857 0%,#059669 45%,#10b981 100%)}
 .top-alert.hold{background:linear-gradient(90deg,#991b1b 0%,#dc2626 45%,#ef4444 100%)}
 .top-alert.watch{background:linear-gradient(90deg,#b45309 0%,#d97706 45%,#f59e0b 100%)}
@@ -282,6 +299,7 @@ body.alert-active{padding-top:76px}
     <span class="top-alert-how" id="topAlertHow" hidden></span>
   </div>
   <a class="top-alert-call" id="topAlertCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
+  <button type="button" class="top-alert-dismiss" id="topAlertDismiss" title="Hide alert bar" aria-label="Hide alert bar">Hide</button>
 </div>
 <div class="glow" aria-hidden="true"></div>
 <div class="shell">
@@ -290,6 +308,7 @@ body.alert-active{padding-top:76px}
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
   <p class="subtitle">Live prices every day — a <strong>fixed alert bar</strong> at the top flashes green (buy), red (hold), or amber (watch). No setup needed. Supplier: <strong>Safe Fuels, Camlough</strong>.</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
+  <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
     <button type="button" class="btn btn-push optional" id="pushBtn" hidden title="Optional — green banner works automatically">📱 Optional phone alerts</button>
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
@@ -389,6 +408,9 @@ body.alert-active{padding-top:76px}
   var heatingChart=null;
   var dieselChart=null;
   var refreshTimer=null;
+  var ALERT_HIDE_KEY="newry_fuel_alert_hidden";
+  var lastAlertKey=null;
+  var lastAlertData=null;
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
@@ -526,12 +548,61 @@ body.alert-active{padding-top:76px}
     requestAnimationFrame(frame);
   }
 
+  function alertFingerprint(alert){
+    if(!alert) return "";
+    return (alert.mode||"")+"|"+(alert.message||"");
+  }
+
+  function getAlertHideState(){
+    try{return JSON.parse(sessionStorage.getItem(ALERT_HIDE_KEY)||"null")}catch(e){return null}
+  }
+
+  function saveAlertHidden(key){
+    try{sessionStorage.setItem(ALERT_HIDE_KEY,JSON.stringify({key:key,dismissed:true}))}catch(e){}
+  }
+
+  function clearAlertHidden(){
+    try{sessionStorage.removeItem(ALERT_HIDE_KEY)}catch(e){}
+  }
+
+  function isAlertHidden(alert){
+    var st=getAlertHideState();
+    return !!(st&&st.dismissed&&st.key===alertFingerprint(alert));
+  }
+
+  function applyTopAlertVisibility(alert){
+    var el=$("topAlert");
+    var showBtn=$("alertShowBtn");
+    document.body.classList.remove("alert-active");
+    if(!alert||!alert.active||!alert.mode){
+      el.hidden=true;
+      showBtn.hidden=true;
+      return;
+    }
+    if(isAlertHidden(alert)){
+      el.hidden=true;
+      showBtn.hidden=false;
+      showBtn.className="alert-show-btn "+alert.mode;
+      showBtn.textContent=alert.mode==="buy"?"Show buy alert":alert.mode==="hold"?"Show hold alert":"Show watch alert";
+      return;
+    }
+    el.hidden=false;
+    showBtn.hidden=true;
+    document.body.classList.add("alert-active");
+  }
+
   function renderTopAlert(data){
     var alert=data.buyAlert;
     var el=$("topAlert");
+    lastAlertData=alert;
     document.body.classList.remove("alert-active");
-    if(!alert||!alert.active||!alert.mode){el.hidden=true;return}
-    el.hidden=false;
+    if(!alert||!alert.active||!alert.mode){el.hidden=true;$("alertShowBtn").hidden=true;return}
+    var key=alertFingerprint(alert);
+    if(key!==lastAlertKey){
+      var st=getAlertHideState();
+      if(st&&st.key!==key) clearAlertHidden();
+      lastAlertKey=key;
+    }
     el.className="top-alert "+alert.mode;
     var icons={buy:"✓",hold:"✋",watch:"👀"};
     $("topAlertIcon").textContent=icons[alert.mode]||"●";
@@ -565,7 +636,7 @@ body.alert-active{padding-top:76px}
     }else{
       call.hidden=true;
     }
-    document.body.classList.add("alert-active");
+    applyTopAlertVisibility(alert);
   }
 
   function scheduleRefresh(data){
@@ -842,9 +913,22 @@ body.alert-active{padding-top:76px}
     });
   }
 
+  function initAlertDismiss(){
+    $("topAlertDismiss").addEventListener("click",function(){
+      if(!lastAlertKey||!lastAlertData||!lastAlertData.active) return;
+      saveAlertHidden(lastAlertKey);
+      applyTopAlertVisibility(lastAlertData);
+    });
+    $("alertShowBtn").addEventListener("click",function(){
+      clearAlertHidden();
+      if(lastAlertData&&lastAlertData.active) applyTopAlertVisibility(lastAlertData);
+    });
+  }
+
   function boot(){
     fetchPrices();
     initPush();
+    initAlertDismiss();
     maybeAutoDial();
     document.addEventListener("visibilitychange",function(){
       if(!document.hidden) fetchPrices();
