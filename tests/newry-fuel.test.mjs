@@ -14,6 +14,7 @@ import {
   analyzeBuySignal,
   buildBuyGuide,
   buildBuyAlertState,
+  buildVerdictWhy,
   buildSharePreviewMeta,
   buildSavingsTable,
   analyzeNewsSentiment,
@@ -197,8 +198,26 @@ export function runNewryFuelTests() {
   }).mode === "hold");
   s.assert("hold alert message", buildBuyAlertState({
     alertWorthy: false,
-    signals: { heating: { verdict: "wait", current: 107 } },
+    signals: { heating: { verdict: "wait", current: 107, why: buildVerdictWhy({
+      current: 107, vs7Pct: 3.2, ma7: 103.5, percentile: 88, verdict: "wait",
+      guide: { targetPricePpl: 101.6, whenToBuy: { bestWindow: { day: 5, pricePpl: 101.6 } } },
+      reasons: ["Near recent highs — consider waiting if you can."],
+    }) } },
   }).message.includes("Hold"));
+  s.assert("hold has why", buildBuyAlertState({
+    alertWorthy: false,
+    signals: { heating: { verdict: "wait", current: 107, why: buildVerdictWhy({
+      current: 107, vs7Pct: 3.2, ma7: 103.5, percentile: 88, verdict: "wait", reasons: [],
+    }) } },
+  }).why.length > 0);
+  const why = buildVerdictWhy({
+    current: 107, vs7Pct: 3.2, ma7: 103.5, vs30Pct: 4, ma30: 102.8,
+    percentile: 88, verdict: "wait", trendSlope: 0.1, reasons: [],
+    guide: { targetPricePpl: 101.6, whenToBuy: { bestWindow: { day: 5, pricePpl: 101.6 } } },
+  });
+  s.assert("verdict why hold", why.reasons.length >= 2);
+  s.assert("verdict why sources", why.sources.length >= 3);
+  s.assert("buy signal has why", buy.why && buy.why.reasons.length >= 0);
   s.assert("buy alert inactive", buildBuyAlertState({ alertWorthy: false, signals: {} }).active === false);
 
   const share = buildSharePreviewMeta(
@@ -226,6 +245,7 @@ export function runNewryFuelTests() {
   s.assert("html top alert", html.includes("topAlert") && html.includes("top-alert"));
   s.assert("html fixed alert copy", html.includes("fixed alert bar"));
   s.assert("html alert flash anim", html.includes("alertFlash"));
+  s.assert("html why box", html.includes("why-box") && html.includes("How we know"));
   s.assert("html og image", html.includes("og:image") && html.includes("og-preview.png"));
   s.assert("html twitter card", html.includes("twitter:card"));
   s.assert("html apple touch 180", html.includes("apple-touch-icon") && html.includes("180x180"));

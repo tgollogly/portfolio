@@ -221,6 +221,12 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .top-alert-body{flex:1;min-width:200px;max-width:520px;text-align:left}
 .top-alert-body strong{display:block;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase}
 .top-alert-body span{font-size:.88rem;opacity:.95;font-weight:500;display:block;margin-top:2px}
+.top-alert-why{font-size:.78rem;opacity:.88;margin-top:4px;line-height:1.35;font-weight:500}
+.top-alert-how{font-size:.72rem;opacity:.75;margin-top:6px;font-style:italic}
+.why-box{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.65);border:1px solid var(--line)}
+.why-box .why-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:8px}
+.why-box ul{margin:0;padding:0 0 0 16px;font-size:.84rem;color:var(--slate);line-height:1.45}
+.why-box ul li{margin-bottom:4px}
 .top-alert-call{
   display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;
   background:#fff;font-weight:700;font-size:.88rem;text-decoration:none;
@@ -252,6 +258,8 @@ body.alert-active{padding-top:76px}
   <div class="top-alert-body">
     <strong id="topAlertTitle">Fuel alert</strong>
     <span id="topAlertDetail">Checking live prices…</span>
+    <span class="top-alert-why" id="topAlertWhy" hidden></span>
+    <span class="top-alert-how" id="topAlertHow" hidden></span>
   </div>
   <a class="top-alert-call" id="topAlertCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
 </div>
@@ -473,6 +481,16 @@ body.alert-active{padding-top:76px}
     $("topAlertIcon").textContent=icons[alert.mode]||"●";
     $("topAlertTitle").textContent=alert.message||"Fuel alert";
     $("topAlertDetail").textContent=alert.detail||"";
+    var whyEl=$("topAlertWhy");
+    var howEl=$("topAlertHow");
+    if(alert.why&&alert.why.length){
+      whyEl.hidden=false;
+      whyEl.textContent=alert.why.slice(0,2).join(" · ");
+    }else{whyEl.hidden=true}
+    if(alert.howWeKnow){
+      howEl.hidden=false;
+      howEl.textContent=alert.howWeKnow;
+    }else{howEl.hidden=true}
     var call=$("topAlertCall");
     if(alert.mode==="buy"){
       call.textContent="📞 Call Safe Fuels";
@@ -531,6 +549,15 @@ body.alert-active{padding-top:76px}
     '</div>';
   }
 
+  function whyBoxHtml(signal){
+    var w=signal&&signal.why;
+    if(!w||!w.reasons||!w.reasons.length) return "";
+    return '<div class="why-box"><div class="why-title">How we know · '+
+      (signal.verdict==="wait"?"why hold":signal.verdict==="buy"?"why buy":"why watch")+
+      '</div><ul>'+w.reasons.slice(0,4).map(function(r){return "<li>"+esc(r)+"</li>"}).join("")+
+      '</ul></div>';
+  }
+
   function signalCard(kind, signal, extra, trend){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
@@ -541,6 +568,7 @@ body.alert-active{padding-top:76px}
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
+      whyBoxHtml(signal)+
       (extra||"")+
     '</article>';
   }
