@@ -23,3 +23,4 @@ jobs:
           node tests/pursuit-security.test.mjs
           node tests/pursuit-store.test.mjs
           node tests/pursuit-news-feeds.test.mjs
+          node tests/mcp-guardrails.test.mjs
