@@ -7,6 +7,7 @@ import { runAiSafetyMatrixTests } from "./ai-safety-matrix.test.mjs";
 import { runMcpGuardrailsTests } from "./mcp-guardrails.test.mjs";
 import { runPursuitExpandedTests } from "./pursuit-expanded.test.mjs";
 import { runBettystownWeatherTests } from "./bettystown-weather.test.mjs";
+import { runSecurityAuditTests } from "./security-audit.test.mjs";
 import { evaluateResults } from "./harness.mjs";
 import { createSuite } from "./harness.mjs";
 import {
@@ -45,6 +46,7 @@ const suites = [
   runMcpGuardrailsTests(),
   runPursuitExpandedTests(),
   runBettystownWeatherTests(),
+  runSecurityAuditTests(),
   runLegacyPrivacySuite(),
   runLegacyPursuitSuite(),
 ];

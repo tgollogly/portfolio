@@ -2,6 +2,18 @@
 
 Last reviewed: 2026-09-16.
 
+## Search engine & crawler blocking
+
+| Layer | What it does |
+|-------|----------------|
+| `robots.txt` | `Disallow: /` for `*` and common AI crawlers (GPTBot, ClaudeBot, CCBot, Google-Extended, Bytespider, …) |
+| `X-Robots-Tag` | Every HTML page gets `noindex, nofollow, noarchive, nosnippet, noimageindex` from `server.js` |
+| `<meta name="robots">` | Key pages (home, privacy, Bettystown, Pursuit, CV, job finder) also carry noindex in HTML |
+
+Social link previews (Facebook, WhatsApp, etc.) still work via explicit OG tags — robots blocking does not remove those.
+
+Verify: `node tests/security-audit.test.mjs` or `node tests/run-all.mjs`.
+
 ## Fixed in code
 
 | Issue | Fix |
@@ -46,4 +58,4 @@ Last reviewed: 2026-09-16.
 - Offline `questions.js` fallback still contains answers in browser
 - Pursuit leaderboard/memory POSTs are unauthenticated (demo scope)
 
-Run tests: `node tests/privacy-guardrails.test.mjs && node tests/pursuit-security.test.mjs`
+Run tests: `node tests/run-all.mjs` (includes security-audit, privacy, pursuit, bettystown).
