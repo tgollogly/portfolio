@@ -118,6 +118,12 @@ const BETTYSTOWN_ASSETS = new Map([
   ["/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
   ["/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
 ]);
+const BETTYSTOWN_PATH_ASSETS = new Map([
+  ["/bettystown/apple-touch-icon.png", `${BETTYSTOWN_PREFIX}/apple-touch-icon.png`],
+  ["/bettystown/favicon-32.png", `${BETTYSTOWN_PREFIX}/favicon-32.png`],
+  ["/bettystown/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
+  ["/bettystown/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
+]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
 const PURSUIT_SEED_PATH = `${QUIZ_GAME_PREFIX}/questions.js`;
@@ -140,6 +146,11 @@ async function serveBettystownAsset(request, env, assetPath) {
   return new Response(asset.body, { status: asset.status, headers });
 }
 
+function isIosSafari(request) {
+  const ua = request.headers.get("User-Agent") || "";
+  return /iPhone|iPad|iPod/i.test(ua);
+}
+
 function bettystownManifestHref(request) {
   return isBettystownHost(new URL(request.url).hostname)
     ? "/manifest.webmanifest"
@@ -160,11 +171,26 @@ function serveBettystownManifest(mode) {
 async function serveBettystownIndex(request, env) {
   const asset = await env.ASSETS.fetch(new URL(BETTYSTOWN_INDEX, request.url));
   if (!asset.ok) return asset;
-  const manifestHref = bettystownManifestHref(request);
-  const html = (await asset.text()).replace(
-    /<link rel="manifest" href="[^"]*"\/>/,
-    `<link rel="manifest" href="${manifestHref}"/>`
-  );
+  const url = new URL(request.url);
+  const isSubdomain = isBettystownHost(url.hostname);
+  let html = await asset.text();
+
+  // iOS Safari uses manifest start_url instead of the address bar when adding to Home Screen.
+  // Omit manifest on iOS so the saved shortcut opens this exact page (/bettystown/).
+  if (isIosSafari(request)) {
+    html = html.replace(/\n<link rel="manifest" href="[^"]*"\/>/, "");
+  } else {
+    const manifestHref = bettystownManifestHref(request);
+    html = html.replace(
+      /<link rel="manifest" href="[^"]*"\/>/,
+      `<link rel="manifest" href="${manifestHref}"/>`
+    );
+  }
+
+  if (!isSubdomain) {
+    html = html.replaceAll("https://tgollogly.dev/sites/bettystown/", "/bettystown/");
+  }
+
   return new Response(html, {
     status: 200,
     headers: {
@@ -899,6 +925,11 @@ export default {
     }
     if (path === "/bettystown/manifest.webmanifest") {
       return serveBettystownManifest("path");
+    }
+    const btPathAsset = BETTYSTOWN_PATH_ASSETS.get(path);
+    if (btPathAsset) return serveBettystownAsset(request, env, btPathAsset);
+    if (path === BETTYSTOWN_PREFIX || path === `${BETTYSTOWN_PREFIX}/` || path === `${BETTYSTOWN_PREFIX}/index.html`) {
+      return Response.redirect(`${url.origin}/bettystown/`, 301);
     }
     if (path === `${BETTYSTOWN_PREFIX}/manifest.webmanifest`) {
       return serveBettystownManifest("path");
