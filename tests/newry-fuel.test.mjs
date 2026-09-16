@@ -35,6 +35,7 @@ import {
   computeMemoryStats,
   buildMemoryPayload,
   buildDieselDisplayMeta,
+  buildDieselHoldExplain,
   computeSeasonalProfile,
   buildPredictionIndicators,
   computeRsi,
@@ -126,6 +127,18 @@ export function runNewryFuelTests() {
   );
   s.assert("diesel display meta", dieselMeta.headline.includes("BT35") && dieselMeta.vsUkLabel.includes("above"));
   s.assert("diesel display note", dieselMeta.note.includes("not home heating"));
+
+  const dieselHold = buildDieselHoldExplain(
+    {
+      current: 176.9,
+      verdict: "wait",
+      guide: { targetPricePpl: 171.5, savingsVsNowPpl: 5.4 },
+      holdOutlook: { headline: "Hold off filling up ~5 days", recheckNote: "Recheck every 3 days" },
+    },
+    dieselMeta
+  );
+  s.assert("diesel hold explain", dieselHold.title.includes("hold off") && dieselHold.save50L > 2);
+  s.assert("diesel hold lead", dieselHold.lead.includes("176.9"));
   const snap = buildTrendSnapshot(trend);
   s.assert("trend snapshot", snap && snap.label.includes("trend"));
 
@@ -357,6 +370,7 @@ export function runNewryFuelTests() {
   s.assert("html memory note", html.includes("memoryNote") && html.includes("persistent memory"));
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));
+  s.assert("html diesel hold explain", html.includes("diesel-hold-box") && html.includes("Why hold off on diesel"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));

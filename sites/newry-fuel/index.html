@@ -157,6 +157,11 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .hold-risks{margin:8px 0 0;padding:0 0 0 16px;font-size:.82rem;color:var(--slate);line-height:1.4}
 .hold-risks li{margin-bottom:4px}
 .hold-recheck{font-size:.8rem;color:var(--muted);margin:8px 0 0;font-style:italic}
+.diesel-hold-box{margin-top:12px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(254,226,226,.4),rgba(255,255,255,.92));border:1px solid rgba(220,38,38,.22)}
+.diesel-hold-lead{font-size:.92rem;font-weight:600;color:var(--slate);margin:0 0 8px;line-height:1.45}
+.diesel-hold-save{font-size:.9rem;font-weight:700;color:#047857;margin:8px 0}
+.diesel-hold-recheck{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.diesel-hold-exception{font-size:.78rem;color:var(--faint);margin:6px 0 0;font-style:italic}
 .top-alert-hold{font-size:.76rem;opacity:.92;margin-top:4px;font-weight:600;display:block}
 .indicators-card{margin-top:24px;background:linear-gradient(145deg,rgba(15,23,42,.97),rgba(30,41,59,.92));border-color:rgba(255,255,255,.08);color:#e2e8f0}
 .indicators-card .card-kicker{color:#fbbf24}
@@ -724,10 +729,26 @@ body.alert-active{padding-top:76px}
   function whyBoxHtml(signal){
     var w=signal&&signal.why;
     if(!w||!w.reasons||!w.reasons.length) return "";
-    return '<div class="why-box"><div class="why-title">How we know · '+
-      (signal.verdict==="wait"?"why hold":signal.verdict==="buy"?"why buy":"why watch")+
-      '</div><ul>'+w.reasons.slice(0,4).map(function(r){return "<li>"+esc(r)+"</li>"}).join("")+
+    var title=signal.verdict==="wait"
+      ?(signal.holdExplain?"Why hold off on diesel?":"why hold")
+      :signal.verdict==="buy"?"why buy":"why watch";
+    return '<div class="why-box"><div class="why-title">How we know · '+esc(title)+
+      '</div><ul>'+w.reasons.slice(0,5).map(function(r){return "<li>"+esc(r)+"</li>"}).join("")+
       '</ul></div>';
+  }
+
+  function dieselHoldExplainHtml(signal){
+    var ex=signal&&signal.holdExplain;
+    if(!ex) return "";
+    return '<div class="diesel-hold-box">'+
+      '<div class="why-title">'+esc(ex.title)+'</div>'+
+      '<p class="diesel-hold-lead">'+esc(ex.lead)+'</p>'+
+      (ex.detail?'<p class="meta">'+esc(ex.detail)+'</p>':"")+
+      (ex.save50L>0?'<p class="diesel-hold-save">💷 If the dip hits: ~£'+ex.save50L.toFixed(2)+' saved on a 50L fill · ~£'+
+        ex.save60L.toFixed(2)+' on 60L (vs today\'s pump price)</p>':"")+
+      '<p class="diesel-hold-recheck">'+esc(ex.recheck)+'</p>'+
+      '<p class="diesel-hold-exception">'+esc(ex.exception)+'</p>'+
+    '</div>';
   }
 
   function dieselPriceContextHtml(diesel){
@@ -754,6 +775,7 @@ body.alert-active{padding-top:76px}
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
+      (kind==="diesel"?dieselHoldExplainHtml(signal):"")+
       whyBoxHtml(signal)+
       (extra||"")+
     '</article>';
