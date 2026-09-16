@@ -116,6 +116,11 @@ header{text-align:center;margin-bottom:10px}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(232,197,71,.08)}
 .lb-empty{font-size:.78rem;color:var(--muted);margin:6px 0 0}
 .bank-stat{font-size:.72rem;color:var(--cyan);text-align:center;margin:0 0 8px}
+.feed-list{margin:0;padding:0;list-style:none;font-size:.75rem;color:var(--muted);line-height:1.45}
+.feed-list li{margin:0 0 6px;padding-left:10px;border-left:2px solid rgba(78,205,196,.35)}
+.feed-list b{color:var(--gold);font-weight:600}
+.feed-tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 8px}
+.feed-tag{font-size:.65rem;padding:3px 8px;border-radius:999px;background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.25);color:var(--cyan)}
 .led-strip{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--chaser),var(--gold),var(--cyan),var(--gold),var(--chaser));background-size:200% 100%;animation:ledScroll 4s linear infinite;z-index:60;pointer-events:none;opacity:.85}
 .led-strip.bottom{top:auto;bottom:0;animation-direction:reverse}
 @keyframes ledScroll{to{background-position:200% 0}}
@@ -327,12 +332,50 @@ function saveRemoteMemory(won){
     return fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).catch(function(){});
   });
 }
+function formatSources(bySource){
+  if(!bySource)return "";
+  var parts=[];
+  if(bySource.news_feed)parts.push(bySource.news_feed+" news");
+  if(bySource.opentdb)parts.push(bySource.opentdb+" trivia");
+  if(bySource.wikipedia)parts.push(bySource.wikipedia+" history");
+  if(bySource.current_events)parts.push(bySource.current_events+" AI");
+  if(bySource.seed)parts.push(bySource.seed+" seed");
+  return parts.length?" · "+parts.slice(0,4).join(", "):"";
+}
 function fetchBankStats(){
   fetch("/api/pursuit-stats").then(function(r){return r.json();}).then(function(data){
     bankTotal=data.total||bankTotal;
     var el=$("bankStat");
-    if(el)el.textContent="Live question bank: "+formatBankCount(bankTotal)+" · updates twice daily";
+    if(el)el.textContent="Live question bank: "+formatBankCount(bankTotal)+formatSources(data.bySource)+" · refreshed 06:00 & 18:00 UTC";
   }).catch(function(){});
+}
+function fetchFeedPanel(){
+  fetch("/api/pursuit-feeds").then(function(r){return r.json();}).then(function(data){
+    var el=$("feedPanel");
+    if(!el)return;
+    var tags=(data.sources||[]).slice(0,5).map(function(s){return '<span class="feed-tag">'+escapeHtml(s.name)+'</span>';}).join("");
+    tags+='<span class="feed-tag">Open Trivia DB</span><span class="feed-tag">Wikipedia</span>';
+    var html='<div class="feed-tags">'+tags+'</div>';
+    var list=[];
+    if(data.headlines){
+      Object.keys(data.headlines).forEach(function(k){
+        (data.headlines[k]||[]).slice(0,2).forEach(function(h){list.push({feed:k,title:h});});
+      });
+    }
+    if(list.length){
+      html+='<ul class="feed-list">';
+      list.slice(0,5).forEach(function(item){
+        html+='<li><b>'+escapeHtml(item.feed.replace(/_/g," "))+'</b> · '+escapeHtml(item.title)+'</li>';
+      });
+      html+='</ul><p style="font-size:.68rem;color:var(--muted);margin:8px 0 0">Headlines become quiz questions — no API keys. MCP: <code style="color:var(--cyan)">GET /api/pursuit-mcp</code></p>';
+    }else{
+      html+='<p class="lb-empty">Headlines load after the next cron refresh (06:00 / 18:00 UTC).</p>';
+    }
+    el.innerHTML=html;
+  }).catch(function(){
+    var el=$("feedPanel");
+    if(el)el.innerHTML='<p class="lb-empty">News feeds unavailable — offline bank still works.</p>';
+  });
 }
 
 function loadName(){try{return localStorage.getItem(LS_NAME)||"";}catch(e){return "";}}
@@ -719,12 +762,13 @@ function showMenu(){
   });
   html+='</div></div>';
   html+='<p class="bank-stat" id="bankStat">Live question bank: loading…</p>';
+  html+='<div class="panel"><h2>Today&apos;s news feeds</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">BBC RSS, Open Trivia DB &amp; Wikipedia — free sources, no login. New questions twice daily.</p><div id="feedPanel"><p class="lb-empty">Loading feeds…</p></div></div>';
   html+='<div class="panel"><h2>Your name</h2><p style="font-size:.78rem;color:var(--muted);margin:0 0 8px">Saved on this device + cloud memory (via MCP/KV). Shown on the leaderboard.</p>';
   html+='<input type="text" class="name-input" id="playerName" maxlength="20" placeholder="Enter your name" autocomplete="nickname" value="'+escapeHtml(loadName())+'"/></div>';
   html+='<div class="panel" id="lbPanel"><h2>Leaderboard</h2>';
   html+='<div class="lb-tabs"><button type="button" class="lb-tab active" data-tab="global">Global</button><button type="button" class="lb-tab" data-tab="local">This device</button></div>';
   html+='<div class="lb-body"><p class="lb-empty">Loading scores…</p></div></div>';
-  html+='<div class="panel"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No repeats per game · bank grows daily with AI current-events questions.</span></p></div>';
+  html+='<div class="panel"><h2>How to play</h2><p style="font-size:.82rem;color:var(--muted);margin:0;line-height:1.5"><strong style="color:var(--gold)">1. Cash Builder</strong> — answer quick-fire questions for money.<br/><strong style="color:var(--gold)">2. Head-to-Head</strong> — race the chaser on the track.<br/><strong style="color:var(--gold)">3. Final Chase</strong> — defend your lead for the jackpot.<br/><span style="color:var(--cyan)">No repeats per game · bank grows from news feeds + AI twice daily.</span></p></div>';
   $("screen").innerHTML=html;
   document.querySelectorAll(".diff-btn").forEach(function(b){
     b.onclick=function(){state.diff=b.dataset.d;document.querySelectorAll(".diff-btn").forEach(function(x){x.classList.remove("selected");});b.classList.add("selected");};
@@ -738,6 +782,7 @@ function showMenu(){
   renderLeaderboardPanel();
   fetchGlobalLeaderboard();
   fetchBankStats();
+  fetchFeedPanel();
   loadRemoteMemory();
   $("controls").innerHTML=
     '<button type="button" class="btn" id="startBtn">Start game</button>'+

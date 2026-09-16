@@ -93,8 +93,16 @@ if (!html.includes("pursuit_player_level") || !html.includes("saveLevel")) {
   console.error("FAIL: index.html missing local level persistence");
   process.exit(1);
 }
+if (!html.includes("pursuit-feeds") || !html.includes("feedPanel")) {
+  console.error("FAIL: index.html missing news feed panel");
+  process.exit(1);
+}
 
 const server = readFileSync(join(dir, "../../server.js"), "utf8");
+if (!server.includes("pursuit-mcp") || !server.includes("pursuit-news-feeds")) {
+  console.error("FAIL: server.js missing news feeds or MCP endpoints");
+  process.exit(1);
+}
 if (!server.includes("pursuit-store") || !server.includes("scheduled")) {
   console.error("FAIL: server.js missing pursuit store or cron refresh");
   process.exit(1);

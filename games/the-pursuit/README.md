@@ -38,15 +38,19 @@ Questions are **not** bundled in the browser anymore. The Worker serves them fro
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /api/pursuit-questions?count=24&pool=easy,medium&exclude=id1,id2` | Random questions for a game |
-| `GET /api/pursuit-stats` | Total count, sources, last AI refresh |
+| `GET /api/pursuit-stats` | Total count, sources, last AI & feed refresh |
+| `GET /api/pursuit-feeds` | BBC RSS sources, cached headlines, stats (no auth) |
+| `GET /api/pursuit-mcp` | Public MCP-style tool manifest (no auth) |
+| `POST /api/pursuit-mcp` | Invoke read-only tools: `get_stats`, `get_feeds`, `get_headlines`, `sample_questions` |
 | `POST /api/pursuit-feedback` | `{ questionId, correct }` — self-improvement stats |
-| `POST /api/pursuit-refresh` | Cron / admin: AI current-events batch + procedural expansion |
+| `POST /api/pursuit-refresh` | Cron / admin: feeds + AI + procedural expansion |
 
 **Growth:**
 
 1. **Seed** — 743 hand-written questions from `questions.js` on first request
-2. **Procedural** — math variants expand the bank toward 10M (5k per cron run)
-3. **AI refresh** — twice daily (06:00 & 18:00 UTC): Gemini adds ~30 current-events questions; weak topics are deprioritised using wrong-answer stats
+2. **News feeds** (no API keys) — twice daily on cron: ~50 Open Trivia DB + Wikipedia “on this day” + BBC RSS headline questions
+3. **AI refresh** — after feeds: Gemini adds ~30 current-events questions using cached headlines; weak topics deprioritised
+4. **Procedural** — math variants expand toward 10M (5k per cron run, cron only)
 
 Static `questions.js` remains as offline fallback only.
 
