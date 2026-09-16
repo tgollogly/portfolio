@@ -184,7 +184,7 @@ var DIFF={
 };
 
 var ROUNDS=["Cash Builder","Head-to-Head","Final Chase"];
-var LS_NAME="pursuit_player_name",LS_SCORES="pursuit_local_scores",LS_PLAYER_ID="pursuit_player_id";
+var LS_NAME="pursuit_player_name",LS_SCORES="pursuit_local_scores",LS_PLAYER_ID="pursuit_player_id",LS_LEVEL="pursuit_player_level";
 var state={},timerId=null,audioCtx=null,musicOn=true,globalLb=[],lbTab="global",bankTotal=0,questionCache=[],lastTickSec=-1;
 
 function $(id){return document.getElementById(id);}
@@ -301,7 +301,7 @@ function loadRemoteMemory(){
   return fetch("/api/pursuit-memory?playerId="+encodeURIComponent(getPlayerId())).then(function(r){return r.json();}).then(function(data){
     if(data.memory){
       if(data.memory.name)saveName(data.memory.name);
-      if(data.memory.level)state.level=data.memory.level;
+      mergeLevel(data.memory.level);
     }
   }).catch(function(){});
 }
@@ -309,21 +309,22 @@ function saveRemoteMemory(won){
   var payload={
     playerId:getPlayerId(),
     name:state.playerName||loadName(),
-    level:state.level||1,
+    level:state.level||loadLevel(),
     gamesPlayed:1,
     wins:won?1:0,
     bestPot:state.pot||0,
     preferredDiff:state.diff||"standard"
   };
-  fetch("/api/pursuit-memory?playerId="+encodeURIComponent(getPlayerId())).then(function(r){return r.json();}).then(function(data){
+  return fetch("/api/pursuit-memory?playerId="+encodeURIComponent(getPlayerId())).then(function(r){return r.json();}).then(function(data){
     var m=data.memory||{};
     payload.gamesPlayed=(m.gamesPlayed||0)+1;
     payload.wins=(m.wins||0)+(won?1:0);
     payload.bestPot=Math.max(m.bestPot||0,state.pot||0);
-    payload.level=Math.max(m.level||1,state.level||1);
+    payload.level=Math.max(m.level||1,state.level||1,loadLevel());
+    saveLevel(payload.level);
     return fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   }).catch(function(){
-    fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).catch(function(){});
+    return fetch("/api/pursuit-memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).catch(function(){});
   });
 }
 function fetchBankStats(){
@@ -336,6 +337,20 @@ function fetchBankStats(){
 
 function loadName(){try{return localStorage.getItem(LS_NAME)||"";}catch(e){return "";}}
 function saveName(n){try{localStorage.setItem(LS_NAME,n);}catch(e){}}
+function loadLevel(){
+  try{var n=parseInt(localStorage.getItem(LS_LEVEL),10);return n>0?n:1;}catch(e){return 1;}
+}
+function saveLevel(n){
+  n=Math.max(1,Math.min(999,Math.floor(Number(n)||1)));
+  state.level=n;
+  try{localStorage.setItem(LS_LEVEL,String(n));}catch(e){}
+  updateHud();
+}
+function mergeLevel(remote){
+  var merged=Math.max(state.level||1,loadLevel(),remote||1);
+  saveLevel(merged);
+  return merged;
+}
 function loadLocalScores(){try{return JSON.parse(localStorage.getItem(LS_SCORES)||"[]");}catch(e){return [];}}
 function addLocalScore(entry){
   var scores=loadLocalScores();
@@ -661,7 +676,7 @@ function startFinal(){
 
 function winFinal(){
   submitScore(true);
-  state.level++;
+  saveLevel((state.level||loadLevel())+1);
   saveRemoteMemory(true);
   showModal("Grand prize!","You won "+formatScore(state.pot)+"! Level "+state.level+" unlocked.",function(){showMenu();});
 }
@@ -695,8 +710,8 @@ function startCashBuilder(){
 
 function showMenu(){
   stopMusic();clearTimer();
-  state.phase="menu";state.round=-1;state.pot=0;state.level=state.level||1;
-  updateHud();
+  state.phase="menu";state.round=-1;state.pot=0;
+  mergeLevel(state.level);
   var html='<div class="panel"><h2>Choose difficulty</h2><p style="font-size:.82rem;color:var(--muted);margin:0 0 8px">Sets chaser strength, question pool &amp; timer — like picking your opponent.</p><div class="diff-grid" id="diffGrid">';
   Object.keys(DIFF).forEach(function(k){
     var d=DIFF[k];
@@ -738,7 +753,7 @@ function showMenu(){
   setMsg("Enter your name, pick difficulty, then tap Start.");
 }
 
-state.diff="standard";state.level=1;
+state.diff="standard";state.level=loadLevel();
 loadRemoteMemory().finally(showMenu);
 document.body.addEventListener("click",function once(){initAudio();startMusic();document.body.removeEventListener("click",once);},{once:true});
 })();
