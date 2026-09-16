@@ -7,6 +7,10 @@ import {
   buildBettystownManifest,
   buildDailyRows,
   buildForecastResponse,
+  buildWeatherAlerts,
+  detectDrySunnySpells,
+  detectHeatEvents,
+  explainWalkDay,
   pickBestDaysChronological,
   forecastUrl,
   scoreWalkDay,
@@ -45,6 +49,20 @@ export function runBettystownWeatherTests() {
   });
   s.assert("awful score low", awful.score < 45);
   s.assert("awful tier poor", awful.tier === "poor");
+
+  const rainyDay = {
+    tempMax: 14,
+    tempMin: 9,
+    rainProb: 85,
+    rainMm: 4.5,
+    windMax: 38,
+    weatherCode: 63,
+    sunshineHours: 1.2,
+  };
+  const explain = explainWalkDay(rainyDay);
+  s.assert("explain rainy verdict", explain.verdict === "skip" || explain.verdict === "caution");
+  s.assert("explain rainy has negatives", explain.negatives.length >= 2);
+  s.assert("explain headline", explain.headline.length > 10);
 
   const samplePayload = {
     timezone: "Europe/Dublin",
@@ -89,6 +107,47 @@ export function runBettystownWeatherTests() {
   s.assert("has forecast", body.forecast.length === 2);
   s.assert("has bestDays", Array.isArray(body.bestDays));
   s.assert("validation pass", validateForecastResponse(body).ok === true);
+  s.assert("response has tomorrow", body.tomorrow != null || body.forecast.length <= 1);
+  s.assert("response has alerts array", Array.isArray(body.alerts));
+  s.assert("response has drySpells", Array.isArray(body.drySpells));
+  s.assert("response has heatEvents", Array.isArray(body.heatEvents));
+  s.assert("forecast has explanation", body.forecast.every((d) => d.explanation?.headline));
+
+  const dryDays = Array.from({ length: 4 }, (_, i) => ({
+    date: `2026-07-${10 + i}`,
+    label: `Day ${i}`,
+    rainMm: 0,
+    rainProb: 10,
+    weatherCode: 1,
+    sunshineHours: 8,
+    tempMax: 21,
+  }));
+  s.assert("dry spell detect", detectDrySunnySpells(dryDays).length === 1);
+  s.assert("dry spell length", detectDrySunnySpells(dryDays)[0].days === 4);
+
+  const hotDays = Array.from({ length: 3 }, (_, i) => ({
+    date: `2026-07-${20 + i}`,
+    label: `Hot ${i}`,
+    tempMax: 26,
+    feelsMax: 28,
+    rainMm: 0,
+    rainProb: 5,
+    weatherCode: 0,
+    sunshineHours: 10,
+  }));
+  s.assert("heat wave detect", detectHeatEvents(hotDays).some((e) => e.type === "heat_wave"));
+
+  s.assert("storm alert", buildWeatherAlerts([{
+    date: "2026-08-01",
+    label: "Mon",
+    weatherCode: 95,
+    tempMax: 18,
+    tempMin: 12,
+    rainMm: 2,
+    rainProb: 50,
+    windMax: 20,
+    uv: 3,
+  }]).some((a) => a.type === "storm"));
 
   s.assert("forecast url open-meteo", forecastUrl().includes("api.open-meteo.com"));
   s.assert("forecast url lat", forecastUrl().includes(String(BETTYSTOWN.latitude)));
@@ -113,6 +172,10 @@ export function runBettystownWeatherTests() {
   s.assert("html mom max", html.includes("Max"));
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
+  s.assert("html tomorrow card", html.includes("tomorrowCard"));
+  s.assert("html alerts bar", html.includes("alertsBar"));
+  s.assert("html fluid blobs", html.includes("blobDrift"));
+  s.assert("html patterns row", html.includes("patternsRow"));
   s.assert("html og image", html.includes("assets/og/bettystown-weather.png"));
   s.assert("html og secure url", html.includes("og:image:secure_url"));
   s.assert("html manifest path", html.includes("/bettystown/manifest.webmanifest"));

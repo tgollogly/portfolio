@@ -39,78 +39,129 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --sky:#e8f4fc;
-  --sky-deep:#b8dff5;
-  --sun:#ffb703;
-  --sun-soft:#fff3cd;
-  --coral:#ff6b6b;
-  --mint:#06d6a0;
-  --sea:#0077b6;
-  --ink:#0d2137;
-  --muted:#5a7184;
-  --card:#ffffff;
-  --line:#d4e8f5;
-  --excellent:#06d6a0;
-  --good:#ffd166;
-  --okay:#83c5be;
-  --poor:#ef476f;
-  --shadow:0 12px 40px rgba(0,119,182,.12);
+  --sky:#e8f4fc;--sky-deep:#b8dff5;--sun:#ffb703;--sun-soft:#fff3cd;
+  --coral:#ff6b6b;--mint:#06d6a0;--sea:#0077b6;--ink:#0d2137;--muted:#5a7184;
+  --card:rgba(255,255,255,.82);--line:rgba(0,119,182,.12);
+  --excellent:#06d6a0;--good:#ffd166;--okay:#83c5be;--poor:#ef476f;
+  --shadow:0 16px 48px rgba(0,119,182,.14);
+  --glass:blur(18px) saturate(1.4);
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{
-  font-family:"DM Sans",system-ui,sans-serif;
-  color:var(--ink);
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, #fff9e6 0%, transparent 55%),
-    linear-gradient(165deg, var(--sky) 0%, #f0f9ff 45%, var(--sky-deep) 100%);
-  line-height:1.5;
+  font-family:"DM Sans",system-ui,sans-serif;color:var(--ink);line-height:1.5;
+  background:linear-gradient(165deg,#fff9ee 0%,var(--sky) 40%,var(--sky-deep) 100%);
+  overflow-x:hidden;
 }
-.hero{
-  max-width:920px;margin:0 auto;padding:28px 20px 12px;
-  animation:fadeUp .6s ease both;
+.blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{
+  position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;
+  animation:blobDrift 22s ease-in-out infinite alternate;
 }
+.blob-a{width:min(70vw,420px);height:min(70vw,420px);background:#ffd166;top:-8%;left:-10%;animation-duration:26s}
+.blob-b{width:min(60vw,360px);height:min(60vw,360px);background:#83c5be;top:30%;right:-15%;animation-delay:-6s;animation-duration:20s}
+.blob-c{width:min(50vw,300px);height:min(50vw,300px);background:#48cae4;bottom:5%;left:20%;animation-delay:-12s;animation-duration:24s}
+.blob-d{width:min(40vw,240px);height:min(40vw,240px);background:#ff9f1c;bottom:25%;right:10%;animation-delay:-4s;opacity:.35}
+@keyframes blobDrift{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(6%,4%) scale(1.08)}
+  66%{transform:translate(-4%,6%) scale(.94)}
+  100%{transform:translate(3%,-3%) scale(1.05)}
+}
+.shell{position:relative;z-index:1}
+.hero{max-width:960px;margin:0 auto;padding:28px 20px 8px;animation:fadeUp .7s ease both}
 .badge{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--card);border:1px solid var(--line);
-  border-radius:999px;padding:6px 14px 6px 10px;
-  font-size:13px;font-weight:600;color:var(--sea);
-  box-shadow:0 4px 16px rgba(0,119,182,.08);
+  display:inline-flex;align-items:center;gap:8px;background:var(--card);
+  backdrop-filter:var(--glass);border:1px solid var(--line);border-radius:999px;
+  padding:6px 14px 6px 10px;font-size:13px;font-weight:600;color:var(--sea);
+  box-shadow:0 4px 20px rgba(0,119,182,.08);
 }
 .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--mint);animation:pulse 2s infinite}
-h1{
-  font-family:Fraunces,Georgia,serif;
-  font-size:clamp(1.85rem,5vw,2.65rem);
-  font-weight:700;margin:16px 0 8px;
-  letter-spacing:-.02em;
+h1{font-family:Fraunces,Georgia,serif;font-size:clamp(1.85rem,5vw,2.75rem);font-weight:700;margin:16px 0 8px;letter-spacing:-.02em}
+.subtitle{font-size:1.05rem;color:var(--muted);max-width:38em;margin:0}
+.mom{font-weight:600;color:var(--sea)}
+.panel{max-width:960px;margin:0 auto;padding:0 20px 48px}
+.status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin:14px 0 0}
+.status .live{color:var(--mint);font-weight:600}
+.loader{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--sea);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}
+.err{background:rgba(255,241,242,.92);backdrop-filter:var(--glass);border:1px solid #fecdd3;color:#be123c;border-radius:16px;padding:16px 20px;margin:16px 0;font-size:.9rem}
+.retry{margin-top:10px;background:var(--sea);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-weight:600;cursor:pointer;font-family:inherit}
+.retry:hover{background:#005f8a}
+
+.alerts-bar{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0;animation:fadeUp .6s .05s ease both}
+.alert-chip{
+  display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:14px;
+  font-size:.82rem;font-weight:500;line-height:1.35;flex:1 1 220px;max-width:100%;
+  backdrop-filter:var(--glass);border:1px solid var(--line);animation:slideIn .5s ease both;
 }
-.subtitle{font-size:1.05rem;color:var(--muted);max-width:36em;margin:0 0 6px}
-.mom{ font-weight:600;color:var(--sea)}
-.paw{font-size:1.1em}
-.panel{max-width:920px;margin:0 auto;padding:0 20px 40px}
+.alert-chip.high{background:rgba(255,228,230,.88);border-color:#fecdd3;color:#9f1239}
+.alert-chip.moderate{background:rgba(255,243,205,.88);border-color:#fde68a;color:#92400e}
+.alert-chip .alert-icon{font-size:1.1rem;flex-shrink:0}
+.alert-chip strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+
+.tomorrow-card{
+  margin-top:22px;padding:22px 24px;border-radius:22px;
+  background:var(--card);backdrop-filter:var(--glass);
+  border:1px solid var(--line);box-shadow:var(--shadow);
+  animation:fadeUp .65s .08s ease both;transition:transform .35s cubic-bezier(.34,1.4,.64,1),box-shadow .35s;
+}
+.tomorrow-card:hover{transform:translateY(-2px);box-shadow:0 20px 56px rgba(0,119,182,.18)}
+.tomorrow-card.skip{border-left:5px solid var(--poor)}
+.tomorrow-card.caution{border-left:5px solid var(--good)}
+.tomorrow-card.go{border-left:5px solid var(--okay)}
+.tomorrow-card.perfect{border-left:5px solid var(--excellent)}
+.tomorrow-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.tomorrow-head h2{font-family:Fraunces,serif;font-size:1.45rem;margin:0;font-weight:700}
+.tomorrow-head .big-icon{font-size:2.8rem;line-height:1;animation:floatIcon 4s ease-in-out infinite}
+.tomorrow-verdict{font-size:1rem;font-weight:600;margin:8px 0 14px;color:var(--sea)}
+.tomorrow-stats{display:flex;flex-wrap:wrap;gap:14px;font-size:.88rem;color:var(--muted);margin-bottom:14px}
+.tomorrow-stats strong{color:var(--ink)}
+.reason-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.reason-list li{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;
+  font-size:.88rem;background:rgba(255,255,255,.6);animation:fadeUp .4s ease both;
+}
+.reason-list li.bad{background:rgba(255,228,230,.5)}
+.reason-list li.good{background:rgba(209,250,229,.45)}
+.reason-list .ri{flex-shrink:0;font-size:1rem}
+.tips{font-size:.82rem;color:var(--muted);margin-top:12px;font-style:italic}
+
+.patterns{display:grid;gap:12px;margin-top:18px}
+@media(min-width:640px){.patterns{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}}
+.pattern-card{
+  padding:16px 18px;border-radius:16px;background:var(--card);backdrop-filter:var(--glass);
+  border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,119,182,.08);
+  animation:fadeUp .55s ease both;transition:transform .3s ease;
+}
+.pattern-card:hover{transform:scale(1.02)}
+.pattern-card.heat{background:linear-gradient(135deg,rgba(255,243,205,.9),rgba(255,255,255,.85));border-color:#fde68a}
+.pattern-card.dry{background:linear-gradient(135deg,rgba(209,250,229,.85),rgba(255,255,255,.85));border-color:#a7f3d0}
+.pattern-card h3{font-family:Fraunces,serif;font-size:1.05rem;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.pattern-card p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.45}
+
 .now-card{
-  background:var(--card);border-radius:20px;padding:22px 24px;
-  box-shadow:var(--shadow);border:1px solid var(--line);
+  margin-top:24px;background:var(--card);backdrop-filter:var(--glass);border-radius:20px;
+  padding:22px 24px;box-shadow:var(--shadow);border:1px solid var(--line);
   display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
-  animation:fadeUp .6s .1s ease both;
+  animation:fadeUp .6s .12s ease both;
 }
-.now-temp{font-family:Fraunces,serif;font-size:3rem;font-weight:700;line-height:1;color:var(--sea)}
+.now-temp{font-family:Fraunces,serif;font-size:3.2rem;font-weight:700;line-height:1;color:var(--sea)}
 .now-meta{font-size:.95rem;color:var(--muted)}
-.now-icon{font-size:3.5rem;line-height:1;text-align:right}
+.now-icon{font-size:3.5rem;line-height:1;text-align:right;animation:floatIcon 5s ease-in-out infinite}
+
 .section-title{
   font-family:Fraunces,serif;font-size:1.35rem;font-weight:600;
-  margin:28px 0 14px;display:flex;align-items:center;gap:10px;
+  margin:32px 0 14px;display:flex;align-items:center;gap:10px;
 }
-.section-title span{font-size:1.4rem}
 .best-grid{display:grid;gap:12px}
 @media(min-width:640px){.best-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}}
 .day-card{
-  background:var(--card);border-radius:16px;padding:16px 18px;
-  border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,119,182,.06);
-  transition:transform .2s, box-shadow .2s;
+  background:var(--card);backdrop-filter:var(--glass);border-radius:16px;padding:16px 18px;
+  border:1px solid var(--line);box-shadow:0 8px 28px rgba(0,119,182,.07);
+  transition:transform .35s cubic-bezier(.34,1.4,.64,1),box-shadow .35s;
   animation:fadeUp .5s ease both;
 }
-.day-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.day-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
 .day-card.excellent{border-left:4px solid var(--excellent)}
 .day-card.good{border-left:4px solid var(--good)}
 .day-card.okay{border-left:4px solid var(--okay)}
@@ -118,71 +169,71 @@ h1{
 .day-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .day-name{font-weight:700;font-size:1.05rem}
 .day-icon{font-size:1.75rem}
-.score-pill{
-  font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:999px;
-  background:var(--sun-soft);color:#b45309;white-space:nowrap;
-}
+.score-pill{font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:999px;background:var(--sun-soft);color:#b45309;white-space:nowrap;display:inline-block;margin-top:8px}
 .score-pill.excellent{background:#d1fae5;color:#047857}
 .score-pill.good{background:#fef3c7;color:#b45309}
 .score-pill.okay{background:#e0f2f1;color:#0f766e}
 .score-pill.poor{background:#ffe4e6;color:#be123c}
 .day-stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:.85rem;color:var(--muted)}
 .day-stats strong{color:var(--ink);font-weight:600}
+.day-why{font-size:.82rem;color:var(--muted);margin-top:10px;line-height:1.4}
 .hint{font-size:.82rem;color:var(--muted);margin-top:8px;font-style:italic}
+
 .table-wrap{
-  background:var(--card);border-radius:16px;border:1px solid var(--line);
-  overflow:hidden;box-shadow:0 6px 24px rgba(0,119,182,.06);
-  animation:fadeUp .6s .2s ease both;
+  background:var(--card);backdrop-filter:var(--glass);border-radius:16px;
+  border:1px solid var(--line);overflow:hidden;box-shadow:0 8px 28px rgba(0,119,182,.07);
+  animation:fadeUp .6s .18s ease both;
 }
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line)}
-th{background:var(--sky);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:rgba(232,244,252,.7);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#f8fcff}
+tr{transition:background .25s}
+tr:hover td{background:rgba(248,252,255,.8)}
+.row-why{font-size:.78rem;color:var(--muted);margin-top:4px;max-width:22em}
 .mini-bar{height:6px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}
-.mini-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--sun))}
-.foot{
-  text-align:center;padding:20px;font-size:.78rem;color:var(--muted);
-}
-.status{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  font-size:.82rem;color:var(--muted);margin:12px 0 0;
-}
-.status .live{color:var(--mint);font-weight:600}
-.loader{
-  display:inline-block;width:18px;height:18px;border:2px solid var(--line);
-  border-top-color:var(--sea);border-radius:50%;animation:spin .8s linear infinite;
-  vertical-align:-3px;margin-right:6px;
-}
-.err{
-  background:#fff1f2;border:1px solid #fecdd3;color:#be123c;
-  border-radius:12px;padding:14px 18px;margin:16px 0;font-size:.9rem;
-}
-.retry{
-  margin-top:10px;background:var(--sea);color:#fff;border:none;
-  border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer;font-family:inherit;
-}
-.retry:hover{background:#005f8a}
+.mini-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--sun));transition:width .8s cubic-bezier(.34,1.4,.64,1)}
+.foot{text-align:center;padding:24px 20px;font-size:.78rem;color:var(--muted)}
+
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+@keyframes floatIcon{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
 @media(max-width:520px){
   .now-card{grid-template-columns:1fr;text-align:center}
   .now-icon{text-align:center}
   th:nth-child(4),td:nth-child(4){display:none}
+  .tomorrow-head .big-icon{font-size:2.2rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .blob,.big-icon,.now-icon{animation:none}
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
 </style>
 </head>
 <body>
+<div class="blobs" aria-hidden="true">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+  <div class="blob blob-d"></div>
+</div>
+
+<div class="shell">
 <header class="hero">
   <div class="badge"><span class="dot"></span> Bettystown · County Meath</div>
   <h1>Mom's Bettystown Weather</h1>
-  <p class="subtitle">Warm, dry beach days for <span class="mom">Mom</span> &amp; her dog <span class="paw">🐕 Max</span> — scored for gentle winds and low rain on the sand.</p>
+  <p class="subtitle">Warm, dry beach days for <span class="mom">Mom</span> &amp; her dog <span class="paw">🐕 Max</span> — with plain-English reasons, heat alerts &amp; sunny-spell detection.</p>
   <div class="status" id="status"><span class="loader"></span> Loading fresh forecast…</div>
 </header>
 
 <main class="panel">
   <div id="error" class="err" hidden></div>
+  <div class="alerts-bar" id="alertsBar" hidden></div>
+  <section class="tomorrow-card" id="tomorrowCard" hidden></section>
+  <div class="patterns" id="patternsRow" hidden></div>
 
   <section class="now-card" id="nowCard" hidden>
     <div>
@@ -215,25 +266,101 @@ tr:hover td{background:#f8fcff}
 
 <footer class="foot">
   Data: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) ·
-  Auto-refreshes on load · Updates every 15 min ·
+  Auto-refreshes every 15 min ·
   <span id="updatedAt">—</span>
 </footer>
+</div>
 
 <script>
 (function(){
   var API="/api/bettystown-weather";
-  var CACHE_KEY="bettystown_weather_v1";
+  var CACHE_KEY="bettystown_weather_v2";
   var REFRESH_MS=15*60*1000;
 
   function $(id){return document.getElementById(id)}
+
+  function esc(s){
+    return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
 
   function tierLabel(t){
     return t==="excellent"?"Perfect for Max":t==="good"?"Great walk":t==="okay"?"Maybe":"Stay home";
   }
 
+  function alertIcon(type){
+    return ({storm:"⛈️",heavy_rain:"🌧️",high_wind:"💨",heat:"🥵",uv:"☀️",frost:"🧊",live_wind:"💨"})[type]||"⚠️";
+  }
+
+  function patternIcon(type){
+    return ({dry_sunny:"☀️",heat_wave:"🌡️",heat_dome:"🔥",extreme_heat:"🥵"})[type]||"📊";
+  }
+
+  function renderAlerts(alerts){
+    var bar=$("alertsBar");
+    if(!alerts||!alerts.length){bar.hidden=true;bar.innerHTML="";return}
+    bar.hidden=false;
+    bar.innerHTML=alerts.slice(0,6).map(function(a,i){
+      return '<div class="alert-chip '+esc(a.severity)+'" style="animation-delay:'+(i*0.05)+'s">'+
+        '<span class="alert-icon">'+alertIcon(a.type)+'</span>'+
+        '<div><strong>'+esc(a.title)+'</strong>'+esc(a.message)+'</div></div>';
+    }).join("");
+  }
+
+  function renderTomorrow(t){
+    var el=$("tomorrowCard");
+    if(!t||!t.explanation){el.hidden=true;return}
+    var ex=t.explanation;
+    el.hidden=false;
+    el.className="tomorrow-card "+ex.verdict;
+    var reasons="";
+    (ex.negatives||[]).forEach(function(r,i){
+      reasons+='<li class="bad" style="animation-delay:'+(i*0.04)+'s"><span class="ri">✗</span>'+esc(r)+'</li>';
+    });
+    (ex.positives||[]).forEach(function(r,i){
+      reasons+='<li class="good" style="animation-delay:'+((ex.negatives||[]).length+i)*0.04+'s"><span class="ri">✓</span>'+esc(r)+'</li>';
+    });
+    el.innerHTML=
+      '<div class="tomorrow-head">'+
+        '<div><h2>Tomorrow · '+esc(t.label)+'</h2>'+
+        '<div class="tomorrow-verdict">'+esc(ex.headline)+'</div></div>'+
+        '<div class="big-icon">'+esc(t.icon)+'</div>'+
+      '</div>'+
+      '<div class="tomorrow-stats">'+
+        '<span><strong>'+Math.round(t.tempMax)+'°</strong> high · '+Math.round(t.tempMin)+'° low</span>'+
+        '<span>Rain <strong>'+Math.round(t.rainProb||0)+'%</strong></span>'+
+        '<span>Wind <strong>'+Math.round(t.windMax||0)+'</strong> km/h</span>'+
+        '<span>Score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
+      '</div>'+
+      (reasons?'<ul class="reason-list">'+reasons+'</ul>':'')+
+      (ex.tips&&ex.tips.length?'<p class="tips">💡 '+esc(ex.tips.join(" · "))+'</p>':'');
+  }
+
+  function renderPatterns(drySpells, heatEvents){
+    var row=$("patternsRow");
+    var cards=[];
+    (drySpells||[]).forEach(function(s,i){
+      cards.push('<article class="pattern-card dry" style="animation-delay:'+(i*0.06)+'s">'+
+        '<h3>'+patternIcon("dry_sunny")+' Dry sunny spell</h3>'+
+        '<p>'+esc(s.message)+' — great stretch for beach walks!</p></article>');
+    });
+    (heatEvents||[]).forEach(function(e,i){
+      cards.push('<article class="pattern-card heat" style="animation-delay:'+((drySpells||[]).length+i)*0.06+'s">'+
+        '<h3>'+patternIcon(e.type)+' '+esc(e.type.replace(/_/g," "))+'</h3>'+
+        '<p>'+esc(e.message)+'</p></article>');
+    });
+    if(!cards.length){row.hidden=true;row.innerHTML="";return}
+    row.hidden=false;
+    row.innerHTML=cards.join("");
+  }
+
   function render(data){
     $("error").hidden=true;
     $("nowCard").hidden=false;
+
+    renderAlerts(data.alerts);
+    renderTomorrow(data.tomorrow);
+    renderPatterns(data.drySpells, data.heatEvents);
+
     var c=data.current||{};
     $("nowTemp").textContent=Math.round(c.temp)+"°";
     $("nowIcon").textContent=c.icon||"🌤️";
@@ -243,16 +370,17 @@ tr:hover td{background:#f8fcff}
     best.innerHTML="";
     var picks=(data.bestDays||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,4);
     if(!picks.length){
-      best.innerHTML='<p class="hint">No standout warm dry days in the next fortnight — check the full outlook below.</p>';
+      best.innerHTML='<p class="hint">No standout warm dry days in the next fortnight — check tomorrow\'s breakdown and the full outlook below.</p>';
     }
     picks.forEach(function(d,i){
+      var why=(d.explanation&&d.explanation.positives&&d.explanation.positives[0])||d.summary;
       var card=document.createElement("article");
       card.className="day-card "+d.walkTier;
-      card.style.animationDelay=(i*0.06)+"s";
+      card.style.animationDelay=(i*0.07)+"s";
       card.innerHTML=
         '<div class="day-top">'+
-          '<div><div class="day-name">'+d.label+'</div><div class="hint">'+d.summary+'</div></div>'+
-          '<div class="day-icon">'+d.icon+'</div>'+
+          '<div><div class="day-name">'+esc(d.label)+'</div><div class="hint">'+esc(d.summary)+'</div></div>'+
+          '<div class="day-icon">'+esc(d.icon)+'</div>'+
         '</div>'+
         '<div class="score-pill '+d.walkTier+'">'+d.walkScore+' · '+tierLabel(d.walkTier)+'</div>'+
         '<div class="day-stats">'+
@@ -260,17 +388,20 @@ tr:hover td{background:#f8fcff}
           '<span>Rain <strong>'+Math.round(d.rainProb||0)+'%</strong></span>'+
           '<span>Wind <strong>'+Math.round(d.windMax||0)+'</strong> km/h</span>'+
           (d.sunshineHours!=null?'<span>☀️ <strong>'+d.sunshineHours+'</strong>h sun</span>':'')+
-        '</div>';
+        '</div>'+
+        '<div class="day-why">'+esc(why)+'</div>';
       best.appendChild(card);
     });
 
     var body=$("forecastBody");
     body.innerHTML="";
     (data.forecast||[]).forEach(function(d){
+      var why=d.explanation?(d.explanation.negatives[0]||d.explanation.positives[0]||d.explanation.headline):"";
       var tr=document.createElement("tr");
       tr.innerHTML=
-        '<td><strong>'+d.label+'</strong></td>'+
-        '<td>'+d.icon+' '+d.summary+'</td>'+
+        '<td><strong>'+esc(d.label)+'</strong></td>'+
+        '<td>'+esc(d.icon)+' '+esc(d.summary)+
+          (why?'<div class="row-why">'+esc(why)+'</div>':'')+'</td>'+
         '<td>'+Math.round(d.tempMax)+'° / '+Math.round(d.tempMin)+'°</td>'+
         '<td>'+Math.round(d.rainProb||0)+'% · '+((d.rainMm||0).toFixed(1))+'mm</td>'+
         '<td>'+Math.round(d.windMax||0)+' km/h</td>'+
@@ -288,14 +419,14 @@ tr:hover td{background:#f8fcff}
     $("status").textContent="Could not reach forecast API";
     var el=$("error");
     el.hidden=false;
-    el.innerHTML=msg+(cached?'<br><small>Showing last saved forecast from your device.</small>':'')+
+    el.innerHTML=esc(msg)+(cached?'<br><small>Showing last saved forecast from your device.</small>':'')+
       '<br><button class="retry" type="button" onclick="location.reload()">Try again</button>';
     if(cached) render(cached);
   }
 
   function loadCached(){
     try{
-      var raw=localStorage.getItem(CACHE_KEY);
+      var raw=localStorage.getItem(CACHE_KEY)||localStorage.getItem("bettystown_weather_v1");
       if(!raw) return null;
       var parsed=JSON.parse(raw);
       if(parsed&&parsed.data) return parsed.data;
