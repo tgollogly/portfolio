@@ -1,4 +1,4 @@
-# Tom's Bettystown Weather Tracker
+# Mom's Bettystown Weather
 
 Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 

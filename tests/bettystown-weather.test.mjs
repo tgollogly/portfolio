@@ -92,7 +92,7 @@ export function runBettystownWeatherTests() {
   s.assert("server challenge exempt", server.includes("isBettystownHost"));
 
   const html = readFileSync(join(root, "sites/bettystown/index.html"), "utf8");
-  s.assert("html title", html.includes("Tom's Bettystown Weather Tracker"));
+  s.assert("html title", html.includes("Mom's Bettystown Weather"));
   s.assert("html mom max", html.includes("Max"));
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
