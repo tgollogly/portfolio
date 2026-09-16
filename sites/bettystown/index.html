@@ -170,9 +170,10 @@ h1{
   animation:fadeUp .6s .12s ease both;
 }
 .now-temp{
-  font-family:var(--display);font-size:3.4rem;font-weight:600;line-height:1;
-  background:linear-gradient(145deg,#0077b6,#2a9d8f 55%,#f4a261);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+  /* DM Sans + solid colour: gradient clip-text breaks "13" etc. on iOS Safari */
+  font-family:"DM Sans",system-ui,sans-serif;font-size:3.4rem;font-weight:700;line-height:1.1;
+  font-variant-numeric:tabular-nums;letter-spacing:-0.02em;
+  color:var(--sea);
 }
 .now-meta{font-size:.95rem;color:var(--muted)}
 .now-icon{font-size:3.5rem;line-height:1;text-align:right;animation:floatIcon 5s ease-in-out infinite}

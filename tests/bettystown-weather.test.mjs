@@ -180,6 +180,8 @@ export function runBettystownWeatherTests() {
   s.assert("html three little birds", html.includes("Three Little Birds"));
   s.assert("html tomorrow not doubled", !html.includes("Tomorrow · Tomorrow"));
   s.assert("html artistic typography", html.includes("text-art") && html.includes("Cormorant"));
+  s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
+  s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html music loop guard", html.includes("watchLoop"));
   s.assert("server audio route", server.includes("three-little-birds.mp3"));
   s.assert("html og image", html.includes("assets/og/bettystown-weather.png"));
