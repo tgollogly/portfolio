@@ -203,6 +203,9 @@ export function runBettystownWeatherTests() {
   s.assert("daily workflow", wf.includes("0 8 * * *"));
   s.assert("health endpoint check", wf.includes("bettystown-health"));
 
+  const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+  s.assert("ci auto deploy job", ci.includes("deploy:") && ci.includes("deploy-portfolio1.sh"));
+
   return s.summary();
 }
 
