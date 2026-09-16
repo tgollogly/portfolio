@@ -88,13 +88,25 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .meta{font-size:.86rem;color:var(--muted);margin-top:8px}
 .reasons{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
 .reasons li{font-size:.84rem;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.6);color:var(--slate)}
+.buy-guide{margin-top:14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,247,237,.95),rgba(255,255,255,.85));border:1px solid rgba(234,88,12,.15)}
+.buy-guide .when{font-size:1.05rem;font-weight:700;color:var(--ink);margin:0 0 8px}
+.buy-guide .when.buy{color:var(--buy)}.buy-guide .when.wait{color:var(--wait)}
+.buy-guide .summary{font-size:.92rem;color:var(--slate);margin:0 0 12px;line-height:1.45}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+.stat .lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:4px}
+.stat .val{font-size:1.05rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums}
+.stat .val.good{color:var(--buy)}.stat .val.warn{color:var(--wait)}
+.stat .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
 .chart-card{margin-top:24px;padding:20px 22px 16px}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chart-head h2{font-family:var(--display);font-size:1.45rem;margin:0}
-.chart-wrap{position:relative;height:min(320px,55vw)}
+.chart-wrap{position:relative;height:min(260px,50vw)}
+.chart-note{font-size:.82rem;color:var(--muted);margin:0 0 10px;line-height:1.45}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend .dash i{background:transparent!important;border:2px dashed var(--muted);height:0;width:14px}
 .stations{margin-top:24px}
 .station{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .station:last-child{border-bottom:none}
@@ -129,16 +141,27 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 
 <section class="grid two" id="liveCards"></section>
 
-<section class="card chart-card" id="chartCard" hidden>
-  <div class="chart-head">
-    <h2>Price trend &amp; prediction</h2>
-    <span class="meta" id="chartHint">7-day forecast from recent movement</span>
-  </div>
-  <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+<section class="card chart-card" id="heatingChartCard" hidden>
+  <div class="chart-head"><h2>🛢️ Heating oil trend</h2></div>
+  <p class="chart-note" id="heatingChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
+  <div class="chart-wrap"><canvas id="heatingChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#ea580c"></i> Heating oil (NI quotes)</span>
-    <span><i style="background:#0284c7"></i> Diesel near Newry</span>
-    <span><i style="background:#94a3b8"></i> UK diesel average (weekly)</span>
+    <span><i style="background:#ea580c"></i> Past price</span>
+    <span class="dash"><i></i> Predicted</span>
+    <span><i style="background:#059669"></i> Target buy price</span>
+    <span><i style="background:#94a3b8"></i> Recent average</span>
+  </div>
+</section>
+
+<section class="card chart-card" id="dieselChartCard" hidden>
+  <div class="chart-head"><h2>⛽ Diesel trend (near Newry)</h2></div>
+  <p class="chart-note" id="dieselChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
+  <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
+  <div class="legend">
+    <span><i style="background:#0284c7"></i> Past price</span>
+    <span class="dash"><i></i> Predicted</span>
+    <span><i style="background:#059669"></i> Target buy price</span>
+    <span><i style="background:#94a3b8"></i> Recent average</span>
   </div>
 </section>
 
@@ -168,75 +191,112 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   var VAPID_API="/api/newry-fuel/vapid-public";
   var SUB_API="/api/newry-fuel/push/subscribe";
   var REFRESH=15*60*1000;
-  var chart=null;
+  var heatingChart=null;
+  var dieselChart=null;
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function fmtP(v){return Number(v).toFixed(1)+"p"}
+  function fmtMoney(v){return v==null?"—":"£"+Number(v).toFixed(2)}
+
+  function buyGuideHtml(signal, kind){
+    var g=signal&&signal.guide;
+    if(!g) return "";
+    var whenCls=signal.verdict==="buy"?"buy":signal.verdict==="wait"?"wait":"";
+    var saveLine="";
+    if(g.action==="buy_now"&&g.savingsVsAveragePpl>0){
+      saveLine=kind==="heating"
+        ?'<div class="sub">On a 900L fill: save ~'+fmtMoney(g.examples.heating900L)+' vs recent average</div>'
+        :'<div class="sub">On a 50L tank: save ~'+fmtMoney(g.examples.diesel50L)+' vs recent average</div>';
+    }else if(g.savingsVsNowPpl>0.3){
+      saveLine=kind==="heating"
+        ?'<div class="sub">If you wait: ~'+fmtMoney(g.examples.wait900L)+' saved on 900L</div>'
+        :'<div class="sub">If you wait: ~'+fmtMoney(g.examples.wait50L)+' saved on 50L</div>';
+    }
+    var avgVal=g.savingsVsAveragePpl;
+    var avgCls=avgVal>0?"good":avgVal<-0.5?"warn":"";
+    return '<div class="buy-guide">'+
+      '<p class="when '+whenCls+'">⏱ '+esc(g.timing)+'</p>'+
+      '<p class="summary">'+esc(g.summary)+'</p>'+
+      '<div class="stats-row">'+
+        '<div class="stat"><div class="lbl">Buy at about</div><div class="val good">'+fmtP(g.targetPricePpl)+'/L</div></div>'+
+        '<div class="stat"><div class="lbl">Right now</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
+        (g.savingsVsNowPpl>0?'<div class="stat"><div class="lbl">Could save</div><div class="val good">'+fmtP(g.savingsVsNowPpl)+'/L</div><div class="sub">'+g.savingsVsNowPct+'% cheaper if you wait</div></div>':"")+
+        (g.savingsVsAveragePpl!=null?'<div class="stat"><div class="lbl">Vs recent avg</div><div class="val '+avgCls+'">'+(avgVal>=0?"+":"")+fmtP(avgVal)+'/L</div><div class="sub">Avg '+fmtP(g.averagePpl)+'/L</div></div>':"")+
+        '<div class="stat"><div class="lbl">Predicted low</div><div class="val">'+fmtP(g.forecastLowPpl)+'/L</div><div class="sub">~day '+g.forecastLowDay+'</div></div>'+
+      '</div>'+saveLine+
+    '</div>';
+  }
 
   function signalCard(kind, signal, extra){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
-    var reasons=(signal.reasons||[]).map(function(r){return "<li>"+esc(r)+"</li>"}).join("");
     return '<article class="card '+cls+'" style="animation-delay:'+(kind==="heating"?0:0.06)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
       '<div class="price">'+fmtP(signal.current)+'<small>/litre</small></div>'+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
-      '<div class="meta">Confidence '+signal.confidence+'% · '+signal.percentile+'th percentile · 7d avg '+(signal.ma7!=null?fmtP(signal.ma7):"—")+'</div>'+
+      buyGuideHtml(signal,kind)+
       (extra||"")+
-      (reasons?'<ul class="reasons">'+reasons+'</ul>':"")+
     '</article>';
   }
 
-  function renderChart(data){
-    $("chartCard").hidden=false;
-    var ctx=$("priceChart").getContext("2d");
-    var h=(data.chart&&data.chart.heating)||[];
-    var d=(data.chart&&data.chart.dieselLocal)||[];
-    var uk=(data.chart&&data.chart.dieselUk)||[];
-    var labels=[]; var map={};
-    function add(series,key){
-      series.forEach(function(p){
-        var lb=p.label||p.t;
-        if(!map[lb]){map[lb]={};labels.push(lb)}
-        map[lb][key]=p.heatingPpl||p.dieselLocalPpl||p.dieselUkAvgPpl;
-      });
-    }
-    add(h,"heating");add(d,"diesel");add(uk,"uk");
-    labels.sort();
-    var tail=labels.slice(-24);
-    var heating=tail.map(function(l){return map[l].heating??null});
-    var diesel=tail.map(function(l){return map[l].diesel??null});
-    var ukLine=tail.map(function(l){return map[l].uk??null});
-    var fc=(data.signals&&data.signals.heating&&data.signals.heating.forecast)||[];
-    if(fc.length){
-      for(var i=0;i<fc.length;i++){
-        tail.push("+"+fc[i].day+"d");
-        heating.push(fc[i].estimate);
-        diesel.push(null);ukLine.push(null);
-      }
-    }
-    if(chart) chart.destroy();
-    chart=new Chart(ctx,{
+  function buildFuelChart(canvasId, history, signal, color, noteId){
+    var cardId=canvasId==="heatingChart"?"heatingChartCard":"dieselChartCard";
+    $(cardId).hidden=false;
+    var ctx=$(canvasId).getContext("2d");
+    var hist=(history||[]).slice(-20);
+    var labels=hist.map(function(p,i){return p.label||p.date||("Pt "+(i+1))});
+    var past=hist.map(function(p){return p.heatingPpl||p.dieselLocalPpl});
+    var g=signal&&signal.guide;
+    var fc=(signal&&signal.forecast)||[];
+    var forecastLabels=fc.map(function(f){return "Day +"+f.day});
+    var forecastData=fc.map(function(f){return f.estimate});
+    var allLabels=labels.concat(["Today"]).concat(forecastLabels);
+    var pastPadded=past.concat([signal.current]).concat(fc.map(function(){return null}));
+    var forecastPadded=labels.map(function(){return null}).concat([signal.current]).concat(forecastData);
+    var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
+    var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
+    var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
+    if(chartRef) chartRef.destroy();
+    var chart=new Chart(ctx,{
       type:"line",
       data:{
-        labels:tail,
+        labels:allLabels,
         datasets:[
-          {label:"Heating oil",data:heating,borderColor:"#ea580c",backgroundColor:"rgba(234,88,12,.12)",tension:.35,fill:true,spanGaps:true},
-          {label:"Diesel local",data:diesel,borderColor:"#0284c7",backgroundColor:"rgba(2,132,199,.08)",tension:.35,fill:false,spanGaps:true},
-          {label:"UK diesel avg",data:ukLine,borderColor:"#94a3b8",borderDash:[6,4],tension:.2,fill:false,spanGaps:true}
+          {label:"Past",data:pastPadded,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:2,spanGaps:false},
+          {label:"Predicted",data:forecastPadded,borderColor:color,borderWidth:2,borderDash:[6,4],tension:.35,fill:false,pointRadius:3,spanGaps:false},
+          {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
+          {label:"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
         ]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+(c.parsed.y!=null?fmtP(c.parsed.y)+"/L":"—")}}}
+        },
         scales:{
-          y:{title:{display:true,text:"pence / litre"},grid:{color:"rgba(15,23,42,.06)"}},
-          x:{ticks:{maxRotation:45,minRotation:0,font:{size:10}},grid:{display:false}}
+          y:{title:{display:true,text:"pence per litre"},grid:{color:"rgba(15,23,42,.06)"}},
+          x:{ticks:{maxRotation:40,minRotation:0,font:{size:10}},grid:{display:false}}
         }
       }
     });
+    if(canvasId==="heatingChart") heatingChart=chart; else dieselChart=chart;
+    if(g&&noteId){
+      $(noteId).textContent="Green line = buy at "+fmtP(g.targetPricePpl)+"/L · grey = recent average "+fmtP(g.averagePpl)+"/L · dashed = where price may go next week";
+    }
+  }
+
+  function renderCharts(data){
+    var hSig=data.signals&&data.signals.heating;
+    var dSig=data.signals&&data.signals.diesel;
+    if(hSig&&hSig.current!=null){
+      buildFuelChart("heatingChart",(data.chart&&data.chart.heating)||[],hSig,"#ea580c","heatingChartNote");
+    }
+    if(dSig&&dSig.current!=null){
+      buildFuelChart("dieselChart",(data.chart&&data.chart.dieselLocal)||[],dSig,"#0284c7","dieselChartNote");
+    }
   }
 
   function render(data){
@@ -247,7 +307,7 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,
       data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"");
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
-    renderChart(data);
+    renderCharts(data);
     if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
       $("stationsCard").hidden=false;
       $("stationList").innerHTML=data.diesel.stations.map(function(s){

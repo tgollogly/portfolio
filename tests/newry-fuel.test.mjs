@@ -11,6 +11,7 @@ import {
   movingAverage,
   linearTrend,
   analyzeBuySignal,
+  buildBuyGuide,
   buildNewryFuelManifest,
   sanitizePushSubscription,
   buildSlackMessage,
@@ -42,6 +43,20 @@ export function runNewryFuelTests() {
   });
   s.assert("buy signal cheap", buy.verdict === "buy" || buy.verdict === "watch");
   s.assert("buy has headline", buy.headline.length > 5);
+  s.assert("buy has guide", buy.guide && buy.guide.summary.length > 10);
+  s.assert("buy guide target", buy.guide.targetPricePpl === buy.current);
+
+  const guide = buildBuyGuide({
+    current: 120,
+    verdict: "wait",
+    trend: { slope: -0.3, intercept: 120 },
+    forecast: [{ day: 3, estimate: 115 }, { day: 7, estimate: 118 }],
+    ma7: 122,
+    ma30: 125,
+    prices: [128, 126, 124, 123, 122, 121, 120],
+  });
+  s.assert("wait guide savings", guide.savingsVsNowPpl > 0);
+  s.assert("wait guide summary", guide.summary.includes("115") || guide.summary.includes("Wait"));
 
   const manifest = buildNewryFuelManifest("path");
   s.assert("manifest path", manifest.start_url === "/newry-fuel/");
@@ -80,7 +95,8 @@ export function runNewryFuelTests() {
   s.assert("html noindex", html.includes("noindex,nofollow"));
   s.assert("html safe fuels", html.includes("Safe Fuels"));
   s.assert("html push btn", html.includes("pushBtn"));
-  s.assert("html chart", html.includes("priceChart"));
+  s.assert("html charts split", html.includes("heatingChart") && html.includes("dieselChart"));
+  s.assert("html buy guide", html.includes("buy-guide"));
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
   s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
