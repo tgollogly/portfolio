@@ -6,8 +6,12 @@ Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 
 | URL | Purpose |
 |-----|---------|
-| https://bettystown.tgollogly.dev/ | Subdomain (after DNS setup) |
-| https://tgollogly.dev/bettystown/ | Path on main site |
+| **https://bettystown.tgollogly.dev/** | Main link to send Mom (subdomain) |
+| https://tgollogly.dev/bettystown/ | Same app on main site |
+
+**Link preview:** sharing the subdomain shows a bright OG card (`og-preview.png`).
+
+**iPhone Home Screen:** open in Safari → Share → **Add to Home Screen** — uses `apple-touch-icon.png` and standalone mode.
 
 ## One-time Cloudflare setup
 
@@ -38,6 +42,14 @@ Ranks days for a **warm, dry, gentle-wind** beach walk with a dog:
 - KV cache (1h) if live fetch fails
 - Browser `localStorage` backup on the page
 - GitHub Action **Bettystown weather daily health check** at 08:00 UTC
+
+## Icons
+
+Regenerate preview + iOS icons:
+
+```bash
+python3 scripts/build-bettystown-icons.py
+```
 
 ## Test
 

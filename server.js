@@ -107,7 +107,16 @@ const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-
 // Original UK quiz-chaser demo — pursuit.tgollogly.dev (see games/the-pursuit/)
 const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
 const BETTYSTOWN_HOST = "bettystown.tgollogly.dev";
-const BETTYSTOWN_INDEX = "/sites/bettystown/index.html";
+const BETTYSTOWN_PREFIX = "/sites/bettystown";
+const BETTYSTOWN_INDEX = `${BETTYSTOWN_PREFIX}/index.html`;
+const BETTYSTOWN_ASSETS = new Map([
+  ["/apple-touch-icon.png", `${BETTYSTOWN_PREFIX}/apple-touch-icon.png`],
+  ["/favicon-32.png", `${BETTYSTOWN_PREFIX}/favicon-32.png`],
+  ["/og-preview.png", `${BETTYSTOWN_PREFIX}/og-preview.png`],
+  ["/manifest.webmanifest", `${BETTYSTOWN_PREFIX}/manifest.webmanifest`],
+  ["/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
+  ["/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
+]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
 const PURSUIT_SEED_PATH = `${QUIZ_GAME_PREFIX}/questions.js`;
@@ -116,13 +125,28 @@ function isBettystownHost(hostname) {
   return hostname === BETTYSTOWN_HOST;
 }
 
-async function serveBettystownWeather(request, env, assetPath) {
-  const asset = await env.ASSETS.fetch(new URL(assetPath || BETTYSTOWN_INDEX, request.url));
+async function serveBettystownAsset(request, env, assetPath) {
+  const asset = await env.ASSETS.fetch(new URL(assetPath, request.url));
   if (!asset.ok) return asset;
   const headers = new Headers(asset.headers);
-  headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Cache-Control", "public, max-age=300");
+  const isHtml = assetPath.endsWith(".html");
+  const isManifest = assetPath.endsWith(".webmanifest");
+  const isPng = assetPath.endsWith(".png");
+  if (isHtml) headers.set("Content-Type", "text/html; charset=utf-8");
+  else if (isManifest) headers.set("Content-Type", "application/manifest+json; charset=utf-8");
+  else if (isPng) headers.set("Content-Type", "image/png");
+  headers.set("Cache-Control", isHtml ? "public, max-age=300" : "public, max-age=86400");
   return new Response(asset.body, { status: asset.status, headers });
+}
+
+async function serveBettystownWeather(request, env, assetPath) {
+  return serveBettystownAsset(request, env, assetPath || BETTYSTOWN_INDEX);
+}
+
+function bettystownAssetPath(path) {
+  if (BETTYSTOWN_ASSETS.has(path)) return BETTYSTOWN_ASSETS.get(path);
+  if (path.startsWith(`${BETTYSTOWN_PREFIX}/`)) return path;
+  return null;
 }
 
 function isQuizGameHost(hostname) {
@@ -810,10 +834,14 @@ export default {
 
     if (isBettystownHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveBettystownWeather(request, env);
-      if (path.startsWith("/sites/bettystown/")) return env.ASSETS.fetch(request);
+      const btAsset = bettystownAssetPath(path);
+      if (btAsset) return serveBettystownAsset(request, env, btAsset);
     }
     if (path === "/bettystown" || path === "/bettystown/") {
       return serveBettystownWeather(request, env);
+    }
+    if (path.startsWith(`${BETTYSTOWN_PREFIX}/`)) {
+      return serveBettystownAsset(request, env, path);
     }
     if (isQuizGameHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveQuizGame(request, env);

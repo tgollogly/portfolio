@@ -96,6 +96,12 @@ export function runBettystownWeatherTests() {
   s.assert("html mom max", html.includes("Max"));
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
+  s.assert("html og image", html.includes("og-preview.png"));
+  s.assert("html apple touch", html.includes("apple-touch-icon"));
+  s.assert("html ios standalone", html.includes("apple-mobile-web-app-capable"));
+  s.assert("og preview exists", readFileSync(join(root, "sites/bettystown/og-preview.png")).length > 1000);
+  s.assert("apple icon exists", readFileSync(join(root, "sites/bettystown/apple-touch-icon.png")).length > 500);
+  s.assert("server bettystown assets", server.includes("BETTYSTOWN_ASSETS"));
 
   const wf = readFileSync(join(root, ".github/workflows/bettystown-weather-check.yml"), "utf8");
   s.assert("daily workflow", wf.includes("0 8 * * *"));
