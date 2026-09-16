@@ -6,10 +6,10 @@ Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 
 | URL | Purpose |
 |-----|---------|
-| **https://bettystown.tgollogly.dev/** | Main link to send Mom (subdomain) |
-| https://tgollogly.dev/bettystown/ | Same app on main site |
+| **https://tgollogly.dev/bettystown/** | **Send this link to Mom** (works now) |
+| https://bettystown.tgollogly.dev/ | Subdomain (after Cloudflare domain setup) |
 
-**Link preview:** sharing the subdomain shows a bright OG card (`og-preview.png`).
+**Link preview:** uses `https://tgollogly.dev/assets/og/bettystown-weather.png` (public, no login).
 
 **iPhone Home Screen:** open in Safari → Share → **Add to Home Screen** — uses `apple-touch-icon.png` and standalone mode.
 

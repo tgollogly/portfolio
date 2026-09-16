@@ -182,6 +182,22 @@ const BLOCK_VPN = true;
 const GATE_COOKIE = "tg_gate";
 const GATE_MAX_AGE_SEC = 7 * 24 * 60 * 60;
 const FACEBOOK_RE = /(^|\.)facebook\.com$|(^|\.)fb\.com$/i;
+const LINK_PREVIEW_BOT_RE =
+  /facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|Discordbot|TelegramBot|Applebot|iMessageBot|Pinterest/i;
+
+function isLinkPreviewBot(request) {
+  const ua = request.headers.get("User-Agent") || "";
+  return LINK_PREVIEW_BOT_RE.test(ua);
+}
+
+function isBettystownPath(path) {
+  return (
+    path === "/bettystown" ||
+    path.startsWith("/bettystown/") ||
+    path.startsWith("/sites/bettystown") ||
+    path === "/assets/og/bettystown-weather.png"
+  );
+}
 
 // Known VPN / proxy / datacenter ASNs (best-effort — not 100% of VPNs).
 const VPN_ASN_SET = new Set([
@@ -356,11 +372,12 @@ function shouldApplyChallenge(request, url, path) {
   if (!ACCESS_CHALLENGE_ENABLED) return false;
   if (isQuizGameHost(url.hostname)) return false;
   if (isBettystownHost(url.hostname)) return false;
+  if (isBettystownPath(path)) return false;
+  if (isLinkPreviewBot(request) && (isBettystownPath(path) || path.startsWith("/assets/og/bettystown"))) return false;
   if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
   if (path === "/access-challenge" || path === "/api/access-verify") return false;
   if (path.startsWith("/api/")) return false;
   if (isQuizGamePath(path) || path.startsWith("/games/clover-match")) return false;
-  if (path === "/bettystown" || path.startsWith("/bettystown/") || path.startsWith("/sites/bettystown")) return false;
   if (!isDocumentPath(path)) return false;
   return isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request);
 }
@@ -956,7 +973,7 @@ export default {
       headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
-    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isBettystownHost(url.hostname) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && !path.startsWith("/bettystown") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isBettystownHost(url.hostname) && !isBettystownPath(path) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
       const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
       if (vpnHit) {
         return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {

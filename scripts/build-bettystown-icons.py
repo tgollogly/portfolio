@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "sites" / "bettystown"
+OG_OUT = ROOT / "assets" / "og" / "bettystown-weather.png"
 
 SKY = (232, 244, 252)
 SKY2 = (184, 223, 245)
@@ -110,7 +111,10 @@ def draw_og_preview() -> Image.Image:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "icons").mkdir(exist_ok=True)
-    draw_og_preview().convert("RGB").save(OUT / "og-preview.png", optimize=True)
+    og = draw_og_preview().convert("RGB")
+    og.save(OUT / "og-preview.png", optimize=True)
+    OG_OUT.parent.mkdir(parents=True, exist_ok=True)
+    og.save(OG_OUT, optimize=True)
     draw_icon_square(180).convert("RGB").save(OUT / "apple-touch-icon.png", optimize=True)
     draw_icon_square(192).convert("RGB").save(OUT / "icons" / "icon-192.png", optimize=True)
     draw_icon_square(512).convert("RGB").save(OUT / "icons" / "icon-512.png", optimize=True)
