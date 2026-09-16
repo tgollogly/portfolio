@@ -1,0 +1,41 @@
+name: Pursuit feed refresh + Cloudflare cron
+
+# Twice-daily question growth without Gemini.
+# Also re-registers Worker cron on portfolio1 (06:00 & 18:00 UTC).
+#
+# Required GitHub secret: CLOUDFLARE_API_TOKEN
+#   Cloudflare dashboard → My Profile → API Tokens → Create Token
+#   Template: "Edit Cloudflare Workers" plus D1 edit on pursuit-questions.
+# Optional: CLOUDFLARE_ACCOUNT_ID (wrangler can infer it from the token).
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Generate RSS / OpenTDB / Wikipedia questions
+        run: node scripts/refresh-pursuit-feeds.mjs /tmp/pursuit-feed-questions.json
+      - name: Import into D1 + register portfolio1 cron triggers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Add GitHub secret CLOUDFLARE_API_TOKEN so this workflow can write D1 and attach Worker crons."
+            exit 1
+          fi
+          npx wrangler d1 execute pursuit-questions --remote \
+            -c wrangler.portfolio1.toml \
+            --file /tmp/pursuit-feed-questions.sql
+          npx wrangler triggers deploy -c wrangler.portfolio1.toml \
+            --name portfolio1 \
+            --schedules "0 6 * * *" "0 18 * * *"

@@ -138,5 +138,10 @@ if (!wranglerP1.includes('crons = ["0 6 * * *", "0 18 * * *"]')) {
   console.error("FAIL: wrangler.portfolio1.toml missing portfolio1 cron schedules");
   process.exit(1);
 }
+const refreshWf = readFileSync(join(dir, "../../.github/workflows/pursuit-refresh.yml"), "utf8");
+if (!refreshWf.includes("d1 execute pursuit-questions") || !refreshWf.includes("triggers deploy")) {
+  console.error("FAIL: missing GitHub Actions Pursuit refresh/cron workflow");
+  process.exit(1);
+}
 
 console.log(`Question bank OK: ${bank.length} questions`, diffs);
