@@ -25,6 +25,7 @@ import {
   buildShortForecast,
   buildExtendedForecast,
   buildWhenToBuyTimeline,
+  buildHoldOutlook,
   computeSeasonalProfile,
   buildPredictionIndicators,
   computeRsi,
@@ -118,6 +119,29 @@ export function runNewryFuelTests() {
   });
   s.assert("extended forecast has 6mo", extFc.some((f) => f.day === 180));
   s.assert("extended forecast tomorrow", extFc.find((f) => f.day === 1).estimate > 0);
+
+  const waitSignal = analyzeBuySignal({
+    current: 120,
+    history: [{ price: 108 }, { price: 110 }, { price: 112 }, { price: 114 }, { price: 116 }, { price: 118 }],
+    label: "Wait test",
+    extendedForecast: extFc,
+    govSeries: seriesLong,
+  });
+  s.assert("wait has hold outlook", waitSignal.holdOutlook && waitSignal.holdOutlook.headline.length > 5);
+  s.assert("hold outlook predictable", waitSignal.holdOutlook.predictable.length > 10);
+  s.assert("hold outlook risk label", waitSignal.holdOutlook.riskLabel.length > 5);
+  s.assert("hold outlook in guide", waitSignal.guide.holdOutlook === waitSignal.holdOutlook);
+
+  const holdDirect = buildHoldOutlook({
+    current: 120,
+    verdict: "wait",
+    extendedForecast: extFc,
+    predictionIndicators: { volatility: 1.2 },
+    history: [{ price: 110 }, { price: 112 }, { price: 114 }, { price: 116 }, { price: 118 }],
+  });
+  s.assert("buildHoldOutlook days", holdDirect.holdDaysMin >= 1 && holdDirect.holdDaysMax >= holdDirect.holdDaysMin);
+  s.assert("buildHoldOutlook confidence", ["high", "medium", "low"].includes(holdDirect.confidence));
+  s.assert("buildHoldOutlook null buy", buildHoldOutlook({ current: 100, verdict: "buy", extendedForecast: extFc }) === null);
 
   const seasonal = computeSeasonalProfile(seriesLong);
   s.assert("seasonal profile", seasonal && seasonal.avgAll > 0);
@@ -261,6 +285,8 @@ export function runNewryFuelTests() {
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
   s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
+  s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
+  s.assert("html hold alert meta", html.includes("topAlertHold"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));
