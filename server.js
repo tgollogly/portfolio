@@ -38,6 +38,10 @@ import {
   getMcpGuardrailManifest,
   runMcpWithGuardrails,
 } from "./lib/pursuit-mcp-guardrails.js";
+import {
+  getBettystownForecast,
+  runBettystownHealthCheck,
+} from "./lib/bettystown-weather.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -102,9 +106,24 @@ const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-
 
 // Original UK quiz-chaser demo — pursuit.tgollogly.dev (see games/the-pursuit/)
 const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
+const BETTYSTOWN_HOST = "bettystown.tgollogly.dev";
+const BETTYSTOWN_INDEX = "/sites/bettystown/index.html";
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
 const PURSUIT_SEED_PATH = `${QUIZ_GAME_PREFIX}/questions.js`;
+
+function isBettystownHost(hostname) {
+  return hostname === BETTYSTOWN_HOST;
+}
+
+async function serveBettystownWeather(request, env, assetPath) {
+  const asset = await env.ASSETS.fetch(new URL(assetPath || BETTYSTOWN_INDEX, request.url));
+  if (!asset.ok) return asset;
+  const headers = new Headers(asset.headers);
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  headers.set("Cache-Control", "public, max-age=300");
+  return new Response(asset.body, { status: asset.status, headers });
+}
 
 function isQuizGameHost(hostname) {
   return QUIZ_GAME_HOSTS.has(hostname);
@@ -312,10 +331,12 @@ function getCookie(request, name) {
 function shouldApplyChallenge(request, url, path) {
   if (!ACCESS_CHALLENGE_ENABLED) return false;
   if (isQuizGameHost(url.hostname)) return false;
+  if (isBettystownHost(url.hostname)) return false;
   if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
   if (path === "/access-challenge" || path === "/api/access-verify") return false;
   if (path.startsWith("/api/")) return false;
   if (isQuizGamePath(path) || path.startsWith("/games/clover-match")) return false;
+  if (path === "/bettystown" || path.startsWith("/bettystown/") || path.startsWith("/sites/bettystown")) return false;
   if (!isDocumentPath(path)) return false;
   return isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request);
 }
@@ -759,6 +780,17 @@ async function handlePursuitMemoryPost(request, env) {
   return json({ ok: true, memory });
 }
 
+async function handleBettystownWeatherGet(env) {
+  const data = await getBettystownForecast(env);
+  if (!data.ok) return json(data, 503);
+  return jsonGet(data);
+}
+
+async function handleBettystownHealthGet(env) {
+  const health = await runBettystownHealthCheck(env);
+  return jsonGet(health, health.ok ? 200 : 503);
+}
+
 async function handlePursuitRefreshPost(request, env) {
   const secret = await getSecret(env, "PURSUIT_REFRESH_SECRET");
   const auth = request.headers.get("Authorization") || "";
@@ -776,6 +808,13 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (isBettystownHost(url.hostname)) {
+      if (path === "/" || path === "/index.html") return serveBettystownWeather(request, env);
+      if (path.startsWith("/sites/bettystown/")) return env.ASSETS.fetch(request);
+    }
+    if (path === "/bettystown" || path === "/bettystown/") {
+      return serveBettystownWeather(request, env);
+    }
     if (isQuizGameHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveQuizGame(request, env);
     }
@@ -848,6 +887,16 @@ export default {
       if (request.method === "POST") return handlePursuitMcpPost(request, env);
       return new Response("GET or POST only", { status: 405, headers: corsGet() });
     }
+    if (path === "/api/bettystown-weather") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleBettystownWeatherGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/bettystown-health") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleBettystownHealthGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
     if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
       if (url.pathname === "/api/health" && request.method === "GET") return handleAIHealth(env);
@@ -879,7 +928,7 @@ export default {
       headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
-    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isBettystownHost(url.hostname) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && !path.startsWith("/bettystown") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
       const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
       if (vpnHit) {
         return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {
