@@ -3786,7 +3786,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Ethiopia?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],
@@ -3882,7 +3882,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Senegal?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],
@@ -4122,7 +4122,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Cameroon?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],
@@ -4458,7 +4458,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Sierra Leone?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],
@@ -4506,7 +4506,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Togo?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],
@@ -4554,7 +4554,7 @@ window.QUIZ_BANK = [
     "q": "Which animal is the symbol of Gambia?",
     "o": [
       "Lion",
-      "Lion",
+      "Leopard",
       "Eagle",
       "Bear"
     ],

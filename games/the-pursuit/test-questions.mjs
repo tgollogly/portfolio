@@ -33,6 +33,11 @@ for (const q of bank) {
     console.error("FAIL: invalid answer index", q.q);
     process.exit(1);
   }
+  const norm = q.o.map((s) => String(s).trim().toLowerCase());
+  if (new Set(norm).size !== 4) {
+    console.error("FAIL: duplicate options", q.id, q.q, q.o);
+    process.exit(1);
+  }
   diffs[q.d] = (diffs[q.d] || 0) + 1;
 }
 
@@ -74,6 +79,14 @@ if (!html.includes("pursuit-check-answer") || !html.includes("escapeHtml(q.q)"))
 }
 if (!html.includes("playerName") || !html.includes("localStorage")) {
   console.error("FAIL: index.html missing name persistence");
+  process.exit(1);
+}
+if (!html.includes("clock-ring") || !html.includes("round-splash") || !html.includes("chaser-panel")) {
+  console.error("FAIL: index.html missing TV-studio timer/chaser UI");
+  process.exit(1);
+}
+if (!html.includes("isValidQuestion")) {
+  console.error("FAIL: index.html missing client-side question validation");
   process.exit(1);
 }
 

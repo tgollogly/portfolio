@@ -116,10 +116,44 @@ header{text-align:center;margin-bottom:10px}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(232,197,71,.08)}
 .lb-empty{font-size:.78rem;color:var(--muted);margin:6px 0 0}
 .bank-stat{font-size:.72rem;color:var(--cyan);text-align:center;margin:0 0 8px}
+.led-strip{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--chaser),var(--gold),var(--cyan),var(--gold),var(--chaser));background-size:200% 100%;animation:ledScroll 4s linear infinite;z-index:60;pointer-events:none;opacity:.85}
+.led-strip.bottom{top:auto;bottom:0;animation-direction:reverse}
+@keyframes ledScroll{to{background-position:200% 0}}
+.clock-wrap{display:flex;justify-content:center;margin:0 0 12px}
+.clock-ring{position:relative;width:88px;height:88px;border-radius:50%;background:conic-gradient(var(--gold) var(--pct,100%),rgba(255,255,255,.08) 0);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(232,197,71,.2),inset 0 0 12px rgba(0,0,0,.5);transition:background .1s linear}
+.clock-ring::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--panel);border:2px solid rgba(232,197,71,.25)}
+.clock-ring.urgent{background:conic-gradient(var(--red) var(--pct,100%),rgba(255,255,255,.08) 0);animation:clockPulse .6s infinite alternate}
+.clock-num{position:relative;z-index:1;font-size:1.65rem;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.clock-ring.urgent .clock-num{color:var(--red)}
+@keyframes clockPulse{to{transform:scale(1.04)}}
+.chaser-panel{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(157,2,8,.35),rgba(157,2,8,.15));border:1px solid rgba(230,57,70,.45);align-items:center;gap:10px;animation:chaserIn .35s ease}
+.chaser-panel.show{display:flex}
+.chaser-panel .av-sm{width:40px;height:40px;border-radius:50%;border:2px solid var(--red);background:linear-gradient(145deg,#5a0a10,#2a0508);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.chaser-panel b{color:#ffb4b4;font-size:.82rem;display:block}
+.chaser-panel span{font-size:.72rem;color:var(--muted)}
+.chaser-panel.thinking .av-sm{animation:chaserThink .8s infinite alternate}
+@keyframes chaserIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes chaserThink{to{transform:scale(1.08);box-shadow:0 0 16px rgba(230,57,70,.5)}}
+.round-splash{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(157,2,8,.35),rgba(7,13,24,.95) 70%);pointer-events:none;opacity:0;transition:opacity .4s}
+.round-splash.show{opacity:1}
+.round-splash.fade{opacity:0}
+.splash-inner{text-align:center;animation:splashPop .6s cubic-bezier(.34,1.4,.64,1)}
+.splash-title{font-size:clamp(1.8rem,8vw,2.6rem);font-weight:900;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 4px 20px rgba(232,197,71,.4))}
+.splash-sub{margin-top:8px;font-size:.95rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+@keyframes splashPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.pot-flash{animation:potFlash .6s ease}
+@keyframes potFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.08);color:var(--gold2);text-shadow:0 0 12px rgba(232,197,71,.6)}}
+.studio-lights{position:fixed;inset:0;pointer-events:none;z-index:0;background:
+  radial-gradient(ellipse 40% 30% at 15% 20%,rgba(78,205,196,.06),transparent),
+  radial-gradient(ellipse 40% 30% at 85% 25%,rgba(232,197,71,.07),transparent),
+  radial-gradient(ellipse 50% 40% at 50% 0%,rgba(157,2,8,.12),transparent 60%)}
 @media(max-width:380px){.diff-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<div class="led-strip" aria-hidden="true"></div>
+<div class="led-strip bottom" aria-hidden="true"></div>
+<div class="studio-lights" aria-hidden="true"></div>
 <div class="spotlight" aria-hidden="true"></div>
 <div class="wrap">
   <header>
@@ -151,7 +185,7 @@ var DIFF={
 
 var ROUNDS=["Cash Builder","Head-to-Head","Final Chase"];
 var LS_NAME="pursuit_player_name",LS_SCORES="pursuit_local_scores",LS_PLAYER_ID="pursuit_player_id";
-var state={},timerId=null,audioCtx=null,musicOn=true,globalLb=[],lbTab="global",bankTotal=0,questionCache=[];
+var state={},timerId=null,audioCtx=null,musicOn=true,globalLb=[],lbTab="global",bankTotal=0,questionCache=[],lastTickSec=-1;
 
 function $(id){return document.getElementById(id);}
 function setMsg(t){$("msg").textContent=t||"";}
@@ -175,20 +209,32 @@ function tone(freq,dur,type,vol){
 }
 function sfxCorrect(){tone(880,.12,"sine",.1);setTimeout(function(){tone(1100,.15,"sine",.08);},80);}
 function sfxWrong(){tone(180,.25,"square",.06);tone(120,.3,"sawtooth",.04);}
-function sfxCash(){tone(660,.08,"triangle",.07);setTimeout(function(){tone(990,.1,"triangle",.06);},60);}
+function sfxCash(){tone(660,.08,"triangle",.07);setTimeout(function(){tone(990,.1,"triangle",.06);},60);setTimeout(function(){tone(1320,.12,"triangle",.05);},120);}
 function sfxMove(){tone(440,.06,"sine",.05);}
+function sfxTick(){tone(880,.04,"square",.04);}
+function sfxStinger(){tone(220,.25,"sawtooth",.05);setTimeout(function(){tone(330,.3,"triangle",.04);},120);setTimeout(function(){tone(440,.35,"sine",.05);},240);}
 
-var musicTimer=null;
+var musicTimer=null,tensionTimer=null;
 function startMusic(){
   if(!audioCtx||!musicOn||musicTimer)return;
-  var scale=[220,247,262,294,330,349,392],i=0;
+  var bass=[110,98,87,82],i=0;
   musicTimer=setInterval(function(){
     if(!musicOn||state.phase==="menu")return;
-    tone(scale[i%scale.length],.18,"triangle",.025);
+    tone(bass[i%bass.length],.22,"sawtooth",.018);
+    if(i%2===0)tone(bass[i%bass.length]*2,.12,"triangle",.012);
     i++;
-  },480);
+  },620);
+  if(!tensionTimer){
+    tensionTimer=setInterval(function(){
+      if(!musicOn||state.phase!=="play"||state.round<0)return;
+      tone(55,.08,"sine",.014);
+    },1400);
+  }
 }
-function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}}
+function stopMusic(){
+  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  if(tensionTimer){clearInterval(tensionTimer);tensionTimer=null;}
+}
 
 function shuffle(arr){
   var a=arr.slice();
@@ -208,13 +254,20 @@ function formatBankCount(n){
   if(n>=1000)return Math.floor(n/1000)+"k+";
   return String(n)+"+";
 }
+function isValidQuestion(q){
+  if(!q||!q.q||!Array.isArray(q.o)||q.o.length!==4)return false;
+  var norm=q.o.map(function(s){return String(s).trim().toLowerCase();});
+  if(new Set(norm).size!==4)return false;
+  var a=Number(q.a);
+  return a>=0&&a<=3&&!!String(q.o[a]).trim();
+}
 function localFallbackPick(n){
   if(!state.usedIds)state.usedIds=new Set();
   var pool=DIFF[state.diff].pool;
-  var bank=(window.QUIZ_BANK||[]).filter(function(q){return pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);});
-  if(bank.length<n)bank=(window.QUIZ_BANK||[]).filter(function(q){return !state.usedIds.has(q.id);});
+  var bank=(window.QUIZ_BANK||[]).filter(function(q){return isValidQuestion(q)&&pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);});
+  if(bank.length<n)bank=(window.QUIZ_BANK||[]).filter(function(q){return isValidQuestion(q)&&!state.usedIds.has(q.id);});
   if(questionCache.length){
-    bank=bank.concat(questionCache.filter(function(q){return pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);}));
+    bank=bank.concat(questionCache.filter(function(q){return isValidQuestion(q)&&pool.indexOf(q.d)>=0&&!state.usedIds.has(q.id);}));
   }
   var picked=shuffle(bank).slice(0,n);
   picked.forEach(function(q){if(q.id)state.usedIds.add(q.id);});
@@ -356,21 +409,48 @@ function showModal(title,text,cb){
   $("modalBtn").onclick=function(){$("overlay").classList.remove("show");if(cb)cb();};
 }
 
-function clearTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function clearTimer(){if(timerId){clearInterval(timerId);timerId=null;}lastTickSec=-1;}
 
-function renderQuestion(q,opts){
-  var html='<div class="panel"><h2>'+ROUNDS[state.round]+'</h2>';
+function showRoundIntro(title,subtitle,cb){
+  var el=document.createElement("div");
+  el.className="round-splash show";
+  el.innerHTML='<div class="splash-inner"><div class="splash-title">'+escapeHtml(title)+'</div><div class="splash-sub">'+escapeHtml(subtitle)+'</div></div>';
+  document.body.appendChild(el);
+  sfxStinger();
+  setTimeout(function(){
+    el.classList.add("fade");
+    setTimeout(function(){el.remove();if(cb)cb();},500);
+  },1700);
+}
+
+function showChaserPanel(thinking,msg){
+  var panel=$("chaserPanel");
+  if(!panel)return;
+  panel.classList.add("show");
+  panel.classList.toggle("thinking",!!thinking);
+  var sub=panel.querySelector(".chaser-msg");
+  if(sub)sub.textContent=msg||(thinking?"The Chaser is answering…":"The Chaser responds!");
+}
+function hideChaserPanel(){
+  var panel=$("chaserPanel");
+  if(panel){panel.classList.remove("show","thinking");}
+}
+
+function renderQuestion(q){
+  var html="";
+  if(state.round>=1)html+=renderTrack(state.pStep||0,state.cStep||0,state.trackSteps||7);
+  html+='<div class="panel"><h2>'+ROUNDS[state.round]+'</h2>';
+  if(state.round>=1){
+    html+='<div class="chaser-panel" id="chaserPanel"><div class="av-sm">🏹</div><div><b>The Chaser</b><span class="chaser-msg">Waiting for your answer…</span></div></div>';
+  }
   if(state.timerMax){
-    html+='<div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>';
+    html+='<div class="clock-wrap"><div class="clock-ring" id="clockRing"><span class="clock-num" id="clockNum">'+Math.ceil(state.timeLeft)+'</span></div></div>';
   }
   html+='<p class="q-text" id="qText">'+escapeHtml(q.q)+'</p><div class="opts" id="opts">';
   q.o.forEach(function(opt,i){
     html+='<button type="button" class="opt" data-i="'+i+'">'+String.fromCharCode(65+i)+'. '+escapeHtml(opt)+'</button>';
   });
   html+='</div></div>';
-  if(state.round===1)html=renderTrack(0,0)+html;
-  if(state.round===2)html=renderTrack(state.pStep,state.cStep)+html;
-  if(state.round===3)html=renderTrack(state.pStep,state.cStep)+html;
   $("screen").innerHTML=html;
   document.querySelectorAll(".opt").forEach(function(btn){
     btn.onclick=function(){answer(parseInt(btn.dataset.i,10));};
@@ -381,15 +461,22 @@ function renderQuestion(q,opts){
 function startTimer(){
   clearTimer();
   var left=state.timeLeft;
-  var fill=$("timerFill");
+  var ring=$("clockRing"),num=$("clockNum");
+  function paint(){
+    var pct=Math.max(0,left/state.timerMax*100);
+    if(ring){
+      ring.style.setProperty("--pct",pct+"%");
+      ring.classList.toggle("urgent",left<=5);
+    }
+    if(num)num.textContent=String(Math.max(0,Math.ceil(left)));
+    var sec=Math.ceil(left);
+    if(sec<=5&&sec!==lastTickSec&&left>0){lastTickSec=sec;sfxTick();}
+  }
+  paint();
   timerId=setInterval(function(){
     left-=0.1;
     state.timeLeft=left;
-    if(fill){
-      var pct=Math.max(0,left/state.timerMax*100);
-      fill.style.width=pct+"%";
-      fill.classList.toggle("urgent",pct<25);
-    }
+    paint();
     if(left<=0){clearTimer();onTimeout();}
   },100);
 }
@@ -410,7 +497,8 @@ function showAnswerResult(i,correct,ok){
   });
   if(ok){sfxCorrect();handleCorrect();}
   else{sfxWrong();handleWrong();}
-  setTimeout(function(){nextAfterQuestion(ok);},1400);
+  var delay=state.round>=1?2400:1400;
+  setTimeout(function(){nextAfterQuestion(ok);},delay);
 }
 function answer(i){
   clearTimer();
@@ -435,10 +523,15 @@ function answer(i){
   });
 }
 
+function flashPot(){
+  var el=$("potLbl");
+  if(el){el.classList.remove("pot-flash");void el.offsetWidth;el.classList.add("pot-flash");}
+}
+
 function handleCorrect(){
   var d=DIFF[state.diff];
   if(state.round===0){
-    state.pot+=d.cash;sfxCash();setMsg("Correct! +£"+d.cash);
+    state.pot+=d.cash;sfxCash();flashPot();setMsg("Correct! +£"+d.cash);
   }else if(state.round===1){
     state.pStep=Math.min(state.pStep+1,state.trackSteps);
     moveMarkers(state.pStep,state.cStep,state.trackSteps);
@@ -466,19 +559,44 @@ function handleWrong(){
 
 function chaserResponse(playerWrong){
   var d=DIFF[state.diff];
-  var chaserCorrect=Math.random()<(playerWrong?d.chaser+0.08:d.chaser);
-  if(chaserCorrect){
-    state.cStep=Math.min(state.cStep+1,state.trackSteps);
-    moveMarkers(state.pStep,state.cStep,state.trackSteps);
-    sfxMove();
-  }
+  showChaserPanel(true,playerWrong?"The Chaser smells blood…":"Can the Chaser keep up?");
+  setTimeout(function(){
+    var chaserCorrect=Math.random()<(playerWrong?d.chaser+0.08:d.chaser);
+    if(chaserCorrect){
+      state.cStep=Math.min(state.cStep+1,state.trackSteps);
+      moveMarkers(state.pStep,state.cStep,state.trackSteps);
+      sfxMove();
+      showChaserPanel(false,"The Chaser moves forward!");
+      setMsg("The Chaser gains a step!");
+    }else{
+      showChaserPanel(false,"The Chaser got it wrong!");
+      setMsg("The Chaser stumbles!");
+    }
+    setTimeout(hideChaserPanel,900);
+  },900);
 }
 
 function chaserFinal(playerWrong){
-  var d=DIFF[state.diff];
-  var advance=Math.random()<(playerWrong?d.chaser+0.1:d.chaser-0.15);
-  if(advance&&state.cStep>0){state.cStep--;moveMarkers(state.pStep,state.cStep,state.trackSteps);}
-  else if(!playerWrong&&Math.random()<d.chaser*0.5){state.cStep=Math.max(0,state.cStep-1);moveMarkers(state.pStep,state.cStep,state.trackSteps);}
+  showChaserPanel(true,playerWrong?"The Chaser is closing in…":"You're pushing back!");
+  setTimeout(function(){
+    var d=DIFF[state.diff];
+    var advance=Math.random()<(playerWrong?d.chaser+0.1:d.chaser-0.15);
+    if(advance&&state.cStep>0){
+      state.cStep--;
+      moveMarkers(state.pStep,state.cStep,state.trackSteps);
+      sfxMove();
+      showChaserPanel(false,"The Chaser retreats!");
+      setMsg("The chaser pushed back!");
+    }else if(!playerWrong&&Math.random()<d.chaser*0.5){
+      state.cStep=Math.max(0,state.cStep-1);
+      moveMarkers(state.pStep,state.cStep,state.trackSteps);
+      showChaserPanel(false,"Brilliant push!");
+      setMsg("You pushed the chaser back!");
+    }else{
+      showChaserPanel(false,"No change on the board.");
+    }
+    setTimeout(hideChaserPanel,900);
+  },900);
 }
 
 function nextAfterQuestion(wasCorrect){
@@ -508,7 +626,7 @@ function askCurrent(){
 
 function endCashBuilder(){
   showModal("Cash Builder complete!","You built £"+state.pot.toLocaleString("en-GB")+". Ready for Head-to-Head?",function(){
-    startHeadToHead();
+    showRoundIntro("Head-to-Head","Race the Chaser on the track",startHeadToHead);
   });
 }
 
@@ -521,7 +639,9 @@ function startHeadToHead(){
 }
 
 function winHeadToHead(){
-  showModal("Head-to-Head won!","The chaser didn't catch you. Enter the Final Chase for £"+state.pot.toLocaleString("en-GB")+"!",function(){startFinal();});
+  showModal("Head-to-Head won!","The chaser didn't catch you. Enter the Final Chase for £"+state.pot.toLocaleString("en-GB")+"!",function(){
+    showRoundIntro("Final Chase","Defend your lead for the jackpot",startFinal);
+  });
 }
 
 function loseHeadToHead(){
@@ -568,7 +688,9 @@ function startCashBuilder(){
   state.round=0;state.phase="play";state.pot=0;state.qIndex=0;state.usedIds=new Set();
   state.playerName=(loadName()||"").trim();
   state.timerMax=DIFF[state.diff].time;
-  beginRound(8,"Beat the clock — £"+DIFF[state.diff].cash+" per correct answer!",askCurrent);
+  showRoundIntro("Cash Builder","Beat the clock for £"+DIFF[state.diff].cash+" per correct answer",function(){
+    beginRound(8,"Quick fire — every second counts!",askCurrent);
+  });
 }
 
 function showMenu(){
