@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run full test suite (≥100 tests, ≥99% pass)
+        run: node tests/run-all.mjs
+      - name: Run legacy pursuit checks
+        run: node games/the-pursuit/test-questions.mjs
