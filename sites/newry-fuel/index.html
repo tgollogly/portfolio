@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex"/>
+<meta name="googlebot" content="noindex,nofollow"/>
+<meta name="color-scheme" content="dark light"/>
+<title>Newry Fuel Watch — Heating Oil &amp; Diesel Alerts</title>
+<meta name="description" content="Live heating oil and diesel prices near Newry, Northern Ireland — smart buy alerts, predictive charts, and one-tap call to Safe Fuels Camlough."/>
+<link rel="canonical" href="https://tgollogly.dev/newry-fuel/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Newry Fuel Watch"/>
+<meta property="og:url" content="https://tgollogly.dev/newry-fuel/"/>
+<meta property="og:title" content="Newry Fuel Watch"/>
+<meta property="og:description" content="Live heating oil &amp; diesel near Newry — know when to buy before prices rise."/>
+<meta name="theme-color" content="#ea580c"/>
+<link rel="manifest" href="/newry-fuel/manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="/newry-fuel/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/newry-fuel/favicon-32.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Fuel Watch"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+<style>
+:root{
+  --ink:#0f172a;--slate:#1e293b;--muted:#64748b;--faint:#94a3b8;
+  --amber:#f59e0b;--orange:#ea580c;--orange-deep:#c2410c;
+  --teal:#14b8a6;--sky:#38bdf8;--card:rgba(255,255,255,.92);
+  --glass:blur(20px) saturate(1.4);--line:rgba(15,23,42,.1);
+  --buy:#059669;--watch:#d97706;--wait:#dc2626;
+  --sans:"Plus Jakarta Sans",system-ui,sans-serif;
+  --display:"DM Serif Display",Georgia,serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.55;
+  background:linear-gradient(165deg,#fff7ed 0%,#fef3c7 35%,#e0f2fe 100%);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55;
+  background:radial-gradient(ellipse 70% 50% at 10% 0%,rgba(245,158,11,.25),transparent 55%),
+  radial-gradient(ellipse 60% 45% at 90% 10%,rgba(234,88,12,.18),transparent 50%),
+  radial-gradient(ellipse 80% 60% at 50% 100%,rgba(56,189,248,.15),transparent 55%);
+  animation:glowShift 20s ease-in-out infinite alternate}
+@keyframes glowShift{0%{opacity:.45;transform:scale(1)}100%{opacity:.62;transform:scale(1.03)}}
+.shell{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 20px 56px}
+.hero{padding:36px 0 12px;animation:rise .8s var(--ease) both}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--card);backdrop-filter:var(--glass);
+  border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.75rem;font-weight:700;
+  color:var(--orange);letter-spacing:.06em;text-transform:uppercase}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;margin:16px 0 8px;line-height:1.05}
+.title-main{display:block;color:var(--ink)}.title-accent{display:block;font-family:var(--sans);font-size:.55em;
+  font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-top:.2em}
+.subtitle{color:var(--muted);max-width:42em;margin:0;font-size:1.02rem}
+.status{font-size:.82rem;color:var(--faint);margin:14px 0 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.status .live{color:var(--teal);font-weight:700}
+.loader{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--orange);
+  border-radius:50%;animation:spin .75s linear infinite;vertical-align:-3px;margin-right:6px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:14px;padding:12px 18px;
+  font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
+.btn:active{transform:scale(.98)}
+.btn-push{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;box-shadow:0 8px 24px rgba(234,88,12,.28)}
+.btn-push:hover{transform:translateY(-2px)}
+.btn-push.on{background:linear-gradient(135deg,var(--teal),#0d9488)}
+.btn-call{background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none}
+.btn-call:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+.grid{display:grid;gap:16px;margin-top:24px}
+@media(min-width:640px){.grid.two{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);backdrop-filter:var(--glass);border:1px solid var(--line);border-radius:22px;
+  padding:22px 24px;box-shadow:0 12px 32px rgba(15,23,42,.06);animation:rise .65s var(--ease) both;
+  transition:transform .35s var(--ease),box-shadow .35s}
+.card:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(15,23,42,.1)}
+.card.buy{border-left:4px solid var(--buy)}.card.watch{border-left:4px solid var(--watch)}
+.card.wait{border-left:4px solid var(--wait)}.card.neutral{border-left:4px solid var(--faint)}
+.card-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--orange);margin-bottom:6px}
+.card h2{font-family:var(--display);font-size:1.65rem;margin:0 0 4px;font-weight:400}
+.price{font-family:var(--sans);font-size:2.8rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums;line-height:1.05}
+.price small{font-size:.45em;font-weight:600;color:var(--muted)}
+.verdict{font-size:1rem;font-weight:600;margin:10px 0;color:var(--slate)}
+.verdict.buy{color:var(--buy)}.verdict.watch{color:var(--watch)}.verdict.wait{color:var(--wait)}
+.meta{font-size:.86rem;color:var(--muted);margin-top:8px}
+.reasons{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.reasons li{font-size:.84rem;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.6);color:var(--slate)}
+.chart-card{margin-top:24px;padding:20px 22px 16px}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chart-head h2{font-family:var(--display);font-size:1.45rem;margin:0}
+.chart-wrap{position:relative;height:min(320px,55vw)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.stations{margin-top:24px}
+.station{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.station:last-child{border-bottom:none}
+.station strong{font-size:.95rem}
+.station .ppl{font-weight:700;color:var(--orange-deep);white-space:nowrap}
+.supplier{margin-top:24px;background:linear-gradient(135deg,rgba(254,243,199,.9),var(--card));border-color:#fde68a}
+.supplier h2{font-family:var(--display);font-size:1.35rem;margin:0 0 6px}
+.foot{text-align:center;padding:28px 0 8px;font-size:.76rem;color:var(--faint)}
+.foot a{color:var(--orange-deep)}
+.err{background:rgba(254,226,226,.9);border:1px solid #fecaca;color:#be123c;border-radius:16px;padding:14px 18px;margin-top:16px}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.glow,.badge .dot{animation:none}*{animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+<div class="shell">
+<header class="hero">
+  <div class="badge"><span class="dot"></span> Newry · BT35 · Northern Ireland</div>
+  <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
+  <p class="subtitle">Live prices, plain-English buy advice, and predictive charts — so you fill up <em>before</em> everyone else notices the dip. Usual supplier: <strong>Safe Fuels, Camlough</strong>.</p>
+  <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
+  <div class="toolbar">
+    <button type="button" class="btn btn-push" id="pushBtn" hidden>📣 Enable buy alerts</button>
+    <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
+  </div>
+</header>
+
+<div id="error" class="err" hidden></div>
+
+<section class="grid two" id="liveCards"></section>
+
+<section class="card chart-card" id="chartCard" hidden>
+  <div class="chart-head">
+    <h2>Price trend &amp; prediction</h2>
+    <span class="meta" id="chartHint">7-day forecast from recent movement</span>
+  </div>
+  <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  <div class="legend">
+    <span><i style="background:#ea580c"></i> Heating oil (NI quotes)</span>
+    <span><i style="background:#0284c7"></i> Diesel near Newry</span>
+    <span><i style="background:#94a3b8"></i> UK diesel average (weekly)</span>
+  </div>
+</section>
+
+<section class="card stations" id="stationsCard" hidden>
+  <div class="card-kicker">Cheapest diesel near you</div>
+  <h2>Forecourts near BT35</h2>
+  <div id="stationList"></div>
+  <p class="meta" id="dieselAttr"></p>
+</section>
+
+<section class="card supplier" id="supplierCard">
+  <div class="card-kicker">Your supplier</div>
+  <h2>Safe Fuels · Camlough</h2>
+  <p class="meta">8 Newry Road, Camlough, Newry BT35 7JP — home heating oil delivery for the Newry area.</p>
+  <p class="meta"><strong>028 3083 0691</strong> · tap a buy alert notification to dial automatically on iPhone.</p>
+</section>
+
+<footer class="foot">
+  Data: CheapestOil.co.uk · Fuel Near You (CC BY 4.0) · UK DESNZ weekly diesel ·
+  Auto-refreshes every 15 min · <span id="updatedAt">—</span>
+</footer>
+</div>
+
+<script>
+(function(){
+  var API="/api/newry-fuel/prices";
+  var VAPID_API="/api/newry-fuel/vapid-public";
+  var SUB_API="/api/newry-fuel/push/subscribe";
+  var REFRESH=15*60*1000;
+  var chart=null;
+
+  function $(id){return document.getElementById(id)}
+  function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+  function fmtP(v){return Number(v).toFixed(1)+"p"}
+
+  function signalCard(kind, signal, extra){
+    if(!signal||signal.current==null) return "";
+    var cls=signal.verdict||"neutral";
+    var reasons=(signal.reasons||[]).map(function(r){return "<li>"+esc(r)+"</li>"}).join("");
+    return '<article class="card '+cls+'" style="animation-delay:'+(kind==="heating"?0:0.06)+'s">'+
+      '<div class="card-kicker">'+esc(signal.label)+'</div>'+
+      '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
+      '<div class="price">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
+      '<div class="meta">Confidence '+signal.confidence+'% · '+signal.percentile+'th percentile · 7d avg '+(signal.ma7!=null?fmtP(signal.ma7):"—")+'</div>'+
+      (extra||"")+
+      (reasons?'<ul class="reasons">'+reasons+'</ul>':"")+
+    '</article>';
+  }
+
+  function renderChart(data){
+    $("chartCard").hidden=false;
+    var ctx=$("priceChart").getContext("2d");
+    var h=(data.chart&&data.chart.heating)||[];
+    var d=(data.chart&&data.chart.dieselLocal)||[];
+    var uk=(data.chart&&data.chart.dieselUk)||[];
+    var labels=[]; var map={};
+    function add(series,key){
+      series.forEach(function(p){
+        var lb=p.label||p.t;
+        if(!map[lb]){map[lb]={};labels.push(lb)}
+        map[lb][key]=p.heatingPpl||p.dieselLocalPpl||p.dieselUkAvgPpl;
+      });
+    }
+    add(h,"heating");add(d,"diesel");add(uk,"uk");
+    labels.sort();
+    var tail=labels.slice(-24);
+    var heating=tail.map(function(l){return map[l].heating??null});
+    var diesel=tail.map(function(l){return map[l].diesel??null});
+    var ukLine=tail.map(function(l){return map[l].uk??null});
+    var fc=(data.signals&&data.signals.heating&&data.signals.heating.forecast)||[];
+    if(fc.length){
+      for(var i=0;i<fc.length;i++){
+        tail.push("+"+fc[i].day+"d");
+        heating.push(fc[i].estimate);
+        diesel.push(null);ukLine.push(null);
+      }
+    }
+    if(chart) chart.destroy();
+    chart=new Chart(ctx,{
+      type:"line",
+      data:{
+        labels:tail,
+        datasets:[
+          {label:"Heating oil",data:heating,borderColor:"#ea580c",backgroundColor:"rgba(234,88,12,.12)",tension:.35,fill:true,spanGaps:true},
+          {label:"Diesel local",data:diesel,borderColor:"#0284c7",backgroundColor:"rgba(2,132,199,.08)",tension:.35,fill:false,spanGaps:true},
+          {label:"UK diesel avg",data:ukLine,borderColor:"#94a3b8",borderDash:[6,4],tension:.2,fill:false,spanGaps:true}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          y:{title:{display:true,text:"pence / litre"},grid:{color:"rgba(15,23,42,.06)"}},
+          x:{ticks:{maxRotation:45,minRotation:0,font:{size:10}},grid:{display:false}}
+        }
+      }
+    });
+  }
+
+  function render(data){
+    $("error").hidden=true;
+    var cards="";
+    cards+=signalCard("heating",data.signals&&data.signals.heating,
+      data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"");
+    cards+=signalCard("diesel",data.signals&&data.signals.diesel,
+      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"");
+    $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
+    renderChart(data);
+    if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
+      $("stationsCard").hidden=false;
+      $("stationList").innerHTML=data.diesel.stations.map(function(s){
+        return '<div class="station"><div><strong>'+esc(s.name)+'</strong><div class="meta">'+esc(s.brand)+' · '+s.distanceMiles.toFixed(1)+' mi</div></div><div class="ppl">'+fmtP(s.pricePpl)+'/L</div></div>';
+      }).join("");
+      $("dieselAttr").textContent=data.diesel.attribution||"";
+    }
+    $("status").innerHTML='<span class="live">● Live</span> · Heating oil &amp; diesel near Newry';
+    $("updatedAt").textContent="Updated "+new Date(data.fetchedAt).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"});
+    try{localStorage.setItem("newry_fuel_v1",JSON.stringify({at:Date.now(),data:data}))}catch(e){}
+  }
+
+  function showError(msg,cached){
+    $("status").textContent="Could not reach fuel API";
+    var el=$("error");el.hidden=false;
+    el.textContent=msg;
+    if(cached) render(cached);
+  }
+
+  function loadCached(){
+    try{var p=JSON.parse(localStorage.getItem("newry_fuel_v1"));return p&&p.data}catch(e){}return null;
+  }
+
+  function fetchPrices(){
+    return fetch(API,{headers:{Accept:"application/json"}})
+      .then(function(r){if(!r.ok) throw new Error("API "+r.status);return r.json()})
+      .then(function(d){if(!d.ok) throw new Error(d.error||"failed");render(d)})
+      .catch(function(err){
+        showError("Fuel data unavailable: "+err.message,cached=loadCached());
+        setTimeout(fetchPrices,8000);
+      });
+  }
+
+  function maybeAutoDial(){
+    if(location.search.indexOf("call=1")<0) return;
+    setTimeout(function(){
+      var a=document.createElement("a");
+      a.href="tel:+442830830691";
+      a.style.display="none";
+      document.body.appendChild(a);
+      a.click();
+    },600);
+  }
+
+  function urlB64ToUint8Array(base64String){
+    var padding="=".repeat((4-base64String.length%4)%4);
+    var base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+    var raw=atob(base64);var out=new Uint8Array(raw.length);
+    for(var i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+    return out;
+  }
+
+  function initPush(){
+    if(!("serviceWorker" in navigator)||!("PushManager" in window)) return;
+    $("pushBtn").hidden=false;
+    var btn=$("pushBtn");
+    navigator.serviceWorker.register("/newry-fuel/sw.js").catch(function(){});
+
+    function setBtn(on){
+      btn.textContent=on?"📣 Alerts on":"📣 Enable buy alerts";
+      btn.classList.toggle("on",on);
+    }
+    setBtn(Notification.permission==="granted");
+
+    btn.addEventListener("click",function(){
+      fetch(VAPID_API).then(function(r){return r.json()}).then(function(v){
+        if(!v.publicKey) throw new Error("Push not configured on server");
+        return Notification.requestPermission().then(function(p){
+          if(p!=="granted") throw new Error("Notifications blocked");
+          return navigator.serviceWorker.ready.then(function(reg){
+            return reg.pushManager.subscribe({
+              userVisibleOnly:true,
+              applicationServerKey:urlB64ToUint8Array(v.publicKey)
+            });
+          });
+        }).then(function(sub){
+          return fetch(SUB_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sub.toJSON())});
+        }).then(function(r){
+          if(!r.ok) throw new Error("Subscribe failed");
+          setBtn(true);
+        });
+      }).catch(function(err){
+        alert("Could not enable alerts: "+err.message);
+      });
+    });
+  }
+
+  fetchPrices();
+  setInterval(fetchPrices,REFRESH);
+  initPush();
+  maybeAutoDial();
+})();
+</script>
+</body>
+</html>

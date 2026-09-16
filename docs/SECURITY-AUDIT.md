@@ -42,6 +42,17 @@ Verify: `node tests/security-audit.test.mjs` or `node tests/run-all.mjs`.
 | `TURNSTILE_*` | Captcha (recommended if challenge enabled) |
 | `PURSUIT_REFRESH_SECRET` | Manual `POST /api/pursuit-refresh` only |
 | `JOB_FINDER_PASSWORD` | Job finder (recommended) |
+| `NEWRY_FUEL_SLACK_WEBHOOK` / `SLACK_WEBHOOK_URL` | Newry Fuel Watch Slack buy alerts |
+| `NEWRY_FUEL_VAPID_PUBLIC` / `NEWRY_FUEL_VAPID_PRIVATE` | Web Push for fuel buy alerts |
+| `NEWRY_FUEL_ALERT_SECRET` | Manual alert trigger + debug endpoint |
+
+## Newry Fuel Watch
+
+- Push subscriptions validated (`sanitizePushSubscription`) — HTTPS endpoints only, key length capped
+- Slack webhook and VAPID private keys are **server-only** (never sent to browser)
+- `/api/newry-fuel/debug` and `/api/newry-fuel/alert` require `NEWRY_FUEL_ALERT_SECRET` Bearer token
+- NI geo access-challenge exempt (site is for Northern Ireland users)
+- Service worker tap-to-call uses fixed Safe Fuels number only (no user-supplied tel URLs)
 
 ## Already in good shape
 

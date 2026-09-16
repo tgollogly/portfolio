@@ -1,0 +1,14 @@
+{
+  "name": "Newry Fuel Watch",
+  "short_name": "Fuel Watch",
+  "description": "Live heating oil & diesel prices near Newry with smart buy alerts.",
+  "start_url": "/newry-fuel/",
+  "scope": "/newry-fuel/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#ea580c",
+  "icons": [
+    { "src": "/newry-fuel/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/newry-fuel/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

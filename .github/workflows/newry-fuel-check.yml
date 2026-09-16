@@ -1,0 +1,24 @@
+name: Newry Fuel Check
+
+on:
+  schedule:
+    - cron: "30 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Unit tests
+        run: node tests/newry-fuel.test.mjs
+      - name: Live heating oil API
+        run: |
+          curl -fsSL -A "Mozilla/5.0 (compatible; HomeAssistant/2024.1)" \
+            "https://www.cheapestoil.co.uk/homeassistant/oilprice?postcode=BT35" | head -c 200
+      - name: Live diesel API
+        run: |
+          curl -fsSL "https://fuelnearyou.com/api/v1/dashboard/widget/nearby?postcode=BT35&fuel_type=B7_STANDARD&radius=10&limit=2" | head -c 300
