@@ -1,0 +1,40 @@
+name: Bettystown weather daily health check
+
+on:
+  schedule:
+    # 08:00 UTC daily — after morning model refresh
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Unit tests (scoring + validation)
+        run: node tests/bettystown-weather.test.mjs
+      - name: Open-Meteo direct fetch (source of truth)
+        run: |
+          node -e "
+          import { fetchOpenMeteoForecast, buildForecastResponse, validateForecastResponse } from './lib/bettystown-weather.js';
+          const live = await fetchOpenMeteoForecast(fetch, { retries: 3 });
+          if (!live.ok) { console.error('Open-Meteo failed:', live.error); process.exit(1); }
+          const body = buildForecastResponse(live.data, { fetchedAt: live.fetchedAt });
+          const v = validateForecastResponse(body);
+          if (!v.ok) { console.error('Validation failed:', v.issues); process.exit(1); }
+          console.log('OK:', body.forecast.length, 'days, best:', body.bestDays.length, 'current', body.current?.temp + '°C');
+          "
+      - name: Live site health (if deployed)
+        continue-on-error: true
+        run: |
+          code=$(curl -sS -o /tmp/bh.json -w "%{http_code}" "https://tgollogly.dev/api/bettystown-health" || echo "000")
+          echo "HTTP $code"
+          cat /tmp/bh.json || true
+          if [ "$code" = "200" ]; then
+            node -e "import fs from 'node:fs'; const h=JSON.parse(fs.readFileSync('/tmp/bh.json','utf8')); if(!h.ok) process.exit(1); console.log('Live health OK', h.forecastDays, 'days');"
+          else
+            echo "::warning::Live health endpoint not 200 yet — deploy portfolio1 to enable"
+          fi
