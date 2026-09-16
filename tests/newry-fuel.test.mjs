@@ -23,6 +23,10 @@ import {
   buildExtendedForecast,
   buildWhenToBuyTimeline,
   computeSeasonalProfile,
+  buildPredictionIndicators,
+  computeRsi,
+  computeMomentum,
+  exponentialMovingAverage,
   backtestBuyModel,
   computeModelConfidence,
   buildNewryFuelManifest,
@@ -125,6 +129,22 @@ export function runNewryFuelTests() {
   s.assert("when to buy timeline", timeline && timeline.windows.length >= 5);
   s.assert("when to buy 6mo outlook", timeline.sixMonthOutlook.includes("6-month"));
   s.assert("buy signal has whenToBuy", buy.guide.whenToBuy && buy.guide.whenToBuy.headline.length > 5);
+  s.assert("buy has indicators", buy.predictionIndicators && buy.predictionIndicators.indicators.length === 6);
+  s.assert("buy forecast bands", buy.forecast[0].low != null && buy.forecast[0].high != null);
+
+  const preds = buildPredictionIndicators({
+    prices: [120, 122, 121, 119, 118, 117, 116, 115, 114, 113, 112, 110, 108, 106, 105],
+    current: 100,
+    ma7: 108,
+    ma30: 115,
+    govSeries: seriesLong,
+    newsSentiment: { priceDirection: "down" },
+  });
+  s.assert("prediction indicators", preds.indicators.length === 6);
+  s.assert("prediction bias", ["up", "down", "steady"].includes(preds.nearTermBias));
+  s.assert("rsi range", computeRsi([100, 102, 104, 103, 105]) >= 0);
+  s.assert("momentum", typeof computeMomentum([100, 101, 102]) === "number");
+  s.assert("ema", exponentialMovingAverage([100, 102, 104]) > 100);
 
   const savings = buildSavingsTable({ savingsPpl: 5, kind: "heating" });
   s.assert("savings table 900L", savings.find((r) => r.litres === 900).savePounds === 45);

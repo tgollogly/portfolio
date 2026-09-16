@@ -117,6 +117,35 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .when-window .when-note{font-size:.8rem;color:var(--slate);margin-top:6px;line-height:1.35}
 .when-window .when-badge{position:absolute;top:10px;right:10px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:rgba(5,150,105,.15);color:#047857}
 .six-month{margin-top:14px;padding:12px 16px;border-radius:14px;background:rgba(15,23,42,.04);font-size:.92rem;font-weight:600;color:var(--slate)}
+.indicators-card{margin-top:24px;background:linear-gradient(145deg,rgba(15,23,42,.97),rgba(30,41,59,.92));border-color:rgba(255,255,255,.08);color:#e2e8f0}
+.indicators-card .card-kicker{color:#fbbf24}
+.indicators-card h2{color:#f8fafc;font-family:var(--display)}
+.indicators-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
+.ind-bias{font-size:1.1rem;font-weight:700;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.08);animation:fadeSlide .6s var(--ease) both}
+.ind-bias.up{color:#fca5a5;background:rgba(220,38,38,.15)}.ind-bias.down{color:#6ee7b7;background:rgba(5,150,105,.15)}.ind-bias.steady{color:#cbd5e1}
+.ind-grid{display:grid;gap:10px}
+@media(min-width:640px){.ind-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.ind-grid{grid-template-columns:repeat(3,1fr)}}
+.ind-item{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);animation:fadeSlide .55s var(--ease) both;transition:transform .3s var(--ease),background .3s}
+.ind-item:hover{transform:translateY(-2px);background:rgba(255,255,255,.09)}
+.ind-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ind-label{font-size:.78rem;font-weight:600;color:#94a3b8}
+.ind-dir{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px}
+.ind-dir.up{background:rgba(248,113,113,.2);color:#fca5a5}.ind-dir.down{background:rgba(52,211,153,.2);color:#6ee7b7}
+.ind-dir.neutral,.ind-dir.steady{background:rgba(148,163,184,.15);color:#cbd5e1}.ind-dir.watch{background:rgba(251,191,36,.15);color:#fcd34d}
+.ind-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:6px}
+.ind-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#14b8a6,#38bdf8);width:0;animation:barGrow 1s var(--ease) forwards}
+.ind-fill.up{background:linear-gradient(90deg,#f97316,#ef4444)}.ind-fill.down{background:linear-gradient(90deg,#059669,#14b8a6)}
+.ind-detail{font-size:.76rem;color:#94a3b8;line-height:1.35}
+.ind-note{margin-top:14px;font-size:.82rem;color:#64748b;text-align:center}
+.card.reveal{animation:cardReveal .7s var(--ease) both}
+.price.counting{animation:pricePop .5s var(--ease)}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes barGrow{from{width:0}to{width:var(--w,50%)}}
+@keyframes cardReveal{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pricePop{0%{transform:scale(.92);opacity:.5}70%{transform:scale(1.02)}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.loading-shimmer{background:linear-gradient(90deg,rgba(255,255,255,.4) 25%,rgba(255,255,255,.8) 50%,rgba(255,255,255,.4) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
 .news-card{margin-top:24px}
 .news-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
 .news-list li{font-size:.86rem;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.65);border-left:3px solid var(--orange)}
@@ -182,6 +211,16 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 <div id="error" class="err" hidden></div>
 
 <section class="grid two" id="liveCards"></section>
+
+<section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
+  <div class="card-kicker">Prediction engine v2</div>
+  <div class="indicators-head">
+    <h2>6 signals · next few days &amp; weeks</h2>
+    <div class="ind-bias" id="indBias"></div>
+  </div>
+  <div class="ind-grid" id="indGrid"></div>
+  <p class="ind-note" id="indNote"></p>
+</section>
 
 <section class="card when-card" id="whenCard" hidden>
   <div class="card-kicker">When to buy · before everyone else</div>
@@ -346,6 +385,40 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     return '<span class="trend-pill '+esc(snapshot.direction)+'">'+esc(snapshot.label)+'</span>';
   }
 
+  function animateValue(el, end, suffix, duration){
+    if(!el||!Number.isFinite(end)) return;
+    var start=parseFloat(el.dataset.val)||end;
+    var t0=performance.now();
+    function frame(t){
+      var p=Math.min(1,(t-t0)/duration);
+      var eased=1-Math.pow(1-p,3);
+      var v=start+(end-start)*eased;
+      el.innerHTML=v.toFixed(1)+(suffix||"")+'<small>/litre</small>';
+      if(p<1) requestAnimationFrame(frame);
+      else el.dataset.val=String(end);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function renderIndicators(data){
+    var trends=data.trends||{};
+    var ind=(trends.diesel&&trends.diesel.indicators)||(trends.heating&&trends.heating.indicators);
+    if(!ind||!ind.indicators||!ind.indicators.length){$("indicatorsCard").hidden=true;return}
+    $("indicatorsCard").hidden=false;
+    var bias=ind.nearTermBias||"steady";
+    var biasEl=$("indBias");
+    biasEl.className="ind-bias "+bias;
+    biasEl.textContent=bias==="up"?"↑ Next 1–14 days: likely UP":bias==="down"?"↓ Next 1–14 days: likely DOWN":"→ Next 1–14 days: steady";
+    $("indGrid").innerHTML=ind.indicators.map(function(item,i){
+      var score=Math.min(100,Math.max(0,item.score||0));
+      return '<div class="ind-item" style="animation-delay:'+(0.05+i*0.06)+'s">'+
+        '<div class="ind-top"><span class="ind-label">'+esc(item.label)+'</span><span class="ind-dir '+esc(item.direction)+'">'+esc(item.direction)+'</span></div>'+
+        '<div class="ind-bar"><div class="ind-fill '+esc(item.direction)+'" style="--w:'+score+'%"></div></div>'+
+        '<div class="ind-detail">'+esc(item.detail)+'</div></div>';
+    }).join("");
+    $("indNote").textContent=ind.accuracyNote||"";
+  }
+
   function outlookPanel(title, icon, trend, prediction){
     if(!trend&&!prediction) return "";
     var tDir=trend&&trend.direction||"flat";
@@ -360,10 +433,10 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   function signalCard(kind, signal, extra, trend){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
-    return '<article class="card '+cls+'" style="animation-delay:'+(kind==="heating"?0:0.06)+'s">'+
+    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
-      '<div class="price">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre</small></div>'+
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
@@ -385,11 +458,18 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
     var allLabels=labels.concat(fcLabels);
     var trendData=past.concat(fc.map(function(){return null}));
     var forecastData=[];
+    var bandLow=[];
+    var bandHigh=[];
     var i;
-    for(i=0;i<labels.length-1;i++) forecastData.push(null);
-    if(past.length) forecastData.push(past[past.length-1]);
-    for(i=1;i<fc.length;i++) forecastData.push(fc[i].estimate);
-    while(forecastData.length<allLabels.length) forecastData.push(null);
+    for(i=0;i<labels.length-1;i++){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
+    if(past.length){forecastData.push(past[past.length-1]);bandLow.push(past[past.length-1]);bandHigh.push(past[past.length-1])}
+    for(i=0;i<fc.length;i++){
+      if(i===0) continue;
+      forecastData.push(fc[i].estimate);
+      bandLow.push(fc[i].low!=null?fc[i].low:fc[i].estimate);
+      bandHigh.push(fc[i].high!=null?fc[i].high:fc[i].estimate);
+    }
+    while(forecastData.length<allLabels.length){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
     var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
@@ -399,8 +479,10 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
       data:{
         labels:allLabels,
         datasets:[
-          {label:"Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false},
-          {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false},
+          {label:"Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false,animation:{duration:900,easing:"easeOutQuart"}},
+          {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
+          {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
+          {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
           {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
           {label:"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
         ]
@@ -449,6 +531,10 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
       data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"",
       trends.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
+    document.querySelectorAll(".price[data-price]").forEach(function(el){
+      animateValue(el,parseFloat(el.dataset.price),"p",650);
+    });
+    renderIndicators(data);
     renderWhenToBuy(data);
 
     if(trends.heating||trends.diesel){
