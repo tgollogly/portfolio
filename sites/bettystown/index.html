@@ -340,6 +340,11 @@ tr:hover td{background:rgba(248,252,255,.8)}
   var API="/api/bettystown-weather";
   var CACHE_KEY="bettystown_weather_v2";
   var REFRESH_MS=15*60*1000;
+  var TZ="Europe/Dublin";
+
+  function formatIrelandDate(ms, opts){
+    return new Date(ms).toLocaleDateString("en-IE", Object.assign({timeZone:TZ}, opts||{}));
+  }
 
   function $(id){return document.getElementById(id)}
 
@@ -440,7 +445,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
 
     var c=data.current||{};
     var todayInfo=data.today||{};
-    $("nowDate").textContent=todayInfo.dateLong||new Date(data.fetchedAt).toLocaleDateString("en-IE",{weekday:"long",day:"numeric",month:"long"});
+    $("nowDate").textContent=todayInfo.dateLong||formatIrelandDate(data.fetchedAt,{weekday:"long",day:"numeric",month:"long"});
     $("nowTemp").textContent=Math.round(c.temp)+"°";
     $("nowIcon").textContent=c.icon||"🌤️";
     $("nowMeta").textContent=(c.summary||"—")+" · feels "+Math.round(c.feels||c.temp)+"° · wind "+Math.round(c.wind||0)+" km/h · humidity "+Math.round(c.humidity||0)+"%";
@@ -494,7 +499,7 @@ tr:hover td{background:rgba(248,252,255,.8)}
     var stale=data.stale?" (cached backup)":"";
     var todayLine=data.today&&data.today.dateLong?(' · Today is '+esc(data.today.dateLong)):"";
     $("status").innerHTML='<span class="live">● Live</span> · '+data.forecast.length+'-day forecast'+todayLine+stale;
-    $("updatedAt").textContent="Updated "+new Date(data.fetchedAt).toLocaleString("en-IE",{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short",timeZone:"Europe/Dublin"})+" (Ireland)";
+    $("updatedAt").textContent="Updated "+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short"})+" (Ireland)";
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:data}))}catch(e){}
   }
 

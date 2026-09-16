@@ -12,6 +12,9 @@ import {
   detectHeatEvents,
   explainWalkDay,
   formatDayMeta,
+  ymdInTimeZone,
+  addDaysYmd,
+  dayDiffYmd,
   pickBestDaysChronological,
   forecastUrl,
   scoreWalkDay,
@@ -29,9 +32,18 @@ export function runBettystownWeatherTests() {
   s.assert("wmo clear", wmoInfo(0).icon === "☀️");
   s.assert("wmo unknown fallback", wmoInfo(999).label === "Unknown");
 
-  const todayMeta = formatDayMeta("2026-09-16", new Date("2026-09-16T15:00:00"));
+  const todayMeta = formatDayMeta("2026-09-16", new Date("2026-09-16T15:00:00Z"), "Europe/Dublin");
   s.assert("formatDayMeta today", todayMeta.label === "Today" && todayMeta.relative === "today");
   s.assert("formatDayMeta dateLong", todayMeta.dateLong.includes("September"));
+  s.assert("sep 16 2026 is wednesday", todayMeta.dateLong.startsWith("Wednesday"));
+
+  const dublinRollover = formatDayMeta("2026-09-17", new Date("2026-09-16T23:30:00Z"), "Europe/Dublin");
+  s.assert("dublin midnight is today", dublinRollover.label === "Today" && dublinRollover.relative === "today");
+  s.assert("dublin midnight weekday", dublinRollover.dateLong.startsWith("Thursday"));
+
+  s.assert("ymd ireland", ymdInTimeZone(new Date("2026-09-16T23:30:00Z"), "Europe/Dublin") === "2026-09-17");
+  s.assert("add days ymd", addDaysYmd("2026-09-16", 1) === "2026-09-17");
+  s.assert("day diff", dayDiffYmd("2026-09-16", "2026-09-17") === 1);
 
   const perfect = scoreWalkDay({
     tempMax: 18,
