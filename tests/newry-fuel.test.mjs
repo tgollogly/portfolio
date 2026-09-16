@@ -13,6 +13,7 @@ import {
   linearTrend,
   analyzeBuySignal,
   buildBuyGuide,
+  buildBuyAlertState,
   buildSavingsTable,
   analyzeNewsSentiment,
   analyzeHeadlineDirection,
@@ -184,6 +185,12 @@ export function runNewryFuelTests() {
   s.assert("slack safe fuels", buildSlackMessage(payload).includes("Safe Fuels"));
   s.assert("push payload tel", buildPushPayload(payload).data.tel === "+442830830691");
 
+  const buyAlert = buildBuyAlertState(payload);
+  s.assert("buy alert active", buyAlert.active === true);
+  s.assert("buy alert message", buyAlert.message.includes("BUY NOW"));
+  s.assert("buy alert items", buyAlert.items.length === 2);
+  s.assert("buy alert inactive", buildBuyAlertState({ alertWorthy: false, signals: { heating: { verdict: "wait" } } }).active === false);
+
   const server = readFileSync(join(root, "server.js"), "utf8");
   s.assert("server newry host", server.includes("newry.tgollogly.dev"));
   s.assert("server newry path", server.includes("/newry-fuel/"));
@@ -198,6 +205,8 @@ export function runNewryFuelTests() {
   s.assert("html noindex", html.includes("noindex,nofollow"));
   s.assert("html safe fuels", html.includes("Safe Fuels"));
   s.assert("html push btn", html.includes("pushBtn"));
+  s.assert("html buy flash", html.includes("buyFlash") && html.includes("buy-flash"));
+  s.assert("html green banner copy", html.includes("green flashing banner"));
   s.assert("html charts split", html.includes("heatingChart") && html.includes("dieselChart"));
   s.assert("html buy guide", html.includes("buy-guide"));
   s.assert("html savings banner", html.includes("savings-banner"));
