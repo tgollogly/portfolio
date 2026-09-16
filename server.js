@@ -8,13 +8,14 @@ import {
 import {
   addLeaderboardEntry,
   ensureSchema,
+  checkQuestionAnswer,
   expandProceduralQuestions,
   getLeaderboard,
   getPlayerMemory,
   getPursuitStats,
   getQuestionCount,
-  maybeBackgroundPursuitRefresh,
   pickQuestionsFromDb,
+  publicQuestion,
   recordQuestionFeedback,
   refreshQuestionsWithAi,
   savePlayerMemory,
@@ -535,16 +536,8 @@ async function ensurePursuitBank(env, requestUrl) {
   }
 }
 
-function queuePursuitBackgroundRefresh(ctx, env, requestUrl) {
-  if (!ctx?.waitUntil) return;
-  ctx.waitUntil(
-    maybeBackgroundPursuitRefresh(env, requestUrl, { geminiFn: gemini, getKeyFn: getKey }).catch(() => {})
-  );
-}
-
-async function handlePursuitQuestionsGet(request, env, ctx) {
+async function handlePursuitQuestionsGet(request, env) {
   await ensurePursuitBank(env, request.url);
-  queuePursuitBackgroundRefresh(ctx, env, request.url);
   const url = new URL(request.url);
   const count = Math.min(48, Math.max(1, parseInt(url.searchParams.get("count") || "24", 10)));
   const pool = (url.searchParams.get("pool") || "easy,medium,hard,expert")
@@ -561,14 +554,44 @@ async function handlePursuitQuestionsGet(request, env, ctx) {
     questions = seed.filter((q) => pool.includes(q.d) && !exclude.includes(q.id)).slice(0, count);
   }
   const stats = await getPursuitStats(env);
-  return jsonGet({ questions, total: stats.total, source: questions.length ? "d1" : "fallback" });
+  const publicQs = questions.map((q) => publicQuestion(q));
+  return jsonGet({ questions: publicQs, total: stats.total, source: questions.length ? "d1" : "fallback" });
 }
 
-async function handlePursuitStatsGet(request, env, ctx) {
+async function handlePursuitStatsGet(request, env) {
   await ensurePursuitBank(env, request.url);
-  queuePursuitBackgroundRefresh(ctx, env, request.url);
   const stats = await getPursuitStats(env);
   return jsonGet(stats);
+}
+
+async function handlePursuitCheckAnswerPost(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const questionId = String(body.questionId || "").slice(0, 64);
+  const choice = Number(body.choice);
+  if (!questionId || choice < 0 || choice > 3) {
+    return json({ error: "questionId and choice (0-3) required" }, 400);
+  }
+  const result = await checkQuestionAnswer(env, questionId, choice);
+  if (!result) return json({ error: "question not found" }, 404);
+  await recordQuestionFeedback(env, questionId, result.correct);
+  return json({ correct: result.correct, answer: result.answer });
+}
+
+async function runPursuitRefresh(env, requestUrl) {
+  await ensurePursuitBank(env, requestUrl);
+  const key = await getKey(env);
+  const ai = key ? await refreshQuestionsWithAi(env, gemini, key) : { ok: false, error: "no ai key" };
+  const total = await getQuestionCount(env);
+  let expand = null;
+  if (total < 10_000_000) {
+    expand = await expandProceduralQuestions(env, Math.min(total + 5000, 10_000_000));
+  }
+  return { ai, expand, total: await getQuestionCount(env) };
 }
 
 async function handlePursuitFeedbackPost(request, env) {
@@ -606,32 +629,15 @@ async function handlePursuitMemoryPost(request, env) {
 async function handlePursuitRefreshPost(request, env) {
   const secret = await getSecret(env, "PURSUIT_REFRESH_SECRET");
   const auth = request.headers.get("Authorization") || "";
-  const cron = request.headers.get("CF-Scheduled") === "true";
-  if (!cron && secret && auth !== `Bearer ${secret}`) {
-    return json({ error: "unauthorized" }, 401);
-  }
-  await ensurePursuitBank(env, request.url);
-  const key = await getKey(env);
-  const ai = key ? await refreshQuestionsWithAi(env, gemini, key) : { ok: false, error: "no ai key" };
-  const total = await getQuestionCount(env);
-  let expand = null;
-  if (total < 10_000_000) {
-    expand = await expandProceduralQuestions(env, Math.min(total + 5000, 10_000_000));
-  }
-  return json({ ai, expand, total: await getQuestionCount(env) });
+  if (!secret) return json({ error: "refresh not configured" }, 503);
+  if (auth !== `Bearer ${secret}`) return json({ error: "unauthorized" }, 401);
+  const result = await runPursuitRefresh(env, request.url);
+  return json({ ok: true, ...result });
 }
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(
-      handlePursuitRefreshPost(
-        new Request("https://internal/api/pursuit-refresh", {
-          method: "POST",
-          headers: { "CF-Scheduled": "true" },
-        }),
-        env
-      )
-    );
+    ctx.waitUntil(runPursuitRefresh(env, "https://internal/").catch(() => {}));
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -668,13 +674,18 @@ export default {
     }
     if (path === "/api/pursuit-questions") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handlePursuitQuestionsGet(request, env, ctx);
+      if (request.method === "GET") return handlePursuitQuestionsGet(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/pursuit-stats") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handlePursuitStatsGet(request, env, ctx);
+      if (request.method === "GET") return handlePursuitStatsGet(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-check-answer") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+      if (request.method === "POST") return handlePursuitCheckAnswerPost(request, env);
+      return new Response("POST only", { status: 405, headers: cors() });
     }
     if (path === "/api/pursuit-feedback") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
