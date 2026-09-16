@@ -379,7 +379,7 @@ function formatSources(bySource){
   if(bySource.news_feed)parts.push(bySource.news_feed+" news");
   if(bySource.opentdb)parts.push(bySource.opentdb+" trivia");
   if(bySource.wikipedia)parts.push(bySource.wikipedia+" history");
-  if(bySource.current_events)parts.push(bySource.current_events+" AI");
+  if(bySource.current_events)parts.push(bySource.current_events+" events");
   if(bySource.seed)parts.push(bySource.seed+" seed");
   return parts.length?" · "+parts.slice(0,4).join(", "):"";
 }

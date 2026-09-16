@@ -115,6 +115,10 @@ if (!server.includes("pursuit-store") || !server.includes("scheduled")) {
   console.error("FAIL: server.js missing pursuit store or cron refresh");
   process.exit(1);
 }
+if (!server.includes("pursuitAiRefreshEnabled") || !server.includes("feeds_only")) {
+  console.error("FAIL: server.js must default to feeds-only refresh (no Gemini)");
+  process.exit(1);
+}
 if (server.includes("CF-Scheduled") || server.includes("maybeBackgroundPursuitRefresh")) {
   console.error("FAIL: server.js still has insecure refresh paths");
   process.exit(1);

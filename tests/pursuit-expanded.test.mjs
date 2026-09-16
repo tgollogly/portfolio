@@ -124,6 +124,7 @@ s.assert("server pursuit-feeds", server.includes("/api/pursuit-feeds"));
 s.assert("server lb delete", server.includes("handlePursuitLeaderboardReset"));
 s.assert("server no CF-Scheduled", !server.includes("CF-Scheduled"));
 s.assert("server check-answer", server.includes("pursuit-check-answer"));
+s.assert("server feeds-only refresh", server.includes("pursuitAiRefreshEnabled") && server.includes("feeds_only"));
 
 const html = readFileSync(join(root, "games/the-pursuit/index.html"), "utf8");
 s.assert("html escapeHtml", html.includes("escapeHtml(q.q)"));

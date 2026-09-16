@@ -616,11 +616,21 @@ async function handlePursuitCheckAnswerPost(request, env) {
   return json({ correct: result.correct, answer: result.answer });
 }
 
+function pursuitAiRefreshEnabled(env) {
+  const flag = env.PURSUIT_USE_AI;
+  return flag === true || flag === "true" || flag === "1";
+}
+
 async function runPursuitRefresh(env, requestUrl) {
   await ensurePursuitBank(env, requestUrl);
   const feeds = await refreshQuestionsFromFeeds(env);
-  const key = await getKey(env);
-  const ai = key ? await refreshQuestionsWithAi(env, gemini, key) : { ok: false, error: "no ai key" };
+  let ai = { ok: false, skipped: true, reason: "feeds_only" };
+  if (pursuitAiRefreshEnabled(env)) {
+    const key = await getKey(env);
+    ai = key
+      ? await refreshQuestionsWithAi(env, gemini, key)
+      : { ok: false, error: "no ai key" };
+  }
   const total = await getQuestionCount(env);
   let expand = null;
   if (total < 10_000_000) {
