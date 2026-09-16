@@ -29,7 +29,9 @@ Bindings (in `wrangler.toml`):
 | `PURSUIT_KV` | Leaderboard + player memory (MCP-accessible) |
 | `PURSUIT_DB` | D1 question bank (scales to millions of rows) |
 
-Optional secret: `PURSUIT_REFRESH_SECRET` — Bearer token for manual `POST /api/pursuit-refresh`.
+Optional secret: `PURSUIT_REFRESH_SECRET` — Bearer token for manual `POST /api/pursuit-refresh` and `DELETE /api/pursuit-leaderboard` (reset global scores).
+
+Reset leaderboard: `bash scripts/reset-pursuit-leaderboard.sh` or `PURSUIT_REFRESH_SECRET=… bash scripts/reset-pursuit-leaderboard.sh --api`
 
 ## Question bank (millions-scale)
 

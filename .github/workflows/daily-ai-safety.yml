@@ -1,0 +1,25 @@
+name: Daily AI safety guardrails
+
+on:
+  schedule:
+    # 07:00 UTC every day
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: AI safety matrix (≥99% pass required)
+        run: node tests/run-all.mjs
+      - name: Privacy guardrails legacy suite
+        run: node tests/privacy-guardrails.test.mjs
+      - name: Pursuit security suite
+        run: |
+          node tests/pursuit-security.test.mjs
+          node tests/pursuit-store.test.mjs
+          node tests/pursuit-news-feeds.test.mjs

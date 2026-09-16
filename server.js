@@ -11,6 +11,7 @@ import {
   checkQuestionAnswer,
   expandProceduralQuestions,
   getLeaderboard,
+  resetLeaderboard,
   getPlayerMemory,
   getPursuitStats,
   getQuestionCount,
@@ -778,7 +779,8 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
       if (request.method === "GET") return handlePursuitLeaderboardGet(env);
       if (request.method === "POST") return handlePursuitScorePost(request, env);
-      return new Response("GET or POST only", { status: 405, headers: corsGet() });
+      if (request.method === "DELETE") return handlePursuitLeaderboardReset(request, env);
+      return new Response("GET, POST or DELETE only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/pursuit-questions") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
@@ -1425,6 +1427,16 @@ async function handlePursuitLeaderboardGet(env) {
   const entries = await getLeaderboard(env);
   entries.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.at || 0) - (a.at || 0));
   return jsonGet({ entries: entries.slice(0, 50) });
+}
+
+async function handlePursuitLeaderboardReset(request, env) {
+  const secret = await getSecret(env, "PURSUIT_REFRESH_SECRET");
+  const auth = request.headers.get("Authorization") || "";
+  if (!secret) return json({ error: "reset not configured" }, 503);
+  if (auth !== `Bearer ${secret}`) return json({ error: "unauthorized" }, 401);
+  const result = await resetLeaderboard(env);
+  if (!result.ok) return json(result, 503);
+  return json(result);
 }
 
 async function handlePursuitScorePost(request, env) {
