@@ -25,7 +25,7 @@ Last reviewed: 2026-09-16.
 
 | Secret | Required for |
 |--------|----------------|
-| `GEMINI_API_KEY` | AI chat, ATS, Pursuit AI refresh |
+| `GEMINI_API_KEY` | AI chat, ATS; optional Pursuit refresh when `PURSUIT_USE_AI=true` |
 | `CHALLENGE_SECRET` | Access gate cookies |
 | `TURNSTILE_*` | Captcha (recommended if challenge enabled) |
 | `PURSUIT_REFRESH_SECRET` | Manual `POST /api/pursuit-refresh` only |

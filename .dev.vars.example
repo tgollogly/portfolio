@@ -11,3 +11,5 @@ CHALLENGE_SECRET=random_long_string_at_least_32_chars
 
 # Pursuit question refresh — required for POST /api/pursuit-refresh (cron uses scheduled() only)
 PURSUIT_REFRESH_SECRET=random_long_string_at_least_32_chars
+# Optional: re-enable Gemini question generation (default is RSS/feeds only)
+# PURSUIT_USE_AI=true
