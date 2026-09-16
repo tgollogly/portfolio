@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  PURSUIT_LB_KEY,
   sanitizePlayerId,
   sanitizePursuitName,
   validateQuestion,
@@ -30,6 +31,7 @@ ok(
   "reject duplicate options"
 );
 ok(!validateQuestion({ q: "Bad?", o: ["A", "B", "C", "D"], a: 5 }), "reject bad index");
+ok(PURSUIT_LB_KEY === "pursuit:leaderboard", "leaderboard kv key");
 
 if (failed) process.exit(1);
 console.log("pursuit-store tests OK");
