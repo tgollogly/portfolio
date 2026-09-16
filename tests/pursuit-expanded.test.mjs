@@ -131,6 +131,7 @@ s.assert("html check-answer api", html.includes("pursuit-check-answer"));
 s.assert("html noindex", html.includes("noindex,nofollow"));
 s.assert("html saveLevel", html.includes("saveLevel"));
 s.assert("html feedPanel", html.includes("feedPanel"));
+s.assert("html menu animations", html.includes("menu-screen") && html.includes("btn-start"));
 
 const wrangler = readFileSync(join(root, "wrangler.portfolio1.toml"), "utf8");
 s.assert("wrangler d1 binding", wrangler.includes("PURSUIT_DB"));
