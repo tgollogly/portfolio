@@ -24,6 +24,14 @@ import {
   seedIfEmpty,
   validateQuestion,
 } from "./lib/pursuit-store.js";
+import {
+  PURSUIT_MCP_TOOLS,
+  RSS_FEEDS,
+  fetchRssHeadlines,
+  generateFeedQuestions,
+  getCachedHeadlines,
+  refreshQuestionsFromFeeds,
+} from "./lib/pursuit-news-feeds.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -604,6 +612,7 @@ async function handlePursuitCheckAnswerPost(request, env) {
 
 async function runPursuitRefresh(env, requestUrl) {
   await ensurePursuitBank(env, requestUrl);
+  const feeds = await refreshQuestionsFromFeeds(env);
   const key = await getKey(env);
   const ai = key ? await refreshQuestionsWithAi(env, gemini, key) : { ok: false, error: "no ai key" };
   const total = await getQuestionCount(env);
@@ -611,7 +620,86 @@ async function runPursuitRefresh(env, requestUrl) {
   if (total < 10_000_000) {
     expand = await expandProceduralQuestions(env, Math.min(total + 5000, 10_000_000));
   }
-  return { ai, expand, total: await getQuestionCount(env) };
+  return { feeds, ai, expand, total: await getQuestionCount(env) };
+}
+
+async function handlePursuitFeedsGet(request, env) {
+  const cached = await getCachedHeadlines(env);
+  const stats = await getPursuitStats(env).catch(() => ({}));
+  return jsonGet({
+    sources: RSS_FEEDS.map((f) => ({ id: f.id, name: f.name, url: f.url, auth: false })),
+    extras: [
+      { id: "opentdb", name: "Open Trivia DB", auth: false },
+      { id: "wikipedia", name: "Wikipedia On This Day", auth: false },
+    ],
+    headlines: cached?.feeds || {},
+    headlinesAt: cached?.at || null,
+    stats,
+    refreshSchedule: "06:00 & 18:00 UTC (cron on portfolio1)",
+  });
+}
+
+async function handlePursuitMcpGet() {
+  return jsonGet({
+    name: "pursuit-quiz",
+    version: "1.0",
+    description: "Public read-only MCP-style tools for The Pursuit quiz bank. No auth required for GET and read tools.",
+    tools: PURSUIT_MCP_TOOLS,
+    endpoints: {
+      manifest: "GET /api/pursuit-mcp",
+      invoke: "POST /api/pursuit-mcp",
+      feeds: "GET /api/pursuit-feeds",
+    },
+  });
+}
+
+async function handlePursuitMcpPost(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const tool = String(body.tool || body.name || "").trim();
+  const args = body.arguments || body.args || {};
+
+  switch (tool) {
+    case "get_stats": {
+      await ensurePursuitBank(env, request.url);
+      const stats = await getPursuitStats(env);
+      return json({ tool, result: stats });
+    }
+    case "get_feeds":
+      return json({
+        tool,
+        result: {
+          rss: RSS_FEEDS,
+          extras: ["opentdb", "wikipedia"],
+          authRequired: false,
+        },
+      });
+    case "get_headlines": {
+      const feedId = String(args.feed || "bbc_news");
+      const limit = Math.min(15, Math.max(1, Number(args.limit) || 8));
+      const feed = RSS_FEEDS.find((f) => f.id === feedId) || RSS_FEEDS[0];
+      const headlines = await fetchRssHeadlines(feed.url, fetch, limit);
+      return json({ tool, result: { feed: feed.id, headlines } });
+    }
+    case "sample_questions": {
+      const limit = Math.min(10, Math.max(1, Number(args.limit) || 5));
+      const preview = await generateFeedQuestions(fetch, { otdbAmount: 10 });
+      return json({
+        tool,
+        result: {
+          count: preview.questions.length,
+          questions: preview.questions.slice(0, limit).map((q) => publicQuestion(q)),
+          errors: preview.errors,
+        },
+      });
+    }
+    default:
+      return json({ error: "unknown tool", available: PURSUIT_MCP_TOOLS.map((t) => t.name) }, 400);
+  }
 }
 
 async function handlePursuitFeedbackPost(request, env) {
@@ -722,6 +810,17 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
       if (request.method === "POST") return handlePursuitRefreshPost(request, env);
       return new Response("POST only", { status: 405, headers: cors() });
+    }
+    if (path === "/api/pursuit-feeds") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitFeedsGet(request, env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/pursuit-mcp") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handlePursuitMcpGet();
+      if (request.method === "POST") return handlePursuitMcpPost(request, env);
+      return new Response("GET or POST only", { status: 405, headers: corsGet() });
     }
     if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
