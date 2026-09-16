@@ -34,6 +34,7 @@ import {
   updateFuelMemoryOutcomes,
   computeMemoryStats,
   buildMemoryPayload,
+  buildDieselDisplayMeta,
   computeSeasonalProfile,
   buildPredictionIndicators,
   computeRsi,
@@ -100,9 +101,31 @@ export function runNewryFuelTests() {
   s.assert("headline down", analyzeHeadlineDirection("Fuel prices fall across UK").direction === "down");
 
   const gov = [{ date: "2026-01-01", dieselPpl: 170 }, { date: "2026-01-08", dieselPpl: 172 }, { date: "2026-01-15", dieselPpl: 175 }];
-  const trend = buildLiveTrendSeries(gov, [], 182.9, "diesel", 182.9);
-  s.assert("trend series length", trend.length >= 4);
+  const dieselHist = [
+    { price: 178, date: "2026-01-10", at: "2026-01-10T06:00:00Z" },
+    { price: 180, date: "2026-01-12", at: "2026-01-12T06:00:00Z" },
+    { price: 181, date: "2026-01-14", at: "2026-01-14T06:00:00Z" },
+  ];
+  const trend = buildLiveTrendSeries(gov, dieselHist, 182.9, "diesel", 182.9);
+  s.assert("diesel trend local only", trend.length >= 4 && trend.every((p) => p.type !== "uk_weekly"));
   s.assert("trend has now", trend.some((p) => p.live));
+  const trendHeat = buildLiveTrendSeries(gov, [], 107, "heating", 182.9);
+  s.assert("heating trend series length", trendHeat.length >= 4);
+
+  const dieselMeta = buildDieselDisplayMeta(
+    {
+      ok: true,
+      cheapestPpl: 176.9,
+      highestPpl: 179.5,
+      stationCount: 3,
+      postcode: "BT35",
+      searchRadiusMiles: 12,
+      cheapestStation: { name: "Test Station", brand: "Brand X", distanceMiles: 2.1 },
+    },
+    gov
+  );
+  s.assert("diesel display meta", dieselMeta.headline.includes("BT35") && dieselMeta.vsUkLabel.includes("above"));
+  s.assert("diesel display note", dieselMeta.note.includes("not home heating"));
   const snap = buildTrendSnapshot(trend);
   s.assert("trend snapshot", snap && snap.label.includes("trend"));
 
@@ -332,6 +355,8 @@ export function runNewryFuelTests() {
   s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
   s.assert("html alert updating guard", html.includes("is-updating"));
   s.assert("html memory note", html.includes("memoryNote") && html.includes("persistent memory"));
+  s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
+  s.assert("html diesel range", html.includes("dieselRange"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));

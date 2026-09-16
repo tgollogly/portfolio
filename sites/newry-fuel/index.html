@@ -98,6 +98,13 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .card h2{font-family:var(--display);font-size:1.65rem;margin:0 0 4px;font-weight:400}
 .price{font-family:var(--sans);font-size:2.8rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums;line-height:1.05}
 .price small{font-size:.45em;font-weight:600;color:var(--muted)}
+.price-context{margin:8px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(2,132,199,.08);border:1px solid rgba(2,132,199,.18)}
+.price-context .price-ctx-main{font-size:.88rem;font-weight:700;color:var(--slate);margin:0 0 4px;line-height:1.35}
+.price-context .price-ctx-sub{font-size:.84rem;color:var(--muted);margin:0 0 6px}
+.price-context .price-ctx-uk{font-size:.82rem;font-weight:600;color:#0369a1;margin:0 0 4px}
+.price-context .price-ctx-note{font-size:.76rem;color:var(--faint);margin:0;line-height:1.35}
+.station.cheapest{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px}
+.station-range{font-size:.88rem;font-weight:600;color:var(--slate);margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.65)}
 .verdict{font-size:1rem;font-weight:600;margin:10px 0;color:var(--slate)}
 .verdict.buy{color:var(--buy)}.verdict.watch{color:var(--watch)}.verdict.wait{color:var(--wait)}
 .meta{font-size:.86rem;color:var(--muted);margin-top:8px}
@@ -373,20 +380,22 @@ body.alert-active{padding-top:76px}
 </section>
 
 <section class="card chart-card" id="dieselChartCard" hidden>
-  <div class="chart-head"><h2>⛽ Diesel trend (near Newry)</h2></div>
-  <p class="chart-note" id="dieselChartNote">Solid = live readings · purple dashed = 7-day prediction · green = buy target</p>
+  <div class="chart-head"><h2>⛽ Diesel at the pump — local trend</h2></div>
+  <p class="chart-note" id="dieselChartNote">Local forecourt prices near BT35 only · grey dashed = UK weekly average for comparison</p>
   <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
   <div class="legend">
     <span><i style="background:#0284c7"></i> Live trend (weekly + now)</span>
     <span><i style="background:#7c3aed"></i> 7-day prediction</span>
     <span><i style="background:#059669"></i> Target buy</span>
-    <span><i style="background:#94a3b8"></i> Average</span>
+    <span><i style="background:#94a3b8"></i> Your 30-day avg</span>
+    <span class="dash"><i style="background:#64748b"></i> UK weekly avg</span>
   </div>
 </section>
 
 <section class="card stations" id="stationsCard" hidden>
-  <div class="card-kicker">Cheapest diesel near you</div>
-  <h2>Forecourts near BT35</h2>
+  <div class="card-kicker">Standard diesel (B7) · pump prices</div>
+  <h2>Forecourts within 12 miles of BT35</h2>
+  <p class="station-range" id="dieselRange" hidden></p>
   <div id="stationList"></div>
   <p class="meta" id="dieselAttr"></p>
 </section>
@@ -721,13 +730,27 @@ body.alert-active{padding-top:76px}
       '</ul></div>';
   }
 
-  function signalCard(kind, signal, extra, trend){
+  function dieselPriceContextHtml(diesel){
+    var d=diesel&&diesel.display;
+    if(!d) return "";
+    return '<div class="price-context">'+
+      '<p class="price-ctx-main">'+esc(d.headline)+'</p>'+
+      (d.subtitle?'<p class="price-ctx-sub">📍 '+esc(d.subtitle)+'</p>':"")+
+      (d.vsUkLabel&&d.ukAvgPpl!=null?'<p class="price-ctx-uk">🇬🇧 UK weekly avg '+fmtP(d.ukAvgPpl)+'/L · '+esc(d.vsUkLabel)+'</p>':"")+
+      (d.rangeLabel?'<p class="price-ctx-sub">'+esc(d.rangeLabel)+'</p>':"")+
+      '<p class="price-ctx-note">'+esc(d.note)+'</p>'+
+    '</div>';
+  }
+
+  function signalCard(kind, signal, extra, trend, fuelData){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
+    var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
     return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
-      '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Car diesel")+'</h2>'+
-      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre</small></div>'+
+      '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Diesel at the pump (B7)")+'</h2>'+
+      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre at pump</small></div>'+
+      priceCtx+
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
       buyGuideHtml(signal,kind)+
@@ -739,6 +762,7 @@ body.alert-active{padding-top:76px}
   function buildFuelChart(canvasId, trendPack, signal, color, noteId){
     if(!window.Chart) return;
     var cardId=canvasId==="heatingChart"?"heatingChartCard":"dieselChartCard";
+    var isDiesel=canvasId==="dieselChart";
     $(cardId).hidden=false;
     var ctx=$(canvasId).getContext("2d");
     var series=(trendPack&&trendPack.series)||[];
@@ -764,20 +788,26 @@ body.alert-active{padding-top:76px}
     while(forecastData.length<allLabels.length){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
+    var ukRef=trendPack&&trendPack.ukReferencePpl;
+    var ukLine=ukRef!=null?allLabels.map(function(){return ukRef}):null;
     var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
     if(chartRef) chartRef.destroy();
+    var datasets=[
+      {label:isDiesel?"Local pump prices": "Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false,animation:{duration:900,easing:"easeOutQuart"}},
+      {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
+      {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
+      {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
+      {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
+      {label:isDiesel?"Your 30-day avg":"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
+    ];
+    if(ukLine){
+      datasets.push({label:"UK weekly avg",data:ukLine,borderColor:"#64748b",borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
+    }
     var chart=new Chart(ctx,{
       type:"line",
       data:{
         labels:allLabels,
-        datasets:[
-          {label:"Live trend",data:trendData,borderColor:color,borderWidth:2.5,backgroundColor:color==="#ea580c"?"rgba(234,88,12,.12)":"rgba(2,132,199,.12)",tension:.35,fill:true,pointRadius:series.map(function(p){return p.live?5:2}),spanGaps:false,animation:{duration:900,easing:"easeOutQuart"}},
-          {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
-          {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
-          {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
-          {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
-          {label:"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
-        ]
+        datasets:datasets
       },
       options:{
         responsive:true,maintainAspectRatio:false,
@@ -794,9 +824,15 @@ body.alert-active{padding-top:76px}
     if(canvasId==="heatingChart") heatingChart=chart; else dieselChart=chart;
     if(noteId){
       var pred=trendPack&&trendPack.prediction;
-      $(noteId).textContent=
-        "Solid = real weekly + live readings · Purple dashed = 7-day prediction · Green = buy target"+
-        (pred?" · Forecast: "+pred.headline:"");
+      if(isDiesel){
+        $(noteId).textContent=
+          "Blue = local forecourt prices we've logged near BT35 · Grey dashed = UK national weekly average · Purple = 7-day forecast"+
+          (pred?" · "+pred.headline:"");
+      }else{
+        $(noteId).textContent=
+          "Solid = real weekly + live readings · Purple dashed = 7-day prediction · Green = buy target"+
+          (pred?" · Forecast: "+pred.headline:"");
+      }
     }
   }
 
@@ -818,10 +854,8 @@ body.alert-active{padding-top:76px}
     var trends=data.trends||{};
     cards+=signalCard("heating",data.signals&&data.signals.heating,
       data.heating&&data.heating.ok?'<div class="meta">Cheapest quote for 900L near BT35 · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':"",
-      trends.heating);
-    cards+=signalCard("diesel",data.signals&&data.signals.diesel,
-      data.diesel&&data.diesel.cheapestStation?'<div class="meta">Best: '+esc(data.diesel.cheapestStation.name)+' ('+fmtP(data.diesel.cheapestStation.pricePpl)+'/L)</div>':"",
-      trends.diesel);
+      trends.heating,null);
+    cards+=signalCard("diesel",data.signals&&data.signals.diesel,"",trends.diesel,data.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
     document.querySelectorAll(".price[data-price]").forEach(function(el){
       animateValue(el,parseFloat(el.dataset.price),"p",650);
@@ -835,7 +869,7 @@ body.alert-active{padding-top:76px}
       $("outlookCard").hidden=false;
       $("outlookGrid").innerHTML=
         outlookPanel("Heating oil","🛢️",trends.heating&&trends.heating.snapshot,trends.heating&&trends.heating.prediction)+
-        outlookPanel("Diesel near Newry","⛽",trends.diesel&&trends.diesel.snapshot,trends.diesel&&trends.diesel.prediction);
+        outlookPanel("Diesel at the pump","⛽",trends.diesel&&trends.diesel.snapshot,trends.diesel&&trends.diesel.prediction);
     }
 
     if(data.news&&data.news.sentiment){
@@ -858,10 +892,22 @@ body.alert-active{padding-top:76px}
     renderCharts(data);
     if(data.diesel&&data.diesel.stations&&data.diesel.stations.length){
       $("stationsCard").hidden=false;
-      $("stationList").innerHTML=data.diesel.stations.map(function(s){
-        return '<div class="station"><div><strong>'+esc(s.name)+'</strong><div class="meta">'+esc(s.brand)+' · '+s.distanceMiles.toFixed(1)+' mi</div></div><div class="ppl">'+fmtP(s.pricePpl)+'/L</div></div>';
+      var disp=data.diesel.display;
+      var rangeEl=$("dieselRange");
+      if(disp&&disp.rangeLabel){
+        rangeEl.hidden=false;
+        rangeEl.textContent="Price range: "+disp.rangeLabel;
+      }else{rangeEl.hidden=true}
+      var cheapestP=data.diesel.cheapestPpl;
+      $("stationList").innerHTML=data.diesel.stations.map(function(s,i){
+        var isBest=s.pricePpl===cheapestP;
+        return '<div class="station'+(isBest?" cheapest":"")+'"><div><strong>'+esc(s.name)+'</strong>'+
+          (isBest?'<span class="meta"> · cheapest</span>':"")+
+          '<div class="meta">'+esc(s.brand)+' · '+s.distanceMiles.toFixed(1)+' mi from BT35</div></div>'+
+          '<div class="ppl">'+fmtP(s.pricePpl)+'/L</div></div>';
       }).join("");
-      $("dieselAttr").textContent=data.diesel.attribution||"";
+      $("dieselAttr").textContent=(data.diesel.attribution||"")+
+        (disp&&disp.ukAvgPpl!=null?" · UK weekly average "+fmtP(disp.ukAvgPpl)+"/L (national, not this forecourt).":"");
     }
     $("status").innerHTML='<span class="live">● Live</span> · Heating oil &amp; diesel near Newry';
     $("updatedAt").textContent="Updated "+new Date(data.fetchedAt).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"});
