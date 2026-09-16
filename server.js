@@ -43,6 +43,15 @@ import {
   getBettystownForecast,
   runBettystownHealthCheck,
 } from "./lib/bettystown-weather.js";
+import {
+  buildFuelResponse,
+  buildNewryFuelManifest,
+  getDebugSnapshot,
+  runFuelAlerts,
+  runNewryFuelHealthCheck,
+  sanitizePushSubscription,
+  savePushSubscription,
+} from "./lib/newry-fuel.js";
 
 // =====================================================================
 // _worker.js — serves the whole site AND the AI backend at /api
@@ -166,7 +175,9 @@ const JOB_FINDER_PATHS = new Set(["/job-finder.html", "/api/jobs", "/assets/job-
 // Original UK quiz-chaser demo — pursuit.tgollogly.dev (see games/the-pursuit/)
 const QUIZ_GAME_HOSTS = new Set(["pursuit.tgollogly.dev", "clover.tgollogly.dev"]);
 const BETTYSTOWN_HOST = "bettystown.tgollogly.dev";
+const NEWRY_FUEL_HOST = "newry.tgollogly.dev";
 const BETTYSTOWN_PREFIX = "/sites/bettystown";
+const NEWRY_FUEL_PREFIX = "/sites/newry-fuel";
 const BETTYSTOWN_INDEX = `${BETTYSTOWN_PREFIX}/index.html`;
 const BETTYSTOWN_ASSETS = new Map([
   ["/apple-touch-icon.png", `${BETTYSTOWN_PREFIX}/apple-touch-icon.png`],
@@ -183,12 +194,32 @@ const BETTYSTOWN_PATH_ASSETS = new Map([
   ["/bettystown/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
   ["/bettystown/audio/three-little-birds.mp3", `${BETTYSTOWN_PREFIX}/audio/three-little-birds.mp3`],
 ]);
+const NEWRY_FUEL_INDEX = `${NEWRY_FUEL_PREFIX}/index.html`;
+const NEWRY_FUEL_ASSETS = new Map([
+  ["/apple-touch-icon.png", `${NEWRY_FUEL_PREFIX}/apple-touch-icon.png`],
+  ["/favicon-32.png", `${NEWRY_FUEL_PREFIX}/favicon-32.png`],
+  ["/manifest.webmanifest", `${NEWRY_FUEL_PREFIX}/manifest.webmanifest`],
+  ["/sw.js", `${NEWRY_FUEL_PREFIX}/sw.js`],
+  ["/icons/icon-192.png", `${NEWRY_FUEL_PREFIX}/icons/icon-192.png`],
+  ["/icons/icon-512.png", `${NEWRY_FUEL_PREFIX}/icons/icon-512.png`],
+]);
+const NEWRY_FUEL_PATH_ASSETS = new Map([
+  ["/newry-fuel/apple-touch-icon.png", `${NEWRY_FUEL_PREFIX}/apple-touch-icon.png`],
+  ["/newry-fuel/favicon-32.png", `${NEWRY_FUEL_PREFIX}/favicon-32.png`],
+  ["/newry-fuel/sw.js", `${NEWRY_FUEL_PREFIX}/sw.js`],
+  ["/newry-fuel/icons/icon-192.png", `${NEWRY_FUEL_PREFIX}/icons/icon-192.png`],
+  ["/newry-fuel/icons/icon-512.png", `${NEWRY_FUEL_PREFIX}/icons/icon-512.png`],
+]);
 const QUIZ_GAME_PREFIX = "/games/the-pursuit";
 const QUIZ_GAME_INDEX = `${QUIZ_GAME_PREFIX}/index.html`;
 const PURSUIT_SEED_PATH = `${QUIZ_GAME_PREFIX}/questions.js`;
 
 function isBettystownHost(hostname) {
   return hostname === BETTYSTOWN_HOST;
+}
+
+function isNewryFuelHost(hostname) {
+  return hostname === NEWRY_FUEL_HOST;
 }
 
 async function serveBettystownAsset(request, env, assetPath) {
@@ -275,6 +306,82 @@ function bettystownAssetPath(path) {
   return null;
 }
 
+async function serveNewryFuelAsset(request, env, assetPath) {
+  const asset = await env.ASSETS.fetch(new URL(assetPath, request.url));
+  if (!asset.ok) return asset;
+  const headers = new Headers(asset.headers);
+  const isHtml = assetPath.endsWith(".html");
+  const isManifest = assetPath.endsWith(".webmanifest");
+  const isJs = assetPath.endsWith(".js");
+  const isPng = assetPath.endsWith(".png");
+  if (isHtml) headers.set("Content-Type", "text/html; charset=utf-8");
+  else if (isManifest) headers.set("Content-Type", "application/manifest+json; charset=utf-8");
+  else if (isJs) headers.set("Content-Type", "application/javascript; charset=utf-8");
+  else if (isPng) headers.set("Content-Type", "image/png");
+  headers.set("Cache-Control", isHtml || isJs ? "public, max-age=300" : "public, max-age=86400");
+  if (isHtml) setRobotsHeaders(headers);
+  return new Response(asset.body, { status: asset.status, headers });
+}
+
+function newryFuelManifestHref(request) {
+  return isNewryFuelHost(new URL(request.url).hostname)
+    ? "/manifest.webmanifest"
+    : "/newry-fuel/manifest.webmanifest";
+}
+
+function serveNewryFuelManifest(mode) {
+  const body = JSON.stringify(buildNewryFuelManifest(mode), null, 2);
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/manifest+json; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+
+async function serveNewryFuelIndex(request, env) {
+  const asset = await env.ASSETS.fetch(new URL(NEWRY_FUEL_INDEX, request.url));
+  if (!asset.ok) return asset;
+  const url = new URL(request.url);
+  const isSubdomain = isNewryFuelHost(url.hostname);
+  let html = await asset.text();
+  if (isIosSafari(request)) {
+    html = html.replace(/\n<link rel="manifest" href="[^"]*"\/>/, "");
+  } else {
+    const manifestHref = newryFuelManifestHref(request);
+    html = html.replace(
+      /<link rel="manifest" href="[^"]*"\/>/,
+      `<link rel="manifest" href="${manifestHref}"/>`
+    );
+  }
+  if (!isSubdomain) {
+    html = html.replaceAll("https://tgollogly.dev/sites/newry-fuel/", "/newry-fuel/");
+  } else {
+    html = html.replaceAll('"/newry-fuel/', '"/');
+  }
+  const headers = new Headers({
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=300",
+  });
+  setRobotsHeaders(headers);
+  return new Response(html, { status: 200, headers });
+}
+
+async function serveNewryFuelSite(request, env, assetPath) {
+  const path = assetPath || NEWRY_FUEL_INDEX;
+  if (path === NEWRY_FUEL_INDEX || path.endsWith("/index.html")) {
+    return serveNewryFuelIndex(request, env);
+  }
+  return serveNewryFuelAsset(request, env, path);
+}
+
+function newryFuelAssetPath(path) {
+  if (NEWRY_FUEL_ASSETS.has(path)) return NEWRY_FUEL_ASSETS.get(path);
+  if (path.startsWith(`${NEWRY_FUEL_PREFIX}/`)) return path;
+  return null;
+}
+
 function isQuizGameHost(hostname) {
   return QUIZ_GAME_HOSTS.has(hostname);
 }
@@ -322,6 +429,14 @@ function isBettystownPath(path) {
     path.startsWith("/bettystown/") ||
     path.startsWith("/sites/bettystown") ||
     path === "/assets/og/bettystown-weather.png"
+  );
+}
+
+function isNewryFuelPath(path) {
+  return (
+    path === "/newry-fuel" ||
+    path.startsWith("/newry-fuel/") ||
+    path.startsWith("/sites/newry-fuel")
   );
 }
 
@@ -498,7 +613,9 @@ function shouldApplyChallenge(request, url, path) {
   if (!ACCESS_CHALLENGE_ENABLED) return false;
   if (isQuizGameHost(url.hostname)) return false;
   if (isBettystownHost(url.hostname)) return false;
+  if (isNewryFuelHost(url.hostname)) return false;
   if (isBettystownPath(path)) return false;
+  if (isNewryFuelPath(path)) return false;
   if (isLinkPreviewBot(request) && (isBettystownPath(path) || path.startsWith("/assets/og/bettystown"))) return false;
   if (!CHALLENGE_FACEBOOK_REFERRER && !CHALLENGE_NI_GEO) return false;
   if (path === "/access-challenge" || path === "/api/access-verify") return false;
@@ -958,6 +1075,54 @@ async function handleBettystownHealthGet(env) {
   return jsonGet(health, health.ok ? 200 : 503);
 }
 
+async function handleNewryFuelPricesGet(env) {
+  const data = await buildFuelResponse(env);
+  if (!data.ok) return json(data, 503);
+  return jsonGet(data);
+}
+
+async function handleNewryFuelHealthGet(env) {
+  const health = await runNewryFuelHealthCheck(env);
+  return jsonGet(health, health.ok ? 200 : 503);
+}
+
+async function handleNewryFuelVapidPublicGet(env) {
+  const key = env?.NEWRY_FUEL_VAPID_PUBLIC;
+  if (!key) return jsonGet({ ok: false, publicKey: null }, 503);
+  return jsonGet({ ok: true, publicKey: key });
+}
+
+async function handleNewryFuelPushSubscribePost(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid json" }, 400);
+  }
+  const sub = sanitizePushSubscription(body);
+  if (!sub) return json({ error: "invalid subscription" }, 400);
+  const result = await savePushSubscription(env, sub);
+  return json(result, result.ok ? 200 : 503);
+}
+
+async function handleNewryFuelDebugGet(request, env) {
+  const secret = await getSecret(env, "NEWRY_FUEL_ALERT_SECRET");
+  const auth = request.headers.get("Authorization") || "";
+  if (!secret) return json({ error: "debug not configured" }, 503);
+  if (auth !== `Bearer ${secret}`) return json({ error: "unauthorized" }, 401);
+  const snapshot = await getDebugSnapshot(env);
+  return jsonGet({ ok: true, ...snapshot });
+}
+
+async function handleNewryFuelAlertPost(request, env) {
+  const secret = await getSecret(env, "NEWRY_FUEL_ALERT_SECRET");
+  const auth = request.headers.get("Authorization") || "";
+  if (!secret) return json({ error: "alerts not configured" }, 503);
+  if (auth !== `Bearer ${secret}`) return json({ error: "unauthorized" }, 401);
+  const result = await runFuelAlerts(env);
+  return json(result, result.ok ? 200 : 503);
+}
+
 async function handlePursuitRefreshPost(request, env) {
   const secret = await getSecret(env, "PURSUIT_REFRESH_SECRET");
   const auth = request.headers.get("Authorization") || "";
@@ -970,6 +1135,7 @@ async function handlePursuitRefreshPost(request, env) {
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runPursuitRefresh(env, "https://internal/").catch(() => {}));
+    ctx.waitUntil(runFuelAlerts(env).catch(() => {}));
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -982,6 +1148,12 @@ export default {
       if (path === "/manifest.webmanifest") return serveBettystownManifest("subdomain");
       const btAsset = bettystownAssetPath(path);
       if (btAsset) return serveBettystownAsset(request, env, btAsset);
+    }
+    if (isNewryFuelHost(url.hostname)) {
+      if (path === "/" || path === "/index.html") return serveNewryFuelSite(request, env);
+      if (path === "/manifest.webmanifest") return serveNewryFuelManifest("subdomain");
+      const nfAsset = newryFuelAssetPath(path);
+      if (nfAsset) return serveNewryFuelAsset(request, env, nfAsset);
     }
     if (path === "/bettystown" || path === "/bettystown/") {
       return serveBettystownWeather(request, env);
@@ -999,6 +1171,23 @@ export default {
     }
     if (path.startsWith(`${BETTYSTOWN_PREFIX}/`)) {
       return serveBettystownAsset(request, env, path);
+    }
+    if (path === "/newry-fuel" || path === "/newry-fuel/") {
+      return serveNewryFuelSite(request, env);
+    }
+    if (path === "/newry-fuel/manifest.webmanifest") {
+      return serveNewryFuelManifest("path");
+    }
+    const nfPathAsset = NEWRY_FUEL_PATH_ASSETS.get(path);
+    if (nfPathAsset) return serveNewryFuelAsset(request, env, nfPathAsset);
+    if (path === NEWRY_FUEL_PREFIX || path === `${NEWRY_FUEL_PREFIX}/` || path === `${NEWRY_FUEL_PREFIX}/index.html`) {
+      return Response.redirect(`${url.origin}/newry-fuel/`, 301);
+    }
+    if (path === `${NEWRY_FUEL_PREFIX}/manifest.webmanifest`) {
+      return serveNewryFuelManifest("path");
+    }
+    if (path.startsWith(`${NEWRY_FUEL_PREFIX}/`)) {
+      return serveNewryFuelAsset(request, env, path);
     }
     if (isQuizGameHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveQuizGame(request, env);
@@ -1082,6 +1271,36 @@ export default {
       if (request.method === "GET") return handleBettystownHealthGet(env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
+    if (path === "/api/newry-fuel/prices") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleNewryFuelPricesGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/newry-fuel/health") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleNewryFuelHealthGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/newry-fuel/vapid-public") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleNewryFuelVapidPublicGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/newry-fuel/push/subscribe") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+      if (request.method === "POST") return handleNewryFuelPushSubscribePost(request, env);
+      return new Response("POST only", { status: 405, headers: cors() });
+    }
+    if (path === "/api/newry-fuel/debug") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleNewryFuelDebugGet(request, env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/newry-fuel/alert") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
+      if (request.method === "POST") return handleNewryFuelAlertPost(request, env);
+      return new Response("POST only", { status: 405, headers: cors() });
+    }
     if (url.pathname === "/api" || url.pathname === "/api/health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: cors() });
       if (url.pathname === "/api/health" && request.method === "GET") return handleAIHealth(env);
@@ -1113,7 +1332,7 @@ export default {
       headers.set("Cache-Control", "private, max-age=3600");
       return new Response(asset.body, { status: asset.status, headers });
     }
-    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isBettystownHost(url.hostname) && !isBettystownPath(path) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
+    if (isDocumentPath(path) && ACCESS_CHALLENGE_ENABLED && !isQuizGameHost(url.hostname) && !isBettystownHost(url.hostname) && !isNewryFuelHost(url.hostname) && !isBettystownPath(path) && !isNewryFuelPath(path) && !isQuizGamePath(path) && !path.startsWith("/games/clover-match") && (isFacebookTraffic(request, url) || isNorthernIrelandTraffic(request))) {
       const vpnHit = await enforceVpnPolicy(request, url, { stage: "browse" });
       if (vpnHit) {
         return new Response(challengeResponseHtml("", path, { vpnBlocked: true, vpnSource: vpnHit.source }), {

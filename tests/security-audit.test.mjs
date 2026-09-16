@@ -53,6 +53,10 @@ export function runSecurityAuditTests() {
   s.assert("privacy noindex", read("privacy.html").includes('content="noindex,nofollow'));
   s.assert("index noindex", read("index.html").includes('content="noindex,nofollow'));
   s.assert("bettystown noindex", read("sites/bettystown/index.html").includes('content="noindex,nofollow'));
+  s.assert("newry fuel noindex", read("sites/newry-fuel/index.html").includes('content="noindex,nofollow'));
+  s.assert("newry fuel alert secret", server.includes("NEWRY_FUEL_ALERT_SECRET"));
+  s.assert("newry fuel push sanitize", server.includes("sanitizePushSubscription"));
+  s.assert("newry fuel debug auth", server.includes("/api/newry-fuel/debug"));
   s.assert("pursuit noindex", read("games/the-pursuit/index.html").includes("noindex,nofollow"));
   s.assert("cv noindex", read("cv.html").includes("noindex,nofollow"));
 

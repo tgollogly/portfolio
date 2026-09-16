@@ -13,3 +13,15 @@ CHALLENGE_SECRET=random_long_string_at_least_32_chars
 PURSUIT_REFRESH_SECRET=random_long_string_at_least_32_chars
 # Optional: re-enable Gemini question generation (default is RSS/feeds only)
 # PURSUIT_USE_AI=true
+
+# Newry Fuel Watch — Slack buy alerts (Incoming Webhook URL)
+# NEWRY_FUEL_SLACK_WEBHOOK=https://hooks.slack.com/services/XXX/YYY/ZZZ
+# Or reuse a generic webhook:
+# SLACK_WEBHOOK_URL=https://hooks.slack.com/services/XXX/YYY/ZZZ
+
+# Web Push VAPID keys — generate with: npx web-push generate-vapid-keys
+# NEWRY_FUEL_VAPID_PUBLIC=BN...
+# NEWRY_FUEL_VAPID_PRIVATE=...
+
+# Bearer token for POST /api/newry-fuel/alert and GET /api/newry-fuel/debug
+# NEWRY_FUEL_ALERT_SECRET=random_long_string_at_least_32_chars
