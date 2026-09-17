@@ -81,9 +81,6 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:14px;padding:12px 18px;
   font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
 .btn:active{transform:scale(.98)}
-.btn-push{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;box-shadow:0 8px 24px rgba(234,88,12,.28)}
-.btn-push:hover{transform:translateY(-2px)}
-.btn-push.on{background:linear-gradient(135deg,var(--teal),#0d9488)}
 .btn-call{background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none}
 .btn-call:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
 .grid{display:grid;gap:16px;margin-top:24px}
@@ -316,7 +313,6 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .top-alert.watch .top-alert-call{color:#b45309}
 .top-alert-call:hover{transform:scale(1.04)}
 body.alert-active{padding-top:76px}
-.btn-push.optional{opacity:.85;font-size:.82rem;padding:10px 14px}
 @keyframes alertFlash{
   0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1)}
   50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.1)}
@@ -349,11 +345,10 @@ body.alert-active{padding-top:76px}
 <header class="hero">
   <div class="badge"><span class="dot"></span> Mullaghbane · BT35 · NI &amp; Louth</div>
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
-  <p class="subtitle">Live prices for <strong>Mullaghbane &amp; Forkhill</strong> — tracks <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> diesel plus NI &amp; Louth heating oil in <strong>€ and £</strong> with live conversion.</p>
+  <p class="subtitle">Live prices for <strong>Mullaghbane &amp; Forkhill</strong> — tracks <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> diesel plus NI &amp; Louth heating oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
-    <button type="button" class="btn btn-push optional" id="pushBtn" hidden title="Optional — green banner works automatically">📱 Optional phone alerts</button>
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
   </div>
 </header>
@@ -437,7 +432,7 @@ body.alert-active{padding-top:76px}
   <div class="card-kicker">Your supplier</div>
   <h2>Safe Fuels · Camlough</h2>
   <p class="meta">8 Newry Road, Camlough, Newry BT35 7JP — home heating oil delivery for the Newry area.</p>
-  <p class="meta"><strong>028 3083 0691</strong> · tap a buy alert notification to dial automatically on iPhone.</p>
+  <p class="meta"><strong>028 3083 0691</strong> · tap Call Safe Fuels above for heating oil delivery.</p>
 </section>
 
 <footer class="foot">
@@ -449,8 +444,6 @@ body.alert-active{padding-top:76px}
 <script>
 (function(){
   var API="/api/newry-fuel/prices";
-  var VAPID_API="/api/newry-fuel/vapid-public";
-  var SUB_API="/api/newry-fuel/push/subscribe";
   var REFRESH_IDLE=15*60*1000;
   var REFRESH_BUY=5*60*1000;
   var heatingChart=null;
@@ -1150,49 +1143,6 @@ body.alert-active{padding-top:76px}
     },600);
   }
 
-  function urlB64ToUint8Array(base64String){
-    var padding="=".repeat((4-base64String.length%4)%4);
-    var base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
-    var raw=atob(base64);var out=new Uint8Array(raw.length);
-    for(var i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
-    return out;
-  }
-
-  function initPush(){
-    if(!("serviceWorker" in navigator)||!("PushManager" in window)) return;
-    $("pushBtn").hidden=false;
-    var btn=$("pushBtn");
-    navigator.serviceWorker.register("/newry-fuel/sw.js").catch(function(){});
-
-    function setBtn(on){
-      btn.textContent=on?"📱 Phone alerts on":"📱 Optional phone alerts";
-      btn.classList.toggle("on",on);
-    }
-    setBtn(Notification.permission==="granted");
-
-    btn.addEventListener("click",function(){
-      fetch(VAPID_API).then(function(r){return r.json()}).then(function(v){
-        if(!v.publicKey) throw new Error("Push not configured on server");
-        return Notification.requestPermission().then(function(p){
-          if(p!=="granted") throw new Error("Notifications blocked");
-          return navigator.serviceWorker.ready.then(function(reg){
-            return reg.pushManager.subscribe({
-              userVisibleOnly:true,
-              applicationServerKey:urlB64ToUint8Array(v.publicKey)
-            });
-          });
-        }).then(function(sub){
-          return fetch(SUB_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sub.toJSON())});
-        }).then(function(r){
-          if(!r.ok) throw new Error("Subscribe failed");
-          setBtn(true);
-        });
-      }).catch(function(err){
-        alert("Could not enable alerts: "+err.message);
-      });
-    });
-  }
-
   function initAlertDismiss(){
     var dismissBtn=$("topAlertDismiss");
     var showBtn=$("alertShowBtn");
@@ -1215,7 +1165,6 @@ body.alert-active{padding-top:76px}
 
   function boot(){
     fetchPrices();
-    initPush();
     initAlertDismiss();
     maybeAutoDial();
     document.addEventListener("visibilitychange",function(){

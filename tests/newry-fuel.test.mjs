@@ -521,7 +521,8 @@ export function runNewryFuelTests() {
   s.assert("html title", html.includes("Newry Fuel Watch"));
   s.assert("html noindex", html.includes("noindex,nofollow"));
   s.assert("html safe fuels", html.includes("Safe Fuels"));
-  s.assert("html push btn", html.includes("pushBtn"));
+  s.assert("html no push btn", !html.includes("pushBtn") && !html.includes("Optional phone alerts"));
+  s.assert("html auto refresh copy", html.includes("Refreshes automatically every 15 minutes"));
   s.assert("html top alert", html.includes("topAlert") && html.includes("top-alert"));
   s.assert("html fixed alert copy", html.includes("fixed alert bar"));
   s.assert("html alert flash anim", html.includes("alertFlash"));
@@ -540,7 +541,7 @@ export function runNewryFuelTests() {
   s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
-  s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
+  s.assert("html no sw register", !html.includes("serviceWorker.register"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));
   s.assert("html alert dismiss", html.includes("topAlertDismiss") && html.includes("alertShowBtn"));
