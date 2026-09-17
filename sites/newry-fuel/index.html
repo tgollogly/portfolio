@@ -109,6 +109,12 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .station-badge.save{background:rgba(5,150,105,.15);color:#047857}
 .diesel-tip{margin-top:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(5,150,105,.12),rgba(255,255,255,.92));border:1px solid rgba(5,150,105,.28);font-size:.92rem;font-weight:600;color:#065f46;line-height:1.45}
 .diesel-tip .tip-detail{font-size:.82rem;font-weight:500;color:var(--slate);margin-top:6px}
+.diesel-call-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.diesel-call-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);width:100%;margin-bottom:2px}
+.diesel-call-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff!important;text-decoration:none;font-size:.88rem;font-weight:700;box-shadow:0 2px 8px rgba(2,132,199,.25)}
+.diesel-call-btn.murphy{background:linear-gradient(135deg,#047857,#059669);box-shadow:0 2px 8px rgba(5,150,105,.25)}
+.station-call{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(2,132,199,.1);color:#0369a1!important;text-decoration:none;font-size:.82rem;font-weight:700}
+.station-call:active{opacity:.85}
 .station-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:rgba(124,58,237,.12);color:#6d28d9;vertical-align:middle}
 .station-badge.roi{background:rgba(2,132,199,.12);color:#0369a1}
 .station-dual{font-size:.78rem;color:var(--muted);margin-top:4px}
@@ -422,6 +428,7 @@ body.alert-active{padding-top:76px}
   <h2>Your forecourts · Mullaghbane &amp; cross-border</h2>
   <p class="station-range" id="dieselRange" hidden></p>
   <p class="station-range" id="dieselCrossBorder" hidden></p>
+  <div class="diesel-call-bar" id="dieselCallBar" hidden></div>
   <div id="stationList"></div>
   <p class="meta" id="dieselAttr"></p>
 </section>
@@ -491,11 +498,34 @@ body.alert-active{padding-top:76px}
     return html;
   }
 
+  function stationCallLink(s, cls){
+    if(!s||!s.tel) return "";
+    return '<a class="station-call'+(cls?" "+cls:"")+'" href="tel:'+esc(String(s.tel).replace(/\s/g,""))+'">📞 '+
+      esc(s.phone||s.tel)+' · confirm price</a>';
+  }
+
+  function dieselCallBarHtml(watchlist){
+    if(!watchlist||!watchlist.length) return "";
+    var withPhone=watchlist.filter(function(w){return w.tel||(w.station&&w.station.tel)});
+    if(!withPhone.length) return "";
+    var btns=withPhone.map(function(w){
+      var s=w.station||w;
+      var tel=w.tel||s.tel;
+      var phone=w.phone||s.phone||tel;
+      var lbl=w.shortLabel||w.label||s.name;
+      var cls=w.id==="murphy-forkhill"?"diesel-call-btn murphy":"diesel-call-btn";
+      return '<a class="'+cls+'" href="tel:'+esc(String(tel).replace(/\s/g,""))+'">📞 '+esc(lbl)+' · '+esc(phone)+'</a>';
+    }).join("");
+    return '<span class="diesel-call-lbl">Tap to call &amp; confirm diesel price</span>'+btns;
+  }
+
   function dieselWatchlistAdviceHtml(diesel){
     var adv=diesel&&diesel.watchlistAdvice;
     if(!adv||!adv.headline||adv.savingsVsUsualPpl<=0) return "";
+    var call=adv.pick&&adv.pick.tel?stationCallLink(adv.pick,""):"";
     return '<div class="diesel-tip">💡 '+esc(adv.headline)+
       (adv.detail?'<div class="tip-detail">'+esc(adv.detail)+'</div>':"")+
+      (call?'<div style="margin-top:8px">'+call+'</div>':"")+
     '</div>';
   }
 
@@ -523,9 +553,10 @@ body.alert-active{padding-top:76px}
     }else if(s.priceEuroCents!=null){
       dual='<div class="station-dual">≈ '+fmtEuroLitres(s.priceEuroCents)+' at live rate</div>';
     }
+    var call=s.tel?stationCallLink(s,""):"";
     return (showDivider?'<div class="station-divider">Other nearby forecourts</div>':"")+
       '<div class="'+cls+'"><div><strong>'+esc(s.name)+'</strong>'+badges+
-      '<div class="meta">'+esc(s.brand||"")+' · '+dist+' · '+(s.region==="roi"?"ROI":"NI")+'</div>'+dual+'</div>'+
+      '<div class="meta">'+esc(s.brand||"")+' · '+dist+' · '+(s.region==="roi"?"ROI":"NI")+'</div>'+dual+call+'</div>'+
       '<div class="ppl">'+fmtP(s.pricePpl)+'/L</div></div>';
   }
 
@@ -1062,6 +1093,12 @@ body.alert-active{padding-top:76px}
         cbEl.hidden=false;
         cbEl.textContent=adv.headline+(adv.detail?" · "+adv.detail:"");
       }else{cbEl.hidden=true}
+      var callBar=$("dieselCallBar");
+      var callHtml=dieselCallBarHtml(data.diesel.watchlist);
+      if(callHtml){
+        callBar.hidden=false;
+        callBar.innerHTML=callHtml;
+      }else{callBar.hidden=true}
       var cheapestP=data.diesel.cheapestPpl;
       var recId=adv&&adv.pick&&adv.pick.watchlistId;
       var sorted=sortStationsForDisplay(data.diesel.stations);

@@ -16,6 +16,7 @@ import {
   euroToGbp,
   parseCheapestOilIeCounty,
   matchDieselWatchlist,
+  applyWatchlistContact,
   mergeDieselStations,
   buildHeatingCrossBorder,
   buildDieselCrossBorder,
@@ -147,6 +148,13 @@ export function runNewryFuelTests() {
 
   s.assert("home is mullaghbane", HOME.name === "Mullaghbane" && MULLAGHBANE.postcode === "BT35");
   s.assert("watchlist gregory", DIESEL_WATCHLIST.some((w) => w.id === "dan-gregorys" && w.usual));
+  s.assert("gregory phone", DIESEL_WATCHLIST.find((w) => w.id === "dan-gregorys")?.tel === "+442830830388");
+  s.assert("murphy phone", DIESEL_WATCHLIST.find((w) => w.id === "murphy-forkhill")?.tel === "+442830888760");
+  const gregContact = applyWatchlistContact(
+    { name: "Gregory service station ltd", pricePpl: 182.9 },
+    matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" })
+  );
+  s.assert("gregory contact on station", gregContact.tel === "+442830830388" && gregContact.phone.includes("0388"));
   s.assert("eur gbp convert", euroCentsToGbpPpl(175, 0.8574) === 150);
   s.assert("euro to gbp", euroToGbp(100, 0.8574) === 85.74);
   s.assert("format euro", formatEuro(4.97) === "€4.97");
@@ -546,7 +554,9 @@ export function runNewryFuelTests() {
   s.assert("html mullaghbane", html.includes("Mullaghbane") && html.includes("Dan Gregory"));
   s.assert("html cross border", html.includes("cross-border") && html.includes("fmtEuroLitres"));
   s.assert("html station watchlist", html.includes("station-badge") && html.includes("dieselCrossBorder"));
-  s.assert("html diesel tip", html.includes("diesel-tip") && html.includes("Cheaper & convenient"));
+  s.assert("html diesel tip", html.includes("diesel-tip") && html.includes("Cheaper &amp; convenient"));
+  s.assert("html diesel call bar", html.includes("dieselCallBar") && html.includes("diesel-call-btn"));
+  s.assert("html station call", html.includes("station-call") && html.includes("confirm price"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));
