@@ -4,10 +4,21 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   NEWRY,
+  HOME,
+  MULLAGHBANE,
+  DIESEL_WATCHLIST,
   SAFE_FUELS,
   FUEL_NEWS_FEEDS,
   normalizePencePerLitre,
   formatPence,
+  formatEuro,
+  euroCentsToGbpPpl,
+  euroToGbp,
+  parseCheapestOilIeCounty,
+  matchDieselWatchlist,
+  mergeDieselStations,
+  buildHeatingCrossBorder,
+  buildDieselCrossBorder,
   parseGovDieselCsv,
   movingAverage,
   linearTrend,
@@ -132,6 +143,51 @@ export function runNewryFuelTests() {
   );
   s.assert("diesel display meta", dieselMeta.headline.includes("BT35") && dieselMeta.vsUkLabel.includes("above"));
   s.assert("diesel display note", dieselMeta.note.includes("not home heating"));
+
+  s.assert("home is mullaghbane", HOME.name === "Mullaghbane" && MULLAGHBANE.postcode === "BT35");
+  s.assert("watchlist gregory", DIESEL_WATCHLIST.some((w) => w.id === "dan-gregorys" && w.usual));
+  s.assert("eur gbp convert", euroCentsToGbpPpl(175, 0.8574) === 150);
+  s.assert("euro to gbp", euroToGbp(100, 0.8574) === 85.74);
+  s.assert("format euro", formatEuro(4.97) === "€4.97");
+
+  const ieHtml =
+    '<div data-price300="497.0000" data-price500="814.0000" data-price1000="1623.0000" data-supplier="Morgan Fuels"></div>';
+  const louth = parseCheapestOilIeCounty(ieHtml, 900);
+  s.assert("parse louth heating", louth.length === 1 && louth[0].supplier === "Morgan Fuels");
+  s.assert("louth cents per litre", louth[0].centsPerLitre > 160);
+
+  const gregory = matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" });
+  s.assert("match gregory", gregory?.id === "dan-gregorys");
+  const murphy = matchDieselWatchlist({ name: "Murphy Bros Forkhill", region: "ni" });
+  s.assert("match murphy forkhill", murphy?.id === "murphy-forkhill");
+
+  const merged = mergeDieselStations(
+    [
+      { name: "Gregory service station ltd", brand: "EMO", pricePpl: 182.9, distanceMiles: 0 },
+      { name: "Murphy Bros Forkhill", brand: "", pricePpl: 170.2, distanceMiles: 0.1 },
+      { name: "Mac Fuels Ltd", brand: "Mac Fuels", pricePpl: 161.9, distanceMiles: 6.1 },
+    ],
+    [{ name: "Maxol Dundalk", brand: "Maxol", priceEuroCents: 168, distanceKm: 12 }],
+    0.8574
+  );
+  s.assert("merge diesel count", merged.stations.length === 4);
+  s.assert("watchlist stations found", merged.watchlist.length >= 2);
+  s.assert("roi converted ppl", merged.stations.some((s) => s.region === "roi" && s.pricePpl < 150));
+
+  const heatCmp = buildHeatingCrossBorder({
+    ni: { cheapestPpl: 107, supplier: "NI" },
+    roi: { cheapest: louth[0] },
+    eurGbp: 0.8574,
+    forLitres: 900,
+  });
+  s.assert("heating cross border", heatCmp && heatCmp.savingsGbp > 0 && heatCmp.cheaperRegion === "ni");
+
+  const dieselCmp = buildDieselCrossBorder({
+    stations: merged.stations,
+    eurGbp: 0.8574,
+    usualId: "dan-gregorys",
+  });
+  s.assert("diesel cross border savings", dieselCmp.savingsVsUsualPpl > 0 && dieselCmp.usual?.usual);
 
   const dieselHold = buildDieselHoldExplain(
     {
@@ -479,6 +535,14 @@ export function runNewryFuelTests() {
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));
   s.assert("html diesel hold explain", html.includes("diesel-hold-box") && html.includes("Why hold off on diesel"));
+  s.assert("html mullaghbane", html.includes("Mullaghbane") && html.includes("Dan Gregory"));
+  s.assert("html cross border", html.includes("cross-border") && html.includes("fmtEuroLitres"));
+  s.assert("html station watchlist", html.includes("station-badge") && html.includes("dieselCrossBorder"));
+
+  const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
+  s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));
+  s.assert("lib frankfurter", lib.includes("FRANKFURTER_EUR_GBP_URL"));
+  s.assert("lib cheapestoil ie", lib.includes("CHEAPEST_OIL_IE_LOUTH_URL"));
 
   const sw = readFileSync(join(root, "sites/newry-fuel/sw.js"), "utf8");
   s.assert("sw notification click", sw.includes("notificationclick"));
