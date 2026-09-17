@@ -534,22 +534,32 @@ body.alert-active{padding-top:76px}
     var timingLine="";
     if(isBuy){
       timingLine='<p class="when buy">⏱ '+esc(g.timing)+'</p>';
-    }else if(isHold&&g.nearTermDay>0){
+    }else if(isHold&&g.hasNearTermDip&&g.nearTermDay>0){
       timingLine='<p class="when wait">⏱ Hold ~'+g.nearTermDay+' day'+(g.nearTermDay>1?"s":"")+
         (g.nearTermDateLabel?" · "+esc(g.nearTermDateLabel):"")+'</p>';
+    }else if(isHold){
+      timingLine='<p class="when wait">⏱ Hold and recheck — no cheaper dip forecast soon</p>';
     }
     var hero="";
     if(isHold){
-      var saveVal=g.savingsVsNowPpl>0?fmtP(g.savingsVsNowPpl)+'/L':'Minimal';
-      var saveCls=g.savingsVsNowPpl>=0.5?"good":"muted";
-      var saveSub=g.savingsVsNowPpl>=0.5?(g.savingsVsNowPct+'% less per litre'):'Small dip forecast';
-      hero='<div class="guide-hero">'+
-        '<div class="hero-stat"><div class="lbl">Today</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
-        '<div class="hero-stat"><div class="lbl">Wait for</div><div class="val good">'+fmtP(g.targetPricePpl)+'/L</div>'+
-          (g.nearTermDay>0?'<div class="sub">~'+g.nearTermDay+' day'+(g.nearTermDay>1?"s":"")+'</div>':"")+
-        '</div>'+
-        '<div class="hero-stat"><div class="lbl">Could save</div><div class="val '+saveCls+'">'+saveVal+'</div><div class="sub">'+saveSub+'</div></div>'+
-      '</div>';
+      if(g.hasNearTermDip&&g.savingsVsNowPpl>0){
+        var saveVal=g.savingsVsNowPpl>=0.5?fmtP(g.savingsVsNowPpl)+'/L':'Minimal';
+        var saveCls=g.savingsVsNowPpl>=0.5?"good":"muted";
+        var saveSub=g.savingsVsNowPpl>=0.5?(g.savingsVsNowPct+'% less per litre'):'Small dip forecast';
+        hero='<div class="guide-hero">'+
+          '<div class="hero-stat"><div class="lbl">Today</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Wait for</div><div class="val good">'+fmtP(g.targetPricePpl)+'/L</div>'+
+            (g.nearTermDay>0?'<div class="sub">~'+g.nearTermDay+' day'+(g.nearTermDay>1?"s":"")+'</div>':"")+
+          '</div>'+
+          '<div class="hero-stat"><div class="lbl">Could save</div><div class="val '+saveCls+'">'+saveVal+'</div><div class="sub">'+saveSub+'</div></div>'+
+        '</div>';
+      }else{
+        hero='<div class="guide-hero">'+
+          '<div class="hero-stat"><div class="lbl">Today</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Forecast</div><div class="val muted">No dip</div><div class="sub">Flat or rising next 2 weeks</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Advice</div><div class="val muted">Recheck</div><div class="sub">Hold only if you can wait</div></div>'+
+        '</div>';
+      }
     }
     var stretch="";
     if(isHold&&g.stretchTargetPpl!=null&&g.stretchSavingsPpl>g.savingsVsNowPpl+0.5){
