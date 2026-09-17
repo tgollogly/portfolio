@@ -19,6 +19,7 @@ import {
   mergeDieselStations,
   buildHeatingCrossBorder,
   buildDieselCrossBorder,
+  buildWatchlistDieselAdvice,
   parseGovDieselCsv,
   movingAverage,
   linearTrend,
@@ -182,12 +183,19 @@ export function runNewryFuelTests() {
   });
   s.assert("heating cross border", heatCmp && heatCmp.savingsGbp > 0 && heatCmp.cheaperRegion === "ni");
 
+  const watchAdvice = buildWatchlistDieselAdvice(merged.stations);
+  s.assert(
+    "murphy cheaper than gregory",
+    watchAdvice?.pick?.watchlistId === "murphy-forkhill" && watchAdvice.savingsVsUsualPpl > 10
+  );
+  s.assert("murphy headline", watchAdvice.headline.includes("Tom Murphy"));
+
   const dieselCmp = buildDieselCrossBorder({
     stations: merged.stations,
     eurGbp: 0.8574,
     usualId: "dan-gregorys",
   });
-  s.assert("diesel cross border savings", dieselCmp.savingsVsUsualPpl > 0 && dieselCmp.usual?.usual);
+  s.assert("diesel cross border picks murphy", dieselCmp.pick?.watchlistId === "murphy-forkhill");
 
   const dieselHold = buildDieselHoldExplain(
     {
@@ -538,6 +546,7 @@ export function runNewryFuelTests() {
   s.assert("html mullaghbane", html.includes("Mullaghbane") && html.includes("Dan Gregory"));
   s.assert("html cross border", html.includes("cross-border") && html.includes("fmtEuroLitres"));
   s.assert("html station watchlist", html.includes("station-badge") && html.includes("dieselCrossBorder"));
+  s.assert("html diesel tip", html.includes("diesel-tip") && html.includes("Cheaper & convenient"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));

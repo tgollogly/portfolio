@@ -105,6 +105,10 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .price-context .price-ctx-note{font-size:.76rem;color:var(--faint);margin:0;line-height:1.35}
 .station.cheapest{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px}
 .station.usual{border-left:3px solid #7c3aed;padding-left:12px;margin-left:-12px}
+.station.recommended{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px;background:linear-gradient(90deg,rgba(5,150,105,.06),transparent)}
+.station-badge.save{background:rgba(5,150,105,.15);color:#047857}
+.diesel-tip{margin-top:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(5,150,105,.12),rgba(255,255,255,.92));border:1px solid rgba(5,150,105,.28);font-size:.92rem;font-weight:600;color:#065f46;line-height:1.45}
+.diesel-tip .tip-detail{font-size:.82rem;font-weight:500;color:var(--slate);margin-top:6px}
 .station-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:rgba(124,58,237,.12);color:#6d28d9;vertical-align:middle}
 .station-badge.roi{background:rgba(2,132,199,.12);color:#0369a1}
 .station-dual{font-size:.78rem;color:var(--muted);margin-top:4px}
@@ -451,7 +455,7 @@ body.alert-active{padding-top:76px}
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-  function fmtP(v){return Number(v).toFixed(1)+"p"}
+  function fmtP(v){return v==null||!Number.isFinite(Number(v))?"—":Number(v).toFixed(1)+"p"}
   function fmtMoney(v){return v==null?"—":"£"+Number(v).toFixed(2)}
   function fmtEuro(v,d){return v==null?"—":"€"+Number(v).toFixed(d==null?2:d)}
   function fmtEuroLitres(cents){return cents==null?"—":"€"+(Number(cents)/100).toFixed(3)+"/L"}
@@ -460,23 +464,39 @@ body.alert-active{padding-top:76px}
     if(!heating||!heating.ok) return "";
     var ex=heating.exchange&&heating.exchange.eurGbp;
     var cmp=heating.comparison;
-    var roi=heating.roi&&heating.roi.ok&&heating.roi.cheapest;
-    var ni=heating.ni&&heating.ni.ok;
-    if(!ni&&!roi) return "";
+    var niData=(heating.ni&&heating.ni.ok)?heating.ni:null;
+    var roiData=(heating.roi&&heating.roi.ok)?heating.roi:null;
+    var niPpl=niData&&(niData.cheapestPpl||niData.averagePpl)||heating.cheapestPpl;
+    var roiCheapest=roiData&&roiData.cheapest;
+    if(!Number.isFinite(niPpl)&&!roiCheapest) return "";
     var html='<div class="cross-border">';
     if(ex) html+='<p class="fx-rate">Live EUR→GBP: €1 = £'+Number(ex).toFixed(4)+
-      (heating.exchange.date?' · '+esc(heating.exchange.date.slice(0,10)):"")+'</p>';
-    if(ni) html+='<p>🇬🇧 NI quote (900L): '+fmtP(ni.cheapestPpl)+'/L · tank ≈ '+fmtMoney((ni.cheapestPpl*900)/100)+'</p>';
-    if(roi){
-      var c=roi.cheapest||roi;
-      var gbpPpl=cmp&&cmp.roi?cmp.roi.pplGbp:null;
-      html+='<p>🇮🇪 Louth (900L): '+fmtEuroLitres(c.centsPerLitre)+
-        (gbpPpl!=null?' ≈ '+fmtP(gbpPpl)+'/L':"")+
-        ' · '+esc(c.supplier)+'</p>';
+      (heating.exchange.date?' · '+esc(String(heating.exchange.date).slice(0,10)):"")+'</p>';
+    if(Number.isFinite(niPpl)){
+      html+='<p>🇬🇧 NI quote (900L): '+fmtP(niPpl)+'/L · tank ≈ '+fmtMoney((niPpl*900)/100)+'</p>';
     }
-    if(cmp&&cmp.savingsGbp>0) html+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
+    if(roiCheapest){
+      var gbpPpl=cmp&&cmp.roi?cmp.roi.pplGbp:null;
+      html+='<p>🇮🇪 Louth (900L): '+fmtEuroLitres(roiCheapest.centsPerLitre)+
+        (gbpPpl!=null?' ≈ '+fmtP(gbpPpl)+'/L':"")+
+        ' · '+esc(roiCheapest.supplier)+'</p>';
+    }
+    if(roiData&&roiData.suppliers&&roiData.suppliers.length>1){
+      html+='<p class="meta">Louth suppliers: '+roiData.suppliers.slice(0,4).map(function(s){
+        return esc(s.supplier)+' '+fmtEuroLitres(s.centsPerLitre);
+      }).join(' · ')+'</p>';
+    }
+    if(cmp&&cmp.savingsGbp>0&&Number.isFinite(niPpl)) html+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
     html+='</div>';
     return html;
+  }
+
+  function dieselWatchlistAdviceHtml(diesel){
+    var adv=diesel&&diesel.watchlistAdvice;
+    if(!adv||!adv.headline||adv.savingsVsUsualPpl<=0) return "";
+    return '<div class="diesel-tip">💡 '+esc(adv.headline)+
+      (adv.detail?'<div class="tip-detail">'+esc(adv.detail)+'</div>':"")+
+    '</div>';
   }
 
   function sortStationsForDisplay(stations){
@@ -487,13 +507,15 @@ body.alert-active{padding-top:76px}
     return watch.concat(rest);
   }
 
-  function stationRowHtml(s, cheapestP, showDivider){
+  function stationRowHtml(s, cheapestP, recommendedId, showDivider){
     var isBest=s.pricePpl===cheapestP;
-    var cls="station"+(isBest?" cheapest":"")+(s.usual?" usual":"");
+    var isRec=recommendedId&&s.watchlistId===recommendedId;
+    var cls="station"+(isBest?" cheapest":"")+(isRec?" recommended":"")+(s.usual&&!isRec?" usual":"");
     var badges="";
     if(s.watchlistLabel) badges+='<span class="station-badge'+(s.region==="roi"?" roi":"")+'">'+esc(s.watchlistLabel)+'</span>';
-    if(s.usual) badges+='<span class="station-badge">Your usual</span>';
-    if(isBest) badges+='<span class="meta"> · cheapest</span>';
+    if(isRec) badges+='<span class="station-badge save">Cheaper &amp; convenient</span>';
+    else if(s.usual) badges+='<span class="station-badge">Your usual</span>';
+    if(isBest&&!isRec) badges+='<span class="meta"> · cheapest overall</span>';
     var dist=s.distanceMiles!=null?s.distanceMiles.toFixed(1)+' mi':"—";
     var dual="";
     if(s.region==="roi"&&s.priceEuroCents!=null){
@@ -863,8 +885,10 @@ body.alert-active{padding-top:76px}
 
   function dieselPriceContextHtml(diesel){
     var d=diesel&&diesel.display;
-    if(!d) return "";
-    return '<div class="price-context">'+
+    if(!d&&!diesel.watchlistAdvice) return "";
+    var html=dieselWatchlistAdviceHtml(diesel);
+    if(!d) return html;
+    return html+'<div class="price-context">'+
       '<p class="price-ctx-main">'+esc(d.headline)+'</p>'+
       (d.subtitle?'<p class="price-ctx-sub">📍 '+esc(d.subtitle)+'</p>':"")+
       (d.vsUkLabel&&d.ukAvgPpl!=null?'<p class="price-ctx-uk">🇬🇧 UK weekly avg '+fmtP(d.ukAvgPpl)+'/L · '+esc(d.vsUkLabel)+'</p>':"")+
@@ -1032,18 +1056,19 @@ body.alert-active{padding-top:76px}
         rangeEl.hidden=false;
         rangeEl.textContent="Price range: "+disp.rangeLabel;
       }else{rangeEl.hidden=true}
-      var cb=data.diesel.crossBorder;
+      var adv=data.diesel.watchlistAdvice;
       var cbEl=$("dieselCrossBorder");
-      if(cb&&cb.headline&&cb.savingsVsUsualPpl>0){
+      if(adv&&adv.headline&&adv.savingsVsUsualPpl>0){
         cbEl.hidden=false;
-        cbEl.textContent=cb.headline;
+        cbEl.textContent=adv.headline+(adv.detail?" · "+adv.detail:"");
       }else{cbEl.hidden=true}
       var cheapestP=data.diesel.cheapestPpl;
+      var recId=adv&&adv.pick&&adv.pick.watchlistId;
       var sorted=sortStationsForDisplay(data.diesel.stations);
       var watchCount=sorted.filter(function(s){return s.watchlistId}).length;
       var html="";
       sorted.forEach(function(s,i){
-        html+=stationRowHtml(s,cheapestP,i===watchCount&&watchCount<sorted.length);
+        html+=stationRowHtml(s,cheapestP,recId,i===watchCount&&watchCount<sorted.length);
       });
       $("stationList").innerHTML=html;
       var fx=data.diesel.exchange&&data.diesel.exchange.eurGbp;
