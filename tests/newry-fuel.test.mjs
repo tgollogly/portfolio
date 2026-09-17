@@ -20,7 +20,9 @@ import {
   mergeDieselStations,
   buildHeatingCrossBorder,
   buildDieselCrossBorder,
+  buildDieselTopPick,
   buildWatchlistDieselAdvice,
+  FUEL_LEGAL_NOTICE,
   parseGovDieselCsv,
   movingAverage,
   linearTrend,
@@ -204,6 +206,18 @@ export function runNewryFuelTests() {
     usualId: "dan-gregorys",
   });
   s.assert("diesel cross border picks murphy", dieselCmp.pick?.watchlistId === "murphy-forkhill");
+
+  const topPick = buildDieselTopPick({
+    ok: true,
+    recommendedStation: merged.stations.find((s) => s.watchlistId === "murphy-forkhill"),
+    watchlistAdvice: watchAdvice,
+    usualStation: merged.stations.find((s) => s.watchlistId === "dan-gregorys"),
+  });
+  s.assert("diesel top pick murphy", topPick?.watchlistId === "murphy-forkhill" && topPick.tel.includes("888760"));
+  s.assert("diesel top pick call label", topPick.callLabel.includes("Murphy"));
+
+  s.assert("legal notice sections", FUEL_LEGAL_NOTICE.sections.length >= 4);
+  s.assert("legal attribution fuel near you", FUEL_LEGAL_NOTICE.sections[1].text.includes("CC BY 4.0"));
 
   const dieselHold = buildDieselHoldExplain(
     {
@@ -558,6 +572,8 @@ export function runNewryFuelTests() {
   s.assert("html diesel tip", html.includes("diesel-tip") && html.includes("Cheaper &amp; convenient"));
   s.assert("html diesel call bar", html.includes("dieselCallBar") && html.includes("diesel-call-btn"));
   s.assert("html station call", html.includes("station-call") && html.includes("confirm price"));
+  s.assert("html diesel top pick", html.includes("dieselTopPick") && html.includes("diesel-top-call"));
+  s.assert("html legal footer", html.includes("legalFooter") && html.includes("Disclaimer, privacy"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));

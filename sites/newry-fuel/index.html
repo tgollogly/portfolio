@@ -313,6 +313,30 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .top-alert.watch .top-alert-call{color:#b45309}
 .top-alert-call:hover{transform:scale(1.04)}
 body.alert-active{padding-top:76px}
+body.diesel-pick-active{padding-top:58px}
+body.alert-active.diesel-pick-active{padding-top:134px}
+.diesel-top-pick{
+  position:fixed;top:0;left:0;right:0;z-index:999;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px;background:linear-gradient(135deg,#047857,#059669);color:#fff;
+  box-shadow:0 4px 20px rgba(5,150,105,.35)
+}
+body.alert-active .diesel-top-pick{top:76px}
+.diesel-top-body{flex:1;min-width:180px}
+.diesel-top-kicker{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:2px}
+.diesel-top-title{font-size:.95rem;font-weight:800;line-height:1.25}
+.diesel-top-detail{font-size:.78rem;opacity:.92;margin-top:2px;line-height:1.3}
+.diesel-top-call{
+  display:inline-flex;align-items:center;gap:6px;padding:11px 16px;border-radius:12px;
+  background:#fff;color:#047857!important;font-weight:800;font-size:.88rem;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);white-space:nowrap
+}
+.diesel-top-call:active{transform:scale(.98)}
+.legal-footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
+.legal-footer .legal-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);margin:0 0 10px}
+.legal-footer p{font-size:.72rem;color:var(--muted);line-height:1.5;margin:0 0 10px}
+.legal-footer strong{color:var(--slate);font-size:.74rem}
+.legal-footer .legal-block{margin-bottom:10px}
 @keyframes alertFlash{
   0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1)}
   50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.1)}
@@ -339,6 +363,14 @@ body.alert-active{padding-top:76px}
   </div>
   <a class="top-alert-call" id="topAlertCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
   <button type="button" class="top-alert-dismiss" id="topAlertDismiss" title="Hide alert bar" aria-label="Hide alert bar">Hide</button>
+</div>
+<div id="dieselTopPick" class="diesel-top-pick" hidden role="region" aria-label="Recommended diesel forecourt">
+  <div class="diesel-top-body">
+    <div class="diesel-top-kicker">Recommended diesel · call to confirm price</div>
+    <div class="diesel-top-title" id="dieselTopTitle">—</div>
+    <div class="diesel-top-detail" id="dieselTopDetail"></div>
+  </div>
+  <a class="diesel-top-call" id="dieselTopCall" href="#">📞 Call forecourt</a>
 </div>
 <div class="glow" aria-hidden="true"></div>
 <div class="shell">
@@ -436,8 +468,13 @@ body.alert-active{padding-top:76px}
 </section>
 
 <footer class="foot">
-  Data: CheapestOil.co.uk &amp; .ie · Fuel Near You · Pick A Pump · Frankfurter EUR/GBP · UK DESNZ diesel ·
-  <span id="refreshNote">Auto-checks every 15 min while open</span> · server updates 6am &amp; 6pm UTC · <span id="updatedAt">—</span>
+  <p class="meta" style="margin-top:0">Data: CheapestOil.co.uk &amp; .ie · Fuel Near You (CC BY 4.0) · Pick A Pump · Frankfurter EUR/GBP · UK DESNZ ·
+  <span id="refreshNote">Auto-checks every 15 min while open</span> · server updates 6am &amp; 6pm UTC · <span id="updatedAt">—</span></p>
+  <div class="legal-footer" id="legalFooter">
+    <p class="legal-title">Disclaimer, privacy &amp; data sources</p>
+    <p id="legalSummary">Personal price guide — not financial or professional advice. Confirm all prices by phone before buying.</p>
+    <div id="legalSections"></div>
+  </div>
 </footer>
 </div>
 
@@ -771,6 +808,36 @@ body.alert-active{padding-top:76px}
     document.body.classList.add("alert-active");
   }
 
+  function renderDieselTopPick(data){
+    var pick=data.diesel&&data.diesel.topPick;
+    var el=$("dieselTopPick");
+    if(!pick||!pick.tel){
+      el.hidden=true;
+      document.body.classList.remove("diesel-pick-active");
+      return;
+    }
+    el.hidden=false;
+    document.body.classList.add("diesel-pick-active");
+    $("dieselTopTitle").textContent=pick.headline||pick.name;
+    var detail=fmtP(pick.pricePpl)+"/L";
+    if(pick.savingsVsUsualPpl>0) detail+=" · save "+fmtP(pick.savingsVsUsualPpl)+"/L vs your usual";
+    detail+=" · prices may change — confirm by phone";
+    $("dieselTopDetail").textContent=detail;
+    var call=$("dieselTopCall");
+    call.href="tel:"+String(pick.tel).replace(/\s/g,"");
+    call.textContent=pick.callLabel||("📞 "+pick.name+" · "+pick.phone);
+  }
+
+  function renderLegalFooter(data){
+    var legal=data.legal;
+    if(!legal) return;
+    if(legal.summary) $("legalSummary").textContent=legal.summary;
+    var sections=legal.sections||[];
+    $("legalSections").innerHTML=sections.map(function(s){
+      return '<div class="legal-block"><strong>'+esc(s.heading)+'</strong><p>'+esc(s.text)+'</p></div>';
+    }).join("");
+  }
+
   function renderTopAlert(data){
     var alert=data.buyAlert;
     var el=$("topAlert");
@@ -1042,7 +1109,9 @@ body.alert-active{padding-top:76px}
     document.querySelectorAll(".price[data-price]").forEach(function(el){
       animateValue(el,parseFloat(el.dataset.price),"p",650);
     });
+    renderDieselTopPick(data);
     renderTopAlert(data);
+    renderLegalFooter(data);
     renderIndicators(data);
     renderWhenToBuy(data);
     scheduleRefresh(data);
