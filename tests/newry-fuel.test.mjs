@@ -27,6 +27,8 @@ import {
   buildWhenToBuyTimeline,
   buildHoldOutlook,
   pickNearTermBest,
+  pickNearTermDip,
+  hasForecastDip,
   createEmptyFuelMemory,
   appendFuelMemory,
   flattenMemoryPrices,
@@ -195,6 +197,39 @@ export function runNewryFuelTests() {
   );
   const nearBest = pickNearTermBest(extHold);
   s.assert("pickNearTermBest within 14d", nearBest && nearBest.day <= 14);
+
+  s.assert("pickNearTermDip rejects higher forecast", pickNearTermDip(107, [{ day: 1, estimate: 107.1, dateLabel: "Tomorrow" }]) === null);
+  s.assert("pickNearTermDip accepts lower forecast", pickNearTermDip(107, [{ day: 3, estimate: 105.5, dateLabel: "In 3 days" }])?.estimate === 105.5);
+  s.assert("hasForecastDip false when higher", !hasForecastDip(107, 107.1));
+
+  const noDipGuide = buildBuyGuide({
+    current: 107,
+    verdict: "wait",
+    trend: { slope: 0, intercept: 107 },
+    forecast: [{ day: 1, estimate: 107.1 }, { day: 7, estimate: 107.2 }],
+    extendedForecast: [
+      { day: 1, estimate: 107.1, dateLabel: "Tomorrow", label: "Tomorrow" },
+      { day: 7, estimate: 107.2, dateLabel: "Next week", label: "Next week" },
+    ],
+    ma7: 106,
+    ma30: 104,
+    prices: [102, 104, 106, 107],
+    kind: "heating",
+  });
+  s.assert("no-dip guide hasNearTermDip false", noDipGuide.hasNearTermDip === false);
+  s.assert("no-dip guide target is today", noDipGuide.targetPricePpl === 107);
+  s.assert("no-dip guide savings zero", noDipGuide.savingsVsNowPpl === 0);
+  s.assert("no-dip why no forecast dip line", !buildVerdictWhy({
+    current: 107,
+    verdict: "wait",
+    guide: noDipGuide,
+    vs7Pct: 1,
+    vs30Pct: 3,
+    percentile: 95,
+    trendSlope: 0,
+    ma7: 106,
+    ma30: 104,
+  }).reasons.some((r) => r.includes("Forecast dip")));
 
   const waitSignal = analyzeBuySignal({
     current: 120,
