@@ -118,7 +118,7 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .guide-hero .hero-stat{padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.85);border:1px solid var(--line);text-align:center}
 .guide-hero .hero-stat .lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:4px}
 .guide-hero .hero-stat .val{font-size:1.05rem;font-weight:800;color:var(--orange-deep);font-variant-numeric:tabular-nums;line-height:1.2}
-.guide-hero .hero-stat .val.good{color:var(--buy)}.guide-hero .hero-stat .val.muted{color:var(--muted);font-size:.88rem;font-weight:600}
+.guide-hero .hero-stat .val.good{color:var(--buy)}.guide-hero .hero-stat .val.warn{color:var(--wait)}.guide-hero .hero-stat .val.muted{color:var(--muted);font-size:.88rem;font-weight:600}
 .guide-hero .hero-stat .sub{font-size:.68rem;color:var(--muted);margin-top:3px}
 .guide-stretch{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);font-size:.84rem;color:var(--slate);line-height:1.4}
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
@@ -538,7 +538,7 @@ body.alert-active{padding-top:76px}
       timingLine='<p class="when wait">⏱ Hold ~'+g.nearTermDay+' day'+(g.nearTermDay>1?"s":"")+
         (g.nearTermDateLabel?" · "+esc(g.nearTermDateLabel):"")+'</p>';
     }else if(isHold){
-      timingLine='<p class="when wait">⏱ Hold and recheck — no cheaper dip forecast soon</p>';
+      timingLine='<p class="when watch">⏱ High price — no dip forecast; waiting may cost more</p>';
     }
     var hero="";
     if(isHold){
@@ -556,8 +556,8 @@ body.alert-active{padding-top:76px}
       }else{
         hero='<div class="guide-hero">'+
           '<div class="hero-stat"><div class="lbl">Today</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
-          '<div class="hero-stat"><div class="lbl">Forecast</div><div class="val muted">No dip</div><div class="sub">Flat or rising next 2 weeks</div></div>'+
-          '<div class="hero-stat"><div class="lbl">Advice</div><div class="val muted">Recheck</div><div class="sub">Hold only if you can wait</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Forecast</div><div class="val muted">No dip</div><div class="sub">Flat or rising</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Advice</div><div class="val warn">Don\'t wait</div><div class="sub">Fill if you need oil</div></div>'+
         '</div>';
       }
     }
@@ -813,6 +813,7 @@ body.alert-active{padding-top:76px}
   function signalCard(kind, signal, extra, trend, fuelData){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
+    if(cls==="wait"&&signal.guide&&signal.guide.hasNearTermDip===false) cls="watch";
     var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
     return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+

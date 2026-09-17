@@ -29,6 +29,7 @@ import {
   pickNearTermBest,
   pickNearTermDip,
   hasForecastDip,
+  isFirmHold,
   createEmptyFuelMemory,
   appendFuelMemory,
   flattenMemoryPrices,
@@ -136,8 +137,8 @@ export function runNewryFuelTests() {
     {
       current: 176.9,
       verdict: "wait",
-      guide: { targetPricePpl: 171.5, savingsVsNowPpl: 5.4 },
-      holdOutlook: { headline: "Hold off filling up ~5 days", recheckNote: "Recheck every 3 days" },
+      guide: { targetPricePpl: 171.5, savingsVsNowPpl: 5.4, hasNearTermDip: true },
+      holdOutlook: { hasDip: true, headline: "Hold off filling up ~5 days", recheckNote: "Recheck every 3 days" },
     },
     dieselMeta
   );
@@ -230,6 +231,27 @@ export function runNewryFuelTests() {
     ma7: 106,
     ma30: 104,
   }).reasons.some((r) => r.includes("Forecast dip")));
+  s.assert("no-dip why warns on waiting", buildVerdictWhy({
+    current: 107,
+    verdict: "wait",
+    guide: noDipGuide,
+    vs7Pct: 1,
+    percentile: 95,
+    trendSlope: 0,
+    ma7: 106,
+  }).reasons[0].includes("risky"));
+  s.assert("isFirmHold false without dip", !isFirmHold(noDipGuide));
+  s.assert("soft wait uses watch alert", buildBuyAlertState({
+    alertWorthy: false,
+    signals: {
+      heating: {
+        verdict: "wait",
+        current: 107,
+        guide: noDipGuide,
+        holdOutlook: { hasDip: false, headline: "High price — no dip forecast" },
+      },
+    },
+  }).mode === "watch");
 
   const waitSignal = analyzeBuySignal({
     current: 120,
@@ -359,17 +381,36 @@ export function runNewryFuelTests() {
   s.assert("buy alert mode", buyAlert.mode === "buy");
   s.assert("buy alert message", buyAlert.message.includes("Buy now"));
   s.assert("buy alert items", buyAlert.items.length === 2);
-  s.assert("hold alert mode", buildBuyAlertState({
+  s.assert("firm hold alert mode", buildBuyAlertState({
     alertWorthy: false,
-    signals: { heating: { verdict: "wait", current: 107 }, diesel: { verdict: "wait", current: 176 } },
+    signals: {
+      heating: {
+        verdict: "wait",
+        current: 107,
+        guide: { hasNearTermDip: true, targetPricePpl: 101.6 },
+        holdOutlook: { hasDip: true, headline: "Hold ~5 days — target ~101.6p/L" },
+      },
+    },
   }).mode === "hold");
-  s.assert("hold alert message", buildBuyAlertState({
+  s.assert("firm hold alert message", buildBuyAlertState({
     alertWorthy: false,
-    signals: { heating: { verdict: "wait", current: 107, why: buildVerdictWhy({
-      current: 107, vs7Pct: 3.2, ma7: 103.5, percentile: 88, verdict: "wait",
-      guide: { targetPricePpl: 101.6, whenToBuy: { bestWindow: { day: 5, pricePpl: 101.6 } } },
-      reasons: ["Near recent highs — consider waiting if you can."],
-    }) } },
+    signals: {
+      heating: {
+        verdict: "wait",
+        current: 107,
+        guide: { hasNearTermDip: true, targetPricePpl: 101.6 },
+        holdOutlook: { hasDip: true, headline: "Hold ~5 days — target ~101.6p/L" },
+        why: buildVerdictWhy({
+          current: 107, vs7Pct: 3.2, ma7: 103.5, percentile: 88, verdict: "wait",
+          guide: {
+            hasNearTermDip: true,
+            targetPricePpl: 101.6,
+            whenToBuy: { bestWindow: { day: 5, pricePpl: 101.6, hasDip: true } },
+          },
+          reasons: ["Near recent highs — consider waiting if you can."],
+        }),
+      },
+    },
   }).message.includes("Hold"));
   s.assert("hold has why", buildBuyAlertState({
     alertWorthy: false,
