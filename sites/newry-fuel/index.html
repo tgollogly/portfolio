@@ -37,31 +37,31 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
 <style>
 :root{
-  --ink:#0f172a;--slate:#1e293b;--muted:#64748b;--faint:#94a3b8;
-  --amber:#f59e0b;--orange:#ea580c;--orange-deep:#c2410c;
-  --teal:#14b8a6;--sky:#38bdf8;--card:rgba(255,255,255,.92);
-  --glass:blur(20px) saturate(1.4);--line:rgba(15,23,42,.1);
-  --buy:#059669;--watch:#d97706;--wait:#dc2626;
-  --sans:"Plus Jakarta Sans",system-ui,sans-serif;
-  --display:"DM Serif Display",Georgia,serif;
+  --ink:#1a2e1f;--slate:#2d4a35;--muted:#5c6b5e;--faint:#8a9a8c;
+  --moss:#1a4d3e;--heather:#6b4c7a;--warm-gold:#c9954a;--cream:#faf6ef;
+  --amber:#d4a017;--orange:#c45c26;--orange-deep:#9a3412;
+  --teal:#2a9d8f;--sky:#7eb8da;--robin-red:#c0392b;
+  --card:rgba(255,252,247,.94);--glass:blur(22px) saturate(1.35);
+  --line:rgba(26,46,31,.09);--buy:#1a7a52;--watch:#b45309;--wait:#b91c1c;
+  --sans:"Outfit",system-ui,sans-serif;--display:"Cormorant Garamond",Georgia,serif;
   --ease:cubic-bezier(.22,1,.36,1);
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{
   font-family:var(--sans);color:var(--ink);line-height:1.55;
-  background:linear-gradient(165deg,#fff7ed 0%,#fef3c7 35%,#e0f2fe 100%);
+  background:linear-gradient(168deg,var(--cream) 0%,#e8f0e4 38%,#dce8f0 72%,#f5ebe0 100%);
   -webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
-.glow{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55;
-  background:radial-gradient(ellipse 70% 50% at 10% 0%,rgba(245,158,11,.25),transparent 55%),
-  radial-gradient(ellipse 60% 45% at 90% 10%,rgba(234,88,12,.18),transparent 50%),
-  radial-gradient(ellipse 80% 60% at 50% 100%,rgba(56,189,248,.15),transparent 55%);
-  animation:glowShift 20s ease-in-out infinite alternate}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.6;
+  background:radial-gradient(ellipse 65% 45% at 8% 5%,rgba(201,149,74,.22),transparent 55%),
+  radial-gradient(ellipse 55% 40% at 92% 8%,rgba(107,76,122,.14),transparent 50%),
+  radial-gradient(ellipse 75% 55% at 50% 100%,rgba(42,157,143,.12),transparent 55%);
+  animation:glowShift 24s ease-in-out infinite alternate}
 @keyframes glowShift{0%{opacity:.45;transform:scale(1)}100%{opacity:.62;transform:scale(1.03)}}
 .shell{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 20px 56px}
 .hero{padding:36px 0 12px;animation:rise .8s var(--ease) both}
@@ -90,7 +90,8 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
   transition:transform .35s var(--ease),box-shadow .35s}
 .card:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(15,23,42,.1)}
 .card.buy{border-left:4px solid var(--buy)}.card.watch{border-left:4px solid var(--watch)}
-.card.wait{border-left:4px solid var(--wait)}.card.neutral{border-left:4px solid var(--faint)}
+.card.wait{border-left:4px solid var(--wait)}.card.hold{border-left:4px solid var(--moss)}
+.card.neutral{border-left:4px solid var(--faint)}
 .card-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--orange);margin-bottom:6px}
 .card h2{font-family:var(--display);font-size:1.65rem;margin:0 0 4px;font-weight:400}
 .price{font-family:var(--sans);font-size:2.8rem;font-weight:700;color:var(--orange-deep);font-variant-numeric:tabular-nums;line-height:1.05}
@@ -367,7 +368,16 @@ body.alert-active .diesel-top-pick{top:76px}
   border:1px solid var(--line);animation:momPop .55s var(--ease) both;transition:transform .3s var(--ease),box-shadow .3s}
 .mom-row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
 .mom-row.buy{border-left:4px solid var(--buy)}.mom-row.wait{border-left:4px solid var(--wait)}
-.mom-row.watch{border-left:4px solid var(--watch)}.mom-row.neutral{border-left:4px solid var(--faint)}
+.mom-row.watch{border-left:4px solid var(--watch)}.mom-row.hold{border-left:4px solid var(--moss)}
+.mom-row.fill{border-left:4px solid var(--heather)}.mom-row.neutral{border-left:4px solid var(--faint)}
+.mom-row.loading{opacity:.7}
+.mom-do{margin:8px 0 0;padding:0;list-style:none;font-size:.82rem;color:var(--slate)}
+.mom-do li{padding:4px 0 4px 18px;position:relative;line-height:1.35}
+.mom-do.do li::before{content:"✓";position:absolute;left:0;color:var(--buy);font-weight:800}
+.mom-do.dont li::before{content:"✗";position:absolute;left:0;color:var(--wait);font-weight:800}
+.mom-action.norush,.mom-action.good{background:rgba(26,77,62,.12);color:var(--moss)}
+.mom-action.order{background:rgba(107,76,122,.12);color:var(--heather)}
+.mom-action.loading{background:rgba(148,163,184,.15);color:var(--muted)}
 .mom-emoji{font-size:1.6rem;line-height:1;flex-shrink:0}
 .mom-body{flex:1;min-width:0}
 .mom-action{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
@@ -391,7 +401,22 @@ body.alert-active .diesel-top-pick{top:76px}
 .expert-fold>summary:hover{background:rgba(254,243,199,.6)}
 .expert-inner{padding:0 16px 16px;display:grid;gap:16px}
 .expert-inner .card{margin-top:0!important;animation:fadeSlide .5s var(--ease) both}
+.btn-sound{background:linear-gradient(135deg,var(--heather),#8b5a9b);color:#fff;border:none;
+  box-shadow:0 6px 18px rgba(107,76,122,.28)}
+.btn-sound:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(107,76,122,.35)}
+.robin-scene{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));right:12px;z-index:50;
+  width:88px;height:72px;pointer-events:none;opacity:.92;filter:drop-shadow(0 6px 12px rgba(26,46,31,.15))}
+.robin-scene .branch{stroke:#5c4033;stroke-width:3;fill:none}
+.robin-scene .robin-body{animation:robinHop 4s ease-in-out infinite}
+.robin-scene .robin-wing{transform-origin:42px 38px;animation:robinFlap .45s ease-in-out infinite alternate}
+@keyframes robinHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes robinFlap{0%{transform:rotate(-8deg)}100%{transform:rotate(12deg)}}
+.action-hero{margin-top:18px;padding:18px 20px;border-radius:20px;
+  background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(232,240,228,.88));
+  border:1px solid var(--line);box-shadow:0 10px 28px rgba(26,46,31,.06)}
+.action-hero-kicker{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--moss);margin-bottom:8px}
 @media(prefers-reduced-motion:reduce){
+  .robin-scene .robin-body,.robin-scene .robin-wing{animation:none}
   .glow,.badge .dot,.top-alert,.top-alert-icon{animation:none}
   *{animation-duration:.01ms!important}
 }
@@ -419,6 +444,20 @@ body.alert-active .diesel-top-pick{top:76px}
   <a class="diesel-top-call" id="dieselTopCall" href="#">📞 Call forecourt</a>
 </div>
 <div class="glow" aria-hidden="true"></div>
+<div class="robin-scene" aria-hidden="true" title="Robin watching Mullaghbane prices">
+  <svg viewBox="0 0 120 90" width="88" height="66" xmlns="http://www.w3.org/2000/svg">
+    <path class="branch" d="M0 55 Q40 48 75 52 Q95 54 120 50"/>
+    <g class="robin-body">
+      <ellipse cx="52" cy="42" rx="14" ry="16" fill="#5c4033"/>
+      <ellipse cx="58" cy="38" rx="11" ry="13" fill="var(--robin-red)"/>
+      <circle cx="63" cy="34" r="2.2" fill="#1a1a1a"/>
+      <path d="M68 36 L76 34 L68 38 Z" fill="#e8a020"/>
+      <ellipse cx="48" cy="52" rx="5" ry="7" fill="var(--robin-red)" opacity=".85"/>
+      <g class="robin-wing"><ellipse cx="42" cy="38" rx="9" ry="5" fill="#8b2500" transform="rotate(-20 42 38)"/></g>
+      <path d="M44 56 L48 68 M56 56 L52 68" stroke="#5c4033" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
 <div class="shell">
 <header class="hero">
   <div class="badge"><span class="dot"></span> Mullaghbane · BT35 · NI &amp; Louth</div>
@@ -428,6 +467,7 @@ body.alert-active .diesel-top-pick{top:76px}
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
+    <button type="button" class="btn btn-sound" id="soundBtn" title="Play cheerful fuel-watch melody (original tune)">🎵 Fuel melody</button>
   </div>
 </header>
 
@@ -444,8 +484,8 @@ body.alert-active .diesel-top-pick{top:76px}
   </div>
 </section>
 
-<section class="mom-guide reveal" id="momGuide" hidden style="animation-delay:.02s">
-  <div class="mom-guide-kicker">Simple advice · in plain English</div>
+<section class="action-hero reveal" id="actionHero" hidden style="animation-delay:.02s">
+  <div class="action-hero-kicker">What to do right now</div>
   <div class="mom-rows" id="momRows"></div>
 </section>
 
@@ -1097,22 +1137,37 @@ body.alert-active .diesel-top-pick{top:76px}
     if(!action) return "neutral";
     if(action.indexOf("BUY")===0) return "buy";
     if(action.indexOf("WAIT")===0) return "wait";
-    if(action.indexOf("FILL")===0) return "fill";
+    if(action.indexOf("ORDER")===0||action.indexOf("FILL")===0) return "fill";
     if(action.indexOf("WATCH")===0) return "watch";
+    if(action.indexOf("NO RUSH")===0||action.indexOf("ALL GOOD")===0) return "hold";
+    if(action.indexOf("LOADING")===0) return "loading";
     return "neutral";
+  }
+
+  function momActionPillClass(action){
+    if(action.indexOf("NO RUSH")===0) return "norush";
+    if(action.indexOf("ALL GOOD")===0) return "good";
+    if(action.indexOf("ORDER")===0) return "order";
+    if(action.indexOf("LOADING")===0) return "loading";
+    return momActionClass(action);
   }
 
   function momRowHtml(kind, signal){
     var m=signal&&signal.momSummary;
-    if(!m||!signal.current) return "";
+    if(!m||!signal.current||m.loading) return "";
     var icon=kind==="heating"?"🛢️":"⛽";
     var title=kind==="heating"?"Heating oil":"Diesel";
     var delay=kind==="heating"?0.04:0.1;
+    var doHtml=(m.doNow&&m.doNow.length)?'<ul class="mom-do do">'+
+      m.doNow.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ul>":"";
+    var dontHtml=(m.dontDo&&m.dontDo.length)?'<ul class="mom-do dont">'+
+      m.dontDo.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ul>":"";
     return '<div class="mom-row '+momActionClass(m.action)+'" style="animation-delay:'+delay+'s">'+
       '<span class="mom-emoji" aria-hidden="true">'+esc(m.emoji||icon)+'</span>'+
       '<div class="mom-body">'+
-        '<div class="mom-action '+momActionClass(m.action)+'">'+esc(m.action)+'</div>'+
+        '<div class="mom-action '+momActionPillClass(m.action)+'">'+esc(m.action)+'</div>'+
         '<p class="mom-line"><strong>'+title+':</strong> '+esc(m.oneLiner)+'</p>'+
+        doHtml+dontHtml+
       '</div></div>';
   }
 
@@ -1122,9 +1177,9 @@ body.alert-active .diesel-top-pick{top:76px}
     var html="";
     if(h&&h.current!=null) html+=momRowHtml("heating",h);
     if(d&&d.current!=null) html+=momRowHtml("diesel",d);
-    var el=$("momGuide");
-    if(!html){el.hidden=true;return}
-    el.hidden=false;
+    var el=$("actionHero");
+    if(!html){if(el) el.hidden=true;return}
+    if(el) el.hidden=false;
     $("momRows").innerHTML=html;
   }
 
@@ -1132,10 +1187,11 @@ body.alert-active .diesel-top-pick{top:76px}
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
     if(cls==="wait"&&signal.guide&&signal.guide.hasNearTermDip===false) cls="watch";
-    var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
     var m=signal.momSummary;
-    var momHead=m?'<div class="mom-card-head"><span class="mom-card-badge">'+
+    var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
+    var momHead=m&&!m.loading?'<div class="mom-card-head"><span class="mom-card-badge">'+
       esc(m.emoji||"")+' '+esc(m.action||"")+' · '+esc(m.short||"")+'</span></div>':"";
+    var verdictLine=(m&&!m.loading&&m.oneLiner)?m.oneLiner:signal.headline;
     return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.06:0.12)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Diesel at the pump (B7)")+'</h2>'+
@@ -1143,7 +1199,7 @@ body.alert-active .diesel-top-pick{top:76px}
       momHead+
       priceCtx+
       trendPill(trend&&trend.snapshot)+
-      '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
+      '<div class="verdict '+cls+'">'+esc(verdictLine)+'</div>'+
       buyGuideHtml(signal,kind)+
       (kind==="diesel"?dieselHoldExplainHtml(signal):"")+
       whyBoxHtml(signal)+
@@ -1357,6 +1413,39 @@ body.alert-active .diesel-top-pick{top:76px}
     },600);
   }
 
+  function playFuelMelody(){
+    try{
+      var Ctx=window.AudioContext||window.webkitAudioContext;
+      if(!Ctx) return;
+      var ctx=new Ctx();
+      var notes=[523.25,659.25,783.99,659.25,783.99,987.77,783.99];
+      var t=ctx.currentTime;
+      notes.forEach(function(freq,i){
+        var osc=ctx.createOscillator();
+        var gain=ctx.createGain();
+        osc.type="triangle";
+        osc.frequency.value=freq;
+        gain.gain.setValueAtTime(0,t+i*0.14);
+        gain.gain.linearRampToValueAtTime(0.18,t+i*0.14+0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001,t+i*0.14+0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t+i*0.14);
+        osc.stop(t+i*0.14+0.4);
+      });
+      setTimeout(function(){ctx.close()},2000);
+    }catch(e){}
+  }
+
+  function initSoundBtn(){
+    var btn=$("soundBtn");
+    if(!btn) return;
+    btn.addEventListener("click",function(e){
+      e.preventDefault();
+      playFuelMelody();
+    });
+  }
+
   function initAlertDismiss(){
     var dismissBtn=$("topAlertDismiss");
     var showBtn=$("alertShowBtn");
@@ -1380,6 +1469,7 @@ body.alert-active .diesel-top-pick{top:76px}
   function boot(){
     fetchPrices();
     initAlertDismiss();
+    initSoundBtn();
     maybeAutoDial();
     document.addEventListener("visibilitychange",function(){
       if(!document.hidden) fetchPrices();
