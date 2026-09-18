@@ -563,14 +563,14 @@ body.alert-active .diesel-top-pick{top:76px}
 
 <section class="card chart-card" id="heatingChartCard" hidden>
   <div class="chart-head"><h2>🛢️ Heating oil trend</h2></div>
-  <p class="chart-note" id="heatingChartNote">Solid line = past prices · dashed = predicted next 7 days · green line = best price to buy at</p>
+  <p class="chart-note" id="heatingChartNote">Solid line = stored typical prices · dashed = predicted next 7 days · green line = best price to buy at</p>
   <div class="chart-wrap"><canvas id="heatingChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#ea580c"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#ea580c"></i> Stored typical prices + now</span>
     <span><i style="background:#7c3aed"></i> 7-day prediction</span>
-    <span><i style="background:#0ea5e9"></i> 7-day moving average</span>
+    <span><i style="background:#0ea5e9"></i> Current daily average</span>
     <span><i style="background:#059669"></i> Target buy</span>
-    <span><i style="background:#94a3b8"></i> Average</span>
+    <span><i style="background:#94a3b8"></i> Recent daily average</span>
   </div>
 </section>
 
@@ -579,11 +579,11 @@ body.alert-active .diesel-top-pick{top:76px}
   <p class="chart-note" id="dieselChartNote">Local forecourt prices near BT35 only · grey dashed = UK weekly average for comparison</p>
   <div class="chart-wrap"><canvas id="dieselChart"></canvas></div>
   <div class="legend">
-    <span><i style="background:#0284c7"></i> Live trend (weekly + now)</span>
+    <span><i style="background:#0284c7"></i> Stored typical prices + now</span>
     <span><i style="background:#7c3aed"></i> 7-day prediction</span>
-    <span><i style="background:#0ea5e9"></i> 7-day moving average</span>
+    <span><i style="background:#0ea5e9"></i> Current daily average</span>
     <span><i style="background:#059669"></i> Target buy</span>
-    <span><i style="background:#94a3b8"></i> Your 30-day avg</span>
+    <span><i style="background:#94a3b8"></i> Recent daily average</span>
     <span class="dash"><i style="background:#64748b"></i> UK weekly avg</span>
   </div>
 </section>
@@ -1317,6 +1317,8 @@ body.alert-active .diesel-top-pick{top:76px}
     var ma7Line=allLabels.map(function(){return signal&&signal.ma7!=null?signal.ma7:null});
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
+    var ma7Label=(signal&&signal.ma7Days?signal.ma7Days:7)+"-day avg";
+    var ma30Label=(signal&&signal.ma30Days?signal.ma30Days:30)+"-day avg";
     var ukRef=trendPack&&trendPack.ukReferencePpl;
     var ukLine=ukRef!=null?allLabels.map(function(){return ukRef}):null;
     var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
@@ -1326,9 +1328,9 @@ body.alert-active .diesel-top-pick{top:76px}
       {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
       {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
       {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
-      {label:"7-day MA",data:ma7Line,borderColor:"#0ea5e9",borderWidth:2,borderDash:[10,4],pointRadius:0,fill:false,animation:{duration:1200,easing:"easeOutCubic"}},
+      {label:ma7Label,data:ma7Line,borderColor:"#0ea5e9",borderWidth:2,borderDash:[10,4],pointRadius:0,fill:false,animation:{duration:1200,easing:"easeOutCubic"}},
       {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
-      {label:isDiesel?"Your 30-day avg":"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
+      {label:ma30Label,data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
     ];
     if(ukLine){
       datasets.push({label:"UK weekly avg",data:ukLine,borderColor:"#64748b",borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});

@@ -188,7 +188,7 @@ export function runNewryFuelTests() {
   s.assert("diesel trend local only", trend.length >= 4 && trend.every((p) => p.type !== "uk_weekly"));
   s.assert("trend has now", trend.some((p) => p.live));
   const trendHeat = buildLiveTrendSeries(gov, [], 107, "heating", 182.9);
-  s.assert("heating trend series length", trendHeat.length >= 4);
+  s.assert("heating trend excludes synthetic diesel proxy", trendHeat.length === 1 && trendHeat[0].live);
 
   const dieselMeta = buildDieselDisplayMeta(
     {
