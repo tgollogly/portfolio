@@ -656,7 +656,7 @@ export function runNewryFuelTests() {
   s.assert("html action hero", html.includes("actionHero") && html.includes("What to do right now"));
   s.assert("html robin mascot", html.includes("robin-scene"));
   s.assert("html fuel melody", html.includes("soundBtn") && html.includes("playFuelMelody"));
-  s.assert("html official abba", html.includes("abbaBtn") && html.includes("youtube-nocookie.com"));
+  s.assert("html official abba", html.includes("abbaBtn") && html.includes("open.spotify.com/embed") && !html.includes("youtube-nocookie"));
   s.assert("html boot not blocked by chart", html.includes("boot();") && !html.includes("if(window.Chart) boot()"));
   s.assert("server serveFuelPrices", server.includes("serveFuelPrices"));
   s.assert("html expert fold", html.includes("expertFold") && html.includes("expert details"));
