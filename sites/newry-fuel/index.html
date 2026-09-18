@@ -120,6 +120,18 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .cross-border .fx-rate{font-size:.78rem;font-weight:700;color:#0369a1;margin:0 0 8px}
 .cross-border p{font-size:.86rem;color:var(--slate);margin:0 0 6px;line-height:1.4}
 .cross-save{font-weight:700;color:#047857;margin-top:8px!important}
+.heating-compare{margin-top:24px}
+.heating-compare-note{font-size:.88rem;font-weight:600;color:var(--slate);margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(234,88,12,.08);border:1px solid rgba(234,88,12,.15)}
+.heating-quote{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.heating-quote:last-child{border-bottom:none}
+.heating-quote.cheapest{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px}
+.heating-quote .hq-name{font-size:.95rem;font-weight:700}
+.heating-quote .hq-meta{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.35}
+.heating-quote .hq-price{font-weight:800;color:var(--orange-deep);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.heating-quote .hq-sub{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:2px}
+.heating-region-divider{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
+.heating-usual{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);font-size:.84rem;color:var(--slate)}
+.heating-usual a{color:#0369a1;font-weight:700;text-decoration:none}
 .station-divider{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
 .verdict{font-size:1rem;font-weight:600;margin:10px 0;color:var(--slate)}
 .verdict.buy{color:var(--buy)}.verdict.watch{color:var(--watch)}.verdict.wait{color:var(--wait)}
@@ -387,6 +399,17 @@ body.alert-active .diesel-top-pick{top:76px}
 
 <div id="error" class="err" hidden></div>
 
+<section class="card heating-compare reveal" id="heatingCompareCard" hidden style="animation-delay:.02s">
+  <div class="card-kicker">Live per-litre · Newry BT35 &amp; Louth</div>
+  <h2>🛢️ Heating oil price comparison</h2>
+  <p class="heating-compare-note" id="heatingCompareNote"></p>
+  <div id="heatingCompareList"></div>
+  <div class="heating-usual" id="heatingUsualNote">
+    Your usual supplier: <strong>Safe Fuels, Camlough</strong> —
+    <a href="tel:+442830830691">028 3083 0691</a> · confirm their quote by phone (may differ from CheapestOil listings).
+  </div>
+</section>
+
 <section class="grid two" id="liveCards"></section>
 
 <section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
@@ -497,35 +520,63 @@ body.alert-active .diesel-top-pick{top:76px}
   function fmtEuro(v,d){return v==null?"—":"€"+Number(v).toFixed(d==null?2:d)}
   function fmtEuroLitres(cents){return cents==null?"—":"€"+(Number(cents)/100).toFixed(3)+"/L"}
 
+  function heatingQuoteRowHtml(q, cheapestPpl, forLitres){
+    if(!q) return "";
+    var isBest=q.pplGbp===cheapestPpl;
+    var native=q.region==="roi"
+      ?fmtEuroLitres(q.pplNative)+' ≈ '+fmtP(q.pplGbp)+'/L'
+      :fmtP(q.pplNative)+'/L';
+    var total=q.region==="roi"
+      ?fmtEuro(q.totalNative)+' (≈ '+fmtMoney(q.totalGbp)+')'
+      :fmtMoney(q.totalNative);
+    return '<div class="heating-quote'+(isBest?" cheapest":"")+'"><div>'+
+      '<div class="hq-name">'+esc(q.supplier)+(isBest?'<span class="meta"> · cheapest</span>':"")+'</div>'+
+      '<div class="hq-meta">'+esc(q.area)+' · '+(forLitres||900)+'L delivery · '+esc(total)+'</div></div>'+
+      '<div class="hq-price">'+native+
+      (q.region==="roi"?'<div class="hq-sub">≈ '+fmtP(q.pplGbp)+'/L in £</div>':"")+
+      '</div></div>';
+  }
+
+  function renderHeatingCompare(heating){
+    var card=$("heatingCompareCard");
+    var live=heating&&heating.liveComparison;
+    if(!heating||!heating.ok||!live||!live.quotes||!live.quotes.length){
+      if(card) card.hidden=true;
+      return;
+    }
+    card.hidden=false;
+    var note=$("heatingCompareNote");
+    var parts=[live.headline||"Live heating oil quotes per litre"];
+    if(live.niRange) parts.push(live.niRange);
+    if(live.eurGbp) parts.push("€1 = £"+Number(live.eurGbp).toFixed(4));
+    note.textContent=parts.filter(Boolean).join(" · ");
+    var cheapestP=live.cheapest&&live.cheapest.pplGbp;
+    var ni=live.quotes.filter(function(q){return q.region==="ni"});
+    var roi=live.quotes.filter(function(q){return q.region==="roi"});
+    var html="";
+    html+='<div class="heating-region-divider">🇬🇧 Newry BT35 (NI) · live supplier quotes</div>';
+    ni.forEach(function(q){html+=heatingQuoteRowHtml(q,cheapestP,live.forLitres);});
+    if(roi.length){
+      html+='<div class="heating-region-divider">🇮🇪 Louth (ROI) · euro prices with £ equivalent</div>';
+      roi.forEach(function(q){html+=heatingQuoteRowHtml(q,cheapestP,live.forLitres);});
+    }
+    $("heatingCompareList").innerHTML=html;
+    var cmp=heating.comparison;
+    if(cmp&&cmp.savingsGbp>0){
+      $("heatingCompareList").innerHTML+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
+    }
+  }
+
   function heatingCrossBorderHtml(heating){
     if(!heating||!heating.ok) return "";
-    var ex=heating.exchange&&heating.exchange.eurGbp;
-    var cmp=heating.comparison;
-    var niData=(heating.ni&&heating.ni.ok)?heating.ni:null;
-    var roiData=(heating.roi&&heating.roi.ok)?heating.roi:null;
-    var niPpl=niData&&(niData.cheapestPpl||niData.averagePpl)||heating.cheapestPpl;
-    var roiCheapest=roiData&&roiData.cheapest;
-    if(!Number.isFinite(niPpl)&&!roiCheapest) return "";
-    var html='<div class="cross-border">';
-    if(ex) html+='<p class="fx-rate">Live EUR→GBP: €1 = £'+Number(ex).toFixed(4)+
-      (heating.exchange.date?' · '+esc(String(heating.exchange.date).slice(0,10)):"")+'</p>';
-    if(Number.isFinite(niPpl)){
-      html+='<p>🇬🇧 NI quote (900L): '+fmtP(niPpl)+'/L · tank ≈ '+fmtMoney((niPpl*900)/100)+'</p>';
+    var live=heating.liveComparison;
+    if(live&&live.niBest){
+      return '<div class="cross-border">'+
+        '<p><strong>Live Newry best:</strong> '+esc(live.niBest.supplier)+' · '+fmtP(live.niBest.pplGbp)+'/L · '+fmtMoney(live.niBest.totalGbp)+' for '+(live.forLitres||900)+'L</p>'+
+        (live.roiBest?'<p><strong>Live Louth best:</strong> '+esc(live.roiBest.supplier)+' · '+fmtEuroLitres(live.roiBest.pplNative)+' ≈ '+fmtP(live.roiBest.pplGbp)+'/L</p>':"")+
+        '<p class="meta">Full supplier list above · updated '+esc((heating.updatedAt||"").slice(0,16).replace("T"," "))+'</p></div>';
     }
-    if(roiCheapest){
-      var gbpPpl=cmp&&cmp.roi?cmp.roi.pplGbp:null;
-      html+='<p>🇮🇪 Louth (900L): '+fmtEuroLitres(roiCheapest.centsPerLitre)+
-        (gbpPpl!=null?' ≈ '+fmtP(gbpPpl)+'/L':"")+
-        ' · '+esc(roiCheapest.supplier)+'</p>';
-    }
-    if(roiData&&roiData.suppliers&&roiData.suppliers.length>1){
-      html+='<p class="meta">Louth suppliers: '+roiData.suppliers.slice(0,4).map(function(s){
-        return esc(s.supplier)+' '+fmtEuroLitres(s.centsPerLitre);
-      }).join(' · ')+'</p>';
-    }
-    if(cmp&&cmp.savingsGbp>0&&Number.isFinite(niPpl)) html+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
-    html+='</div>';
-    return html;
+    return "";
   }
 
   function stationCallLink(s, cls){
@@ -1100,9 +1151,9 @@ body.alert-active .diesel-top-pick{top:76px}
     $("error").hidden=true;
     var cards="";
     var trends=data.trends||{};
+    renderHeatingCompare(data.heating);
     cards+=signalCard("heating",data.signals&&data.signals.heating,
-      (data.heating&&data.heating.ok?heatingCrossBorderHtml(data.heating)+
-        '<div class="meta">NI &amp; Louth quotes for 900L · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':""),
+      (data.heating&&data.heating.ok?heatingCrossBorderHtml(data.heating):""),
       trends.heating,null);
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,"",trends.diesel,data.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';

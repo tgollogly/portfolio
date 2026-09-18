@@ -15,6 +15,8 @@ import {
   euroCentsToGbpPpl,
   euroToGbp,
   parseCheapestOilIeCounty,
+  parseCheapestOilUkPostcode,
+  buildHeatingLiveComparison,
   matchDieselWatchlist,
   applyWatchlistContact,
   mergeDieselStations,
@@ -166,6 +168,23 @@ export function runNewryFuelTests() {
   const louth = parseCheapestOilIeCounty(ieHtml, 900);
   s.assert("parse louth heating", louth.length === 1 && louth[0].supplier === "Morgan Fuels");
   s.assert("louth cents per litre", louth[0].centsPerLitre > 160);
+
+  const niHtml =
+    '<div data-price300="345" data-price500="545" data-price900="965" data-supplier="AMG Fuels"></div>' +
+    '<div data-price300="335" data-price500="545" data-price900="965" data-supplier="Donnelly Fuels"></div>';
+  const newry = parseCheapestOilUkPostcode(niHtml, 900);
+  s.assert("parse newry heating", newry.length === 2 && newry[0].pencePerLitre >= 107);
+  s.assert("newry ppl calc", Math.abs(newry[0].pencePerLitre - 107.22) < 0.1);
+
+  const liveHeat = buildHeatingLiveComparison({
+    niSuppliers: newry,
+    roiSuppliers: louth,
+    eurGbp: 0.8574,
+    forLitres: 900,
+    niCheapestPpl: 107,
+  });
+  s.assert("heating live comparison", liveHeat.quotes.length === 3 && liveHeat.niBest?.region === "ni");
+  s.assert("heating live headline", liveHeat.headline.includes("Newry") || liveHeat.headline.includes("Cheapest"));
 
   const gregory = matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" });
   s.assert("match gregory", gregory?.id === "dan-gregorys");
@@ -574,6 +593,7 @@ export function runNewryFuelTests() {
   s.assert("html station call", html.includes("station-call") && html.includes("confirm price"));
   s.assert("html diesel top pick", html.includes("dieselTopPick") && html.includes("diesel-top-call"));
   s.assert("html legal footer", html.includes("legalFooter") && html.includes("Disclaimer, privacy"));
+  s.assert("html heating compare", html.includes("heatingCompareCard") && html.includes("price comparison"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));
