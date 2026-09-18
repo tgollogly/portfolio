@@ -81,9 +81,6 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:14px;padding:12px 18px;
   font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s}
 .btn:active{transform:scale(.98)}
-.btn-push{background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;box-shadow:0 8px 24px rgba(234,88,12,.28)}
-.btn-push:hover{transform:translateY(-2px)}
-.btn-push.on{background:linear-gradient(135deg,var(--teal),#0d9488)}
 .btn-call{background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none}
 .btn-call:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
 .grid{display:grid;gap:16px;margin-top:24px}
@@ -105,6 +102,16 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .price-context .price-ctx-note{font-size:.76rem;color:var(--faint);margin:0;line-height:1.35}
 .station.cheapest{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px}
 .station.usual{border-left:3px solid #7c3aed;padding-left:12px;margin-left:-12px}
+.station.recommended{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px;background:linear-gradient(90deg,rgba(5,150,105,.06),transparent)}
+.station-badge.save{background:rgba(5,150,105,.15);color:#047857}
+.diesel-tip{margin-top:12px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(5,150,105,.12),rgba(255,255,255,.92));border:1px solid rgba(5,150,105,.28);font-size:.92rem;font-weight:600;color:#065f46;line-height:1.45}
+.diesel-tip .tip-detail{font-size:.82rem;font-weight:500;color:var(--slate);margin-top:6px}
+.diesel-call-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.diesel-call-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);width:100%;margin-bottom:2px}
+.diesel-call-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff!important;text-decoration:none;font-size:.88rem;font-weight:700;box-shadow:0 2px 8px rgba(2,132,199,.25)}
+.diesel-call-btn.murphy{background:linear-gradient(135deg,#047857,#059669);box-shadow:0 2px 8px rgba(5,150,105,.25)}
+.station-call{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(2,132,199,.1);color:#0369a1!important;text-decoration:none;font-size:.82rem;font-weight:700}
+.station-call:active{opacity:.85}
 .station-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:rgba(124,58,237,.12);color:#6d28d9;vertical-align:middle}
 .station-badge.roi{background:rgba(2,132,199,.12);color:#0369a1}
 .station-dual{font-size:.78rem;color:var(--muted);margin-top:4px}
@@ -113,6 +120,18 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .cross-border .fx-rate{font-size:.78rem;font-weight:700;color:#0369a1;margin:0 0 8px}
 .cross-border p{font-size:.86rem;color:var(--slate);margin:0 0 6px;line-height:1.4}
 .cross-save{font-weight:700;color:#047857;margin-top:8px!important}
+.heating-compare{margin-top:24px}
+.heating-compare-note{font-size:.88rem;font-weight:600;color:var(--slate);margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(234,88,12,.08);border:1px solid rgba(234,88,12,.15)}
+.heating-quote{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.heating-quote:last-child{border-bottom:none}
+.heating-quote.cheapest{border-left:3px solid var(--buy);padding-left:12px;margin-left:-12px}
+.heating-quote .hq-name{font-size:.95rem;font-weight:700}
+.heating-quote .hq-meta{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.35}
+.heating-quote .hq-price{font-weight:800;color:var(--orange-deep);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.heating-quote .hq-sub{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:2px}
+.heating-region-divider{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
+.heating-usual{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);font-size:.84rem;color:var(--slate)}
+.heating-usual a{color:#0369a1;font-weight:700;text-decoration:none}
 .station-divider{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 0 4px;border-top:1px dashed var(--line);margin-top:6px}
 .verdict{font-size:1rem;font-weight:600;margin:10px 0;color:var(--slate)}
 .verdict.buy{color:var(--buy)}.verdict.watch{color:var(--watch)}.verdict.wait{color:var(--wait)}
@@ -306,7 +325,30 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .top-alert.watch .top-alert-call{color:#b45309}
 .top-alert-call:hover{transform:scale(1.04)}
 body.alert-active{padding-top:76px}
-.btn-push.optional{opacity:.85;font-size:.82rem;padding:10px 14px}
+body.diesel-pick-active{padding-top:58px}
+body.alert-active.diesel-pick-active{padding-top:134px}
+.diesel-top-pick{
+  position:fixed;top:0;left:0;right:0;z-index:999;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px;background:linear-gradient(135deg,#047857,#059669);color:#fff;
+  box-shadow:0 4px 20px rgba(5,150,105,.35)
+}
+body.alert-active .diesel-top-pick{top:76px}
+.diesel-top-body{flex:1;min-width:180px}
+.diesel-top-kicker{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:2px}
+.diesel-top-title{font-size:.95rem;font-weight:800;line-height:1.25}
+.diesel-top-detail{font-size:.78rem;opacity:.92;margin-top:2px;line-height:1.3}
+.diesel-top-call{
+  display:inline-flex;align-items:center;gap:6px;padding:11px 16px;border-radius:12px;
+  background:#fff;color:#047857!important;font-weight:800;font-size:.88rem;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);white-space:nowrap
+}
+.diesel-top-call:active{transform:scale(.98)}
+.legal-footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
+.legal-footer .legal-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);margin:0 0 10px}
+.legal-footer p{font-size:.72rem;color:var(--muted);line-height:1.5;margin:0 0 10px}
+.legal-footer strong{color:var(--slate);font-size:.74rem}
+.legal-footer .legal-block{margin-bottom:10px}
 @keyframes alertFlash{
   0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.18);filter:brightness(1)}
   50%{box-shadow:0 6px 40px rgba(255,255,255,.35);filter:brightness(1.1)}
@@ -315,6 +357,40 @@ body.alert-active{padding-top:76px}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes momPop{0%{opacity:0;transform:scale(.94) translateY(8px)}100%{opacity:1;transform:none}}
+.mom-guide{margin-top:20px;padding:20px 22px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(254,243,199,.88));
+  border:1px solid rgba(234,88,12,.18);box-shadow:0 14px 36px rgba(15,23,42,.08);animation:rise .7s var(--ease) both}
+.mom-guide-kicker{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:10px}
+.mom-rows{display:grid;gap:12px}
+@media(min-width:640px){.mom-rows{grid-template-columns:1fr 1fr}}
+.mom-row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.82);
+  border:1px solid var(--line);animation:momPop .55s var(--ease) both;transition:transform .3s var(--ease),box-shadow .3s}
+.mom-row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+.mom-row.buy{border-left:4px solid var(--buy)}.mom-row.wait{border-left:4px solid var(--wait)}
+.mom-row.watch{border-left:4px solid var(--watch)}.mom-row.neutral{border-left:4px solid var(--faint)}
+.mom-emoji{font-size:1.6rem;line-height:1;flex-shrink:0}
+.mom-body{flex:1;min-width:0}
+.mom-action{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;margin-bottom:6px}
+.mom-action.buy{background:rgba(5,150,105,.15);color:#047857}
+.mom-action.wait{background:rgba(220,38,38,.12);color:#b91c1c}
+.mom-action.watch{background:rgba(217,119,6,.15);color:#b45309}
+.mom-action.fill{background:rgba(100,116,139,.12);color:#475569}
+.mom-line{font-size:.95rem;font-weight:600;color:var(--slate);margin:0;line-height:1.45}
+.mom-card-head{margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.mom-card-badge{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--slate);
+  padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+.expert-fold{margin-top:20px;border-radius:22px;border:1px solid var(--line);background:rgba(255,255,255,.55);
+  overflow:hidden;animation:rise .75s var(--ease) .15s both}
+.expert-fold>summary{cursor:pointer;padding:16px 20px;font-size:.92rem;font-weight:700;color:var(--slate);
+  list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:linear-gradient(135deg,rgba(255,247,237,.95),rgba(255,255,255,.9));transition:background .25s}
+.expert-fold>summary::-webkit-details-marker{display:none}
+.expert-fold>summary::after{content:"+";font-size:1.2rem;font-weight:400;color:var(--muted);transition:transform .3s var(--ease)}
+.expert-fold[open]>summary::after{transform:rotate(45deg)}
+.expert-fold>summary:hover{background:rgba(254,243,199,.6)}
+.expert-inner{padding:0 16px 16px;display:grid;gap:16px}
+.expert-inner .card{margin-top:0!important;animation:fadeSlide .5s var(--ease) both}
 @media(prefers-reduced-motion:reduce){
   .glow,.badge .dot,.top-alert,.top-alert-icon{animation:none}
   *{animation-duration:.01ms!important}
@@ -334,26 +410,53 @@ body.alert-active{padding-top:76px}
   <a class="top-alert-call" id="topAlertCall" href="tel:+442830830691">📞 Call Safe Fuels</a>
   <button type="button" class="top-alert-dismiss" id="topAlertDismiss" title="Hide alert bar" aria-label="Hide alert bar">Hide</button>
 </div>
+<div id="dieselTopPick" class="diesel-top-pick" hidden role="region" aria-label="Recommended diesel forecourt">
+  <div class="diesel-top-body">
+    <div class="diesel-top-kicker">Recommended diesel · call to confirm price</div>
+    <div class="diesel-top-title" id="dieselTopTitle">—</div>
+    <div class="diesel-top-detail" id="dieselTopDetail"></div>
+  </div>
+  <a class="diesel-top-call" id="dieselTopCall" href="#">📞 Call forecourt</a>
+</div>
 <div class="glow" aria-hidden="true"></div>
 <div class="shell">
 <header class="hero">
   <div class="badge"><span class="dot"></span> Mullaghbane · BT35 · NI &amp; Louth</div>
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
-  <p class="subtitle">Live prices for <strong>Mullaghbane &amp; Forkhill</strong> — tracks <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> diesel plus NI &amp; Louth heating oil in <strong>€ and £</strong> with live conversion.</p>
+  <p class="subtitle">Live prices for <strong>Mullaghbane &amp; Forkhill</strong> — tracks <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> diesel plus NI &amp; Louth heating oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
-    <button type="button" class="btn btn-push optional" id="pushBtn" hidden title="Optional — green banner works automatically">📱 Optional phone alerts</button>
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
   </div>
 </header>
 
 <div id="error" class="err" hidden></div>
 
+<section class="card heating-compare reveal" id="heatingCompareCard" hidden style="animation-delay:.02s">
+  <div class="card-kicker">Live per-litre · Newry BT35 &amp; Louth</div>
+  <h2>🛢️ Heating oil price comparison</h2>
+  <p class="heating-compare-note" id="heatingCompareNote"></p>
+  <div id="heatingCompareList"></div>
+  <div class="heating-usual" id="heatingUsualNote">
+    Your usual supplier: <strong>Safe Fuels, Camlough</strong> —
+    <a href="tel:+442830830691">028 3083 0691</a> · confirm their quote by phone (may differ from CheapestOil listings).
+  </div>
+</section>
+
+<section class="mom-guide reveal" id="momGuide" hidden style="animation-delay:.02s">
+  <div class="mom-guide-kicker">Simple advice · in plain English</div>
+  <div class="mom-rows" id="momRows"></div>
+</section>
+
 <section class="grid two" id="liveCards"></section>
 
+<details class="expert-fold" id="expertFold">
+<summary>📊 Charts &amp; expert details</summary>
+<div class="expert-inner">
+
 <section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
-  <div class="card-kicker">Prediction engine v3 · persistent memory</div>
+  <div class="card-kicker">Expert view · 6 price signals</div>
   <div class="indicators-head">
     <h2>6 signals · next few days &amp; weeks</h2>
     <div class="ind-bias" id="indBias"></div>
@@ -418,28 +521,35 @@ body.alert-active{padding-top:76px}
   <h2>Your forecourts · Mullaghbane &amp; cross-border</h2>
   <p class="station-range" id="dieselRange" hidden></p>
   <p class="station-range" id="dieselCrossBorder" hidden></p>
+  <div class="diesel-call-bar" id="dieselCallBar" hidden></div>
   <div id="stationList"></div>
   <p class="meta" id="dieselAttr"></p>
 </section>
+
+</div>
+</details>
 
 <section class="card supplier" id="supplierCard">
   <div class="card-kicker">Your supplier</div>
   <h2>Safe Fuels · Camlough</h2>
   <p class="meta">8 Newry Road, Camlough, Newry BT35 7JP — home heating oil delivery for the Newry area.</p>
-  <p class="meta"><strong>028 3083 0691</strong> · tap a buy alert notification to dial automatically on iPhone.</p>
+  <p class="meta"><strong>028 3083 0691</strong> · tap Call Safe Fuels above for heating oil delivery.</p>
 </section>
 
 <footer class="foot">
-  Data: CheapestOil.co.uk &amp; .ie · Fuel Near You · Pick A Pump · Frankfurter EUR/GBP · UK DESNZ diesel ·
-  <span id="refreshNote">Auto-checks every 15 min while open</span> · server updates 6am &amp; 6pm UTC · <span id="updatedAt">—</span>
+  <p class="meta" style="margin-top:0">Data: CheapestOil.co.uk &amp; .ie · Fuel Near You (CC BY 4.0) · Pick A Pump · Frankfurter EUR/GBP · UK DESNZ ·
+  <span id="refreshNote">Auto-checks every 15 min while open</span> · server updates 6am &amp; 6pm UTC · <span id="updatedAt">—</span></p>
+  <div class="legal-footer" id="legalFooter">
+    <p class="legal-title">Disclaimer, privacy &amp; data sources</p>
+    <p id="legalSummary">Personal price guide — not financial or professional advice. Confirm all prices by phone before buying.</p>
+    <div id="legalSections"></div>
+  </div>
 </footer>
 </div>
 
 <script>
 (function(){
   var API="/api/newry-fuel/prices";
-  var VAPID_API="/api/newry-fuel/vapid-public";
-  var SUB_API="/api/newry-fuel/push/subscribe";
   var REFRESH_IDLE=15*60*1000;
   var REFRESH_BUY=5*60*1000;
   var heatingChart=null;
@@ -451,32 +561,106 @@ body.alert-active{padding-top:76px}
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-  function fmtP(v){return Number(v).toFixed(1)+"p"}
+  function fmtP(v){return v==null||!Number.isFinite(Number(v))?"—":Number(v).toFixed(1)+"p"}
   function fmtMoney(v){return v==null?"—":"£"+Number(v).toFixed(2)}
   function fmtEuro(v,d){return v==null?"—":"€"+Number(v).toFixed(d==null?2:d)}
   function fmtEuroLitres(cents){return cents==null?"—":"€"+(Number(cents)/100).toFixed(3)+"/L"}
 
+  function heatingQuoteRowHtml(q, cheapestPpl, forLitres){
+    if(!q) return "";
+    var isBest=q.pplGbp===cheapestPpl;
+    var native=q.region==="roi"
+      ?fmtEuroLitres(q.pplNative)+' ≈ '+fmtP(q.pplGbp)+'/L'
+      :fmtP(q.pplNative)+'/L';
+    var total=q.region==="roi"
+      ?fmtEuro(q.totalNative)+' (≈ '+fmtMoney(q.totalGbp)+')'
+      :fmtMoney(q.totalNative);
+    var call=q.tel?'<a class="station-call" href="tel:'+esc(String(q.tel).replace(/\s/g,""))+'">📞 '+
+      esc(q.phone||q.tel)+' · confirm quote</a>':"";
+    return '<div class="heating-quote'+(isBest?" cheapest":"")+'"><div>'+
+      '<div class="hq-name">'+esc(q.supplier)+(isBest?'<span class="meta"> · cheapest</span>':"")+'</div>'+
+      '<div class="hq-meta">'+esc(q.area)+' · '+(forLitres||900)+'L delivery · '+esc(total)+'</div>'+call+'</div>'+
+      '<div class="hq-price">'+native+
+      (q.region==="roi"?'<div class="hq-sub">≈ '+fmtP(q.pplGbp)+'/L in £</div>':"")+
+      '</div></div>';
+  }
+
+  function renderHeatingCompare(heating){
+    var card=$("heatingCompareCard");
+    var live=heating&&heating.liveComparison;
+    if(!heating||!heating.ok||!live||!live.quotes||!live.quotes.length){
+      if(card) card.hidden=true;
+      return;
+    }
+    card.hidden=false;
+    var note=$("heatingCompareNote");
+    var parts=[live.headline||"Live heating oil quotes per litre"];
+    if(live.niRange) parts.push(live.niRange);
+    if(live.eurGbp) parts.push("€1 = £"+Number(live.eurGbp).toFixed(4));
+    note.textContent=parts.filter(Boolean).join(" · ");
+    var cheapestP=live.cheapest&&live.cheapest.pplGbp;
+    var ni=live.quotes.filter(function(q){return q.region==="ni"});
+    var roi=live.quotes.filter(function(q){return q.region==="roi"});
+    var html="";
+    html+='<div class="heating-region-divider">🇬🇧 Newry BT35 (NI) · live supplier quotes</div>';
+    ni.forEach(function(q){html+=heatingQuoteRowHtml(q,cheapestP,live.forLitres);});
+    if(roi.length){
+      html+='<div class="heating-region-divider">🇮🇪 Louth (ROI) · euro prices with £ equivalent</div>';
+      roi.forEach(function(q){html+=heatingQuoteRowHtml(q,cheapestP,live.forLitres);});
+    }
+    $("heatingCompareList").innerHTML=html;
+    var cmp=heating.comparison;
+    if(cmp&&cmp.savingsGbp>0){
+      $("heatingCompareList").innerHTML+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
+    }
+    var bestNi=live.niBest;
+    if(bestNi&&bestNi.tel){
+      note.textContent=(note.textContent?note.textContent+" · ":"")+
+        "Cheapest Newry: tap "+bestNi.supplier+" · "+(bestNi.phone||bestNi.tel);
+    }
+  }
+
   function heatingCrossBorderHtml(heating){
     if(!heating||!heating.ok) return "";
-    var ex=heating.exchange&&heating.exchange.eurGbp;
-    var cmp=heating.comparison;
-    var roi=heating.roi&&heating.roi.ok&&heating.roi.cheapest;
-    var ni=heating.ni&&heating.ni.ok;
-    if(!ni&&!roi) return "";
-    var html='<div class="cross-border">';
-    if(ex) html+='<p class="fx-rate">Live EUR→GBP: €1 = £'+Number(ex).toFixed(4)+
-      (heating.exchange.date?' · '+esc(heating.exchange.date.slice(0,10)):"")+'</p>';
-    if(ni) html+='<p>🇬🇧 NI quote (900L): '+fmtP(ni.cheapestPpl)+'/L · tank ≈ '+fmtMoney((ni.cheapestPpl*900)/100)+'</p>';
-    if(roi){
-      var c=roi.cheapest||roi;
-      var gbpPpl=cmp&&cmp.roi?cmp.roi.pplGbp:null;
-      html+='<p>🇮🇪 Louth (900L): '+fmtEuroLitres(c.centsPerLitre)+
-        (gbpPpl!=null?' ≈ '+fmtP(gbpPpl)+'/L':"")+
-        ' · '+esc(c.supplier)+'</p>';
+    var live=heating.liveComparison;
+    if(live&&live.niBest){
+      return '<div class="cross-border">'+
+        '<p><strong>Live Newry best:</strong> '+esc(live.niBest.supplier)+' · '+fmtP(live.niBest.pplGbp)+'/L · '+fmtMoney(live.niBest.totalGbp)+' for '+(live.forLitres||900)+'L</p>'+
+        (live.roiBest?'<p><strong>Live Louth best:</strong> '+esc(live.roiBest.supplier)+' · '+fmtEuroLitres(live.roiBest.pplNative)+' ≈ '+fmtP(live.roiBest.pplGbp)+'/L</p>':"")+
+        '<p class="meta">Full supplier list above · updated '+esc((heating.updatedAt||"").slice(0,16).replace("T"," "))+'</p></div>';
     }
-    if(cmp&&cmp.savingsGbp>0) html+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
-    html+='</div>';
-    return html;
+    return "";
+  }
+
+  function stationCallLink(s, cls){
+    if(!s||!s.tel) return "";
+    return '<a class="station-call'+(cls?" "+cls:"")+'" href="tel:'+esc(String(s.tel).replace(/\s/g,""))+'">📞 '+
+      esc(s.phone||s.tel)+' · confirm price</a>';
+  }
+
+  function dieselCallBarHtml(watchlist){
+    if(!watchlist||!watchlist.length) return "";
+    var withPhone=watchlist.filter(function(w){return w.tel||(w.station&&w.station.tel)});
+    if(!withPhone.length) return "";
+    var btns=withPhone.map(function(w){
+      var s=w.station||w;
+      var tel=w.tel||s.tel;
+      var phone=w.phone||s.phone||tel;
+      var lbl=w.shortLabel||w.label||s.name;
+      var cls=w.id==="murphy-forkhill"?"diesel-call-btn murphy":"diesel-call-btn";
+      return '<a class="'+cls+'" href="tel:'+esc(String(tel).replace(/\s/g,""))+'">📞 '+esc(lbl)+' · '+esc(phone)+'</a>';
+    }).join("");
+    return '<span class="diesel-call-lbl">Tap to call &amp; confirm diesel price</span>'+btns;
+  }
+
+  function dieselWatchlistAdviceHtml(diesel){
+    var adv=diesel&&diesel.watchlistAdvice;
+    if(!adv||!adv.headline||adv.savingsVsUsualPpl<=0) return "";
+    var call=adv.pick&&adv.pick.tel?stationCallLink(adv.pick,""):"";
+    return '<div class="diesel-tip">💡 '+esc(adv.headline)+
+      (adv.detail?'<div class="tip-detail">'+esc(adv.detail)+'</div>':"")+
+      (call?'<div style="margin-top:8px">'+call+'</div>':"")+
+    '</div>';
   }
 
   function sortStationsForDisplay(stations){
@@ -487,13 +671,15 @@ body.alert-active{padding-top:76px}
     return watch.concat(rest);
   }
 
-  function stationRowHtml(s, cheapestP, showDivider){
+  function stationRowHtml(s, cheapestP, recommendedId, showDivider){
     var isBest=s.pricePpl===cheapestP;
-    var cls="station"+(isBest?" cheapest":"")+(s.usual?" usual":"");
+    var isRec=recommendedId&&s.watchlistId===recommendedId;
+    var cls="station"+(isBest?" cheapest":"")+(isRec?" recommended":"")+(s.usual&&!isRec?" usual":"");
     var badges="";
     if(s.watchlistLabel) badges+='<span class="station-badge'+(s.region==="roi"?" roi":"")+'">'+esc(s.watchlistLabel)+'</span>';
-    if(s.usual) badges+='<span class="station-badge">Your usual</span>';
-    if(isBest) badges+='<span class="meta"> · cheapest</span>';
+    if(isRec) badges+='<span class="station-badge save">Cheaper &amp; convenient</span>';
+    else if(s.usual) badges+='<span class="station-badge">Your usual</span>';
+    if(isBest&&!isRec) badges+='<span class="meta"> · cheapest overall</span>';
     var dist=s.distanceMiles!=null?s.distanceMiles.toFixed(1)+' mi':"—";
     var dual="";
     if(s.region==="roi"&&s.priceEuroCents!=null){
@@ -501,9 +687,10 @@ body.alert-active{padding-top:76px}
     }else if(s.priceEuroCents!=null){
       dual='<div class="station-dual">≈ '+fmtEuroLitres(s.priceEuroCents)+' at live rate</div>';
     }
+    var call=s.tel?stationCallLink(s,""):"";
     return (showDivider?'<div class="station-divider">Other nearby forecourts</div>':"")+
       '<div class="'+cls+'"><div><strong>'+esc(s.name)+'</strong>'+badges+
-      '<div class="meta">'+esc(s.brand||"")+' · '+dist+' · '+(s.region==="roi"?"ROI":"NI")+'</div>'+dual+'</div>'+
+      '<div class="meta">'+esc(s.brand||"")+' · '+dist+' · '+(s.region==="roi"?"ROI":"NI")+'</div>'+dual+call+'</div>'+
       '<div class="ppl">'+fmtP(s.pricePpl)+'/L</div></div>';
   }
 
@@ -531,7 +718,7 @@ body.alert-active{padding-top:76px}
       '<p class="hold-q">How long to hold — predictable or risky?</p>'+
       '<p class="hold-a">'+esc(ho.predictable||"Recheck often — fuel can move on news overnight.")+'</p>'+
       '<div class="hold-pills">'+
-        '<span class="hold-pill '+confCls+'">Confidence · '+esc(ho.confidence||"medium")+'</span>'+
+        '<span class="hold-pill '+confCls+'">Guide strength · '+esc(ho.confidence||"medium")+'</span>'+
         '<span class="hold-pill '+riskCls+'">'+esc(ho.riskLabel||"Moderate risk")+'</span>'+
       '</div>'+
       '<div class="hold-stats">'+
@@ -583,9 +770,10 @@ body.alert-active{padding-top:76px}
     var isBuy=signal.verdict==="buy";
     var whenCls=isBuy?"buy":isHold?"wait":"";
     var acc=g.accuracy;
+    var strengthLbl=acc&&(acc.label||"Guide strength");
     var accHtml=acc?'<div class="accuracy-pill'+(acc.highConfidence?" high":"")+'">'+
-      (acc.highConfidence?"✓ ":"")+"Confidence "+acc.score+"%"+
-      (acc.highConfidence?" · high accuracy tier":"")+
+      (acc.highConfidence?"✓ ":"")+esc(strengthLbl)+" "+acc.score+"%"+
+      (acc.highConfidence?" · strong match to past patterns":"")+
       '</div>':"";
     var banner=(isBuy&&g.savingsHeadline)?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
     var table="";
@@ -723,6 +911,36 @@ body.alert-active{padding-top:76px}
     el.hidden=false;
     showBtn.hidden=true;
     document.body.classList.add("alert-active");
+  }
+
+  function renderDieselTopPick(data){
+    var pick=data.diesel&&data.diesel.topPick;
+    var el=$("dieselTopPick");
+    if(!pick||!pick.tel){
+      el.hidden=true;
+      document.body.classList.remove("diesel-pick-active");
+      return;
+    }
+    el.hidden=false;
+    document.body.classList.add("diesel-pick-active");
+    $("dieselTopTitle").textContent=pick.headline||pick.name;
+    var detail=fmtP(pick.pricePpl)+"/L";
+    if(pick.savingsVsUsualPpl>0) detail+=" · save "+fmtP(pick.savingsVsUsualPpl)+"/L vs your usual";
+    detail+=" · prices may change — confirm by phone";
+    $("dieselTopDetail").textContent=detail;
+    var call=$("dieselTopCall");
+    call.href="tel:"+String(pick.tel).replace(/\s/g,"");
+    call.textContent=pick.callLabel||("📞 "+pick.name+" · "+pick.phone);
+  }
+
+  function renderLegalFooter(data){
+    var legal=data.legal;
+    if(!legal) return;
+    if(legal.summary) $("legalSummary").textContent=legal.summary;
+    var sections=legal.sections||[];
+    $("legalSections").innerHTML=sections.map(function(s){
+      return '<div class="legal-block"><strong>'+esc(s.heading)+'</strong><p>'+esc(s.text)+'</p></div>';
+    }).join("");
   }
 
   function renderTopAlert(data){
@@ -863,8 +1081,10 @@ body.alert-active{padding-top:76px}
 
   function dieselPriceContextHtml(diesel){
     var d=diesel&&diesel.display;
-    if(!d) return "";
-    return '<div class="price-context">'+
+    if(!d&&!diesel.watchlistAdvice) return "";
+    var html=dieselWatchlistAdviceHtml(diesel);
+    if(!d) return html;
+    return html+'<div class="price-context">'+
       '<p class="price-ctx-main">'+esc(d.headline)+'</p>'+
       (d.subtitle?'<p class="price-ctx-sub">📍 '+esc(d.subtitle)+'</p>':"")+
       (d.vsUkLabel&&d.ukAvgPpl!=null?'<p class="price-ctx-uk">🇬🇧 UK weekly avg '+fmtP(d.ukAvgPpl)+'/L · '+esc(d.vsUkLabel)+'</p>':"")+
@@ -873,15 +1093,54 @@ body.alert-active{padding-top:76px}
     '</div>';
   }
 
+  function momActionClass(action){
+    if(!action) return "neutral";
+    if(action.indexOf("BUY")===0) return "buy";
+    if(action.indexOf("WAIT")===0) return "wait";
+    if(action.indexOf("FILL")===0) return "fill";
+    if(action.indexOf("WATCH")===0) return "watch";
+    return "neutral";
+  }
+
+  function momRowHtml(kind, signal){
+    var m=signal&&signal.momSummary;
+    if(!m||!signal.current) return "";
+    var icon=kind==="heating"?"🛢️":"⛽";
+    var title=kind==="heating"?"Heating oil":"Diesel";
+    var delay=kind==="heating"?0.04:0.1;
+    return '<div class="mom-row '+momActionClass(m.action)+'" style="animation-delay:'+delay+'s">'+
+      '<span class="mom-emoji" aria-hidden="true">'+esc(m.emoji||icon)+'</span>'+
+      '<div class="mom-body">'+
+        '<div class="mom-action '+momActionClass(m.action)+'">'+esc(m.action)+'</div>'+
+        '<p class="mom-line"><strong>'+title+':</strong> '+esc(m.oneLiner)+'</p>'+
+      '</div></div>';
+  }
+
+  function renderMomGuide(data){
+    var h=data.signals&&data.signals.heating;
+    var d=data.signals&&data.signals.diesel;
+    var html="";
+    if(h&&h.current!=null) html+=momRowHtml("heating",h);
+    if(d&&d.current!=null) html+=momRowHtml("diesel",d);
+    var el=$("momGuide");
+    if(!html){el.hidden=true;return}
+    el.hidden=false;
+    $("momRows").innerHTML=html;
+  }
+
   function signalCard(kind, signal, extra, trend, fuelData){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
     if(cls==="wait"&&signal.guide&&signal.guide.hasNearTermDip===false) cls="watch";
     var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
-    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
+    var m=signal.momSummary;
+    var momHead=m?'<div class="mom-card-head"><span class="mom-card-badge">'+
+      esc(m.emoji||"")+' '+esc(m.action||"")+' · '+esc(m.short||"")+'</span></div>':"";
+    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.06:0.12)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Diesel at the pump (B7)")+'</h2>'+
       '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre at pump</small></div>'+
+      momHead+
       priceCtx+
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
@@ -985,16 +1244,19 @@ body.alert-active{padding-top:76px}
     $("error").hidden=true;
     var cards="";
     var trends=data.trends||{};
+    renderHeatingCompare(data.heating);
+    renderMomGuide(data);
     cards+=signalCard("heating",data.signals&&data.signals.heating,
-      (data.heating&&data.heating.ok?heatingCrossBorderHtml(data.heating)+
-        '<div class="meta">NI &amp; Louth quotes for 900L · updated '+esc((data.heating.updatedAt||"").slice(0,16).replace("T"," "))+'</div>':""),
+      (data.heating&&data.heating.ok?heatingCrossBorderHtml(data.heating):""),
       trends.heating,null);
     cards+=signalCard("diesel",data.signals&&data.signals.diesel,"",trends.diesel,data.diesel);
     $("liveCards").innerHTML=cards||'<p class="meta">No live data yet.</p>';
     document.querySelectorAll(".price[data-price]").forEach(function(el){
       animateValue(el,parseFloat(el.dataset.price),"p",650);
     });
+    renderDieselTopPick(data);
     renderTopAlert(data);
+    renderLegalFooter(data);
     renderIndicators(data);
     renderWhenToBuy(data);
     scheduleRefresh(data);
@@ -1032,18 +1294,25 @@ body.alert-active{padding-top:76px}
         rangeEl.hidden=false;
         rangeEl.textContent="Price range: "+disp.rangeLabel;
       }else{rangeEl.hidden=true}
-      var cb=data.diesel.crossBorder;
+      var adv=data.diesel.watchlistAdvice;
       var cbEl=$("dieselCrossBorder");
-      if(cb&&cb.headline&&cb.savingsVsUsualPpl>0){
+      if(adv&&adv.headline&&adv.savingsVsUsualPpl>0){
         cbEl.hidden=false;
-        cbEl.textContent=cb.headline;
+        cbEl.textContent=adv.headline+(adv.detail?" · "+adv.detail:"");
       }else{cbEl.hidden=true}
+      var callBar=$("dieselCallBar");
+      var callHtml=dieselCallBarHtml(data.diesel.watchlist);
+      if(callHtml){
+        callBar.hidden=false;
+        callBar.innerHTML=callHtml;
+      }else{callBar.hidden=true}
       var cheapestP=data.diesel.cheapestPpl;
+      var recId=adv&&adv.pick&&adv.pick.watchlistId;
       var sorted=sortStationsForDisplay(data.diesel.stations);
       var watchCount=sorted.filter(function(s){return s.watchlistId}).length;
       var html="";
       sorted.forEach(function(s,i){
-        html+=stationRowHtml(s,cheapestP,i===watchCount&&watchCount<sorted.length);
+        html+=stationRowHtml(s,cheapestP,recId,i===watchCount&&watchCount<sorted.length);
       });
       $("stationList").innerHTML=html;
       var fx=data.diesel.exchange&&data.diesel.exchange.eurGbp;
@@ -1088,49 +1357,6 @@ body.alert-active{padding-top:76px}
     },600);
   }
 
-  function urlB64ToUint8Array(base64String){
-    var padding="=".repeat((4-base64String.length%4)%4);
-    var base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
-    var raw=atob(base64);var out=new Uint8Array(raw.length);
-    for(var i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
-    return out;
-  }
-
-  function initPush(){
-    if(!("serviceWorker" in navigator)||!("PushManager" in window)) return;
-    $("pushBtn").hidden=false;
-    var btn=$("pushBtn");
-    navigator.serviceWorker.register("/newry-fuel/sw.js").catch(function(){});
-
-    function setBtn(on){
-      btn.textContent=on?"📱 Phone alerts on":"📱 Optional phone alerts";
-      btn.classList.toggle("on",on);
-    }
-    setBtn(Notification.permission==="granted");
-
-    btn.addEventListener("click",function(){
-      fetch(VAPID_API).then(function(r){return r.json()}).then(function(v){
-        if(!v.publicKey) throw new Error("Push not configured on server");
-        return Notification.requestPermission().then(function(p){
-          if(p!=="granted") throw new Error("Notifications blocked");
-          return navigator.serviceWorker.ready.then(function(reg){
-            return reg.pushManager.subscribe({
-              userVisibleOnly:true,
-              applicationServerKey:urlB64ToUint8Array(v.publicKey)
-            });
-          });
-        }).then(function(sub){
-          return fetch(SUB_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(sub.toJSON())});
-        }).then(function(r){
-          if(!r.ok) throw new Error("Subscribe failed");
-          setBtn(true);
-        });
-      }).catch(function(err){
-        alert("Could not enable alerts: "+err.message);
-      });
-    });
-  }
-
   function initAlertDismiss(){
     var dismissBtn=$("topAlertDismiss");
     var showBtn=$("alertShowBtn");
@@ -1153,7 +1379,6 @@ body.alert-active{padding-top:76px}
 
   function boot(){
     fetchPrices();
-    initPush();
     initAlertDismiss();
     maybeAutoDial();
     document.addEventListener("visibilitychange",function(){

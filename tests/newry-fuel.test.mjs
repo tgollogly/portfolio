@@ -15,10 +15,18 @@ import {
   euroCentsToGbpPpl,
   euroToGbp,
   parseCheapestOilIeCounty,
+  parseCheapestOilUkPostcode,
+  parseDistributorPhone,
+  normalizeTelForHref,
+  buildHeatingLiveComparison,
   matchDieselWatchlist,
+  applyWatchlistContact,
   mergeDieselStations,
   buildHeatingCrossBorder,
   buildDieselCrossBorder,
+  buildDieselTopPick,
+  buildWatchlistDieselAdvice,
+  FUEL_LEGAL_NOTICE,
   parseGovDieselCsv,
   movingAverage,
   linearTrend,
@@ -40,6 +48,9 @@ import {
   pickNearTermBest,
   pickNearTermDip,
   hasForecastDip,
+  isMeaningfulDip,
+  MIN_DIP_PPL,
+  buildMomSummary,
   isFirmHold,
   createEmptyFuelMemory,
   appendFuelMemory,
@@ -146,15 +157,46 @@ export function runNewryFuelTests() {
 
   s.assert("home is mullaghbane", HOME.name === "Mullaghbane" && MULLAGHBANE.postcode === "BT35");
   s.assert("watchlist gregory", DIESEL_WATCHLIST.some((w) => w.id === "dan-gregorys" && w.usual));
+  s.assert("gregory phone", DIESEL_WATCHLIST.find((w) => w.id === "dan-gregorys")?.tel === "+442830830388");
+  s.assert("murphy phone", DIESEL_WATCHLIST.find((w) => w.id === "murphy-forkhill")?.tel === "+442830888760");
+  const gregContact = applyWatchlistContact(
+    { name: "Gregory service station ltd", pricePpl: 182.9 },
+    matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" })
+  );
+  s.assert("gregory contact on station", gregContact.tel === "+442830830388" && gregContact.phone.includes("0388"));
   s.assert("eur gbp convert", euroCentsToGbpPpl(175, 0.8574) === 150);
   s.assert("euro to gbp", euroToGbp(100, 0.8574) === 85.74);
   s.assert("format euro", formatEuro(4.97) === "€4.97");
 
   const ieHtml =
-    '<div data-price300="497.0000" data-price500="814.0000" data-price1000="1623.0000" data-supplier="Morgan Fuels"></div>';
+    '<div data-price300="497.0000" data-price500="814.0000" data-price1000="1623.0000" data-supplier="Morgan Fuels">' +
+    '<a href="/distributors/Louth/morgan-fuels">Morgan Fuels</a></div>';
   const louth = parseCheapestOilIeCounty(ieHtml, 900);
   s.assert("parse louth heating", louth.length === 1 && louth[0].supplier === "Morgan Fuels");
   s.assert("louth cents per litre", louth[0].centsPerLitre > 160);
+
+  const niHtml =
+    '<div data-price300="345" data-price500="545" data-price900="965" data-supplier="AMG Fuels">' +
+    '<a href="/distributors/AMG-Fuels">AMG</a></div>' +
+    '<div data-price300="335" data-price500="545" data-price900="965" data-supplier="Donnelly Fuels">' +
+    '<a href="/distributors/Donnelly-Fuels">Donnelly</a></div>';
+  s.assert("parse distributor phone", parseDistributorPhone('Phone: <a href="tel:028 3083 9869">028 3083 9869</a>')?.phone.includes("9869"));
+  s.assert("normalize ni tel", normalizeTelForHref("028 3088 8760") === "+442830888760");
+  s.assert("normalize roi freephone", normalizeTelForHref("1800 444 447") === "+3531800444447");
+  const newry = parseCheapestOilUkPostcode(niHtml, 900);
+  s.assert("parse newry heating", newry.length === 2 && newry[0].pencePerLitre >= 107);
+  s.assert("newry ppl calc", Math.abs(newry[0].pencePerLitre - 107.22) < 0.1);
+
+  const liveHeat = buildHeatingLiveComparison({
+    niSuppliers: newry,
+    roiSuppliers: louth,
+    eurGbp: 0.8574,
+    forLitres: 900,
+    niCheapestPpl: 107,
+  });
+  s.assert("heating live comparison", liveHeat.quotes.length === 3 && liveHeat.niBest?.region === "ni");
+  s.assert("heating live headline", liveHeat.headline.includes("Newry") || liveHeat.headline.includes("Cheapest"));
+  s.assert("heating compare distributor path", newry[0].distributorPath === "/distributors/AMG-Fuels");
 
   const gregory = matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" });
   s.assert("match gregory", gregory?.id === "dan-gregorys");
@@ -182,12 +224,31 @@ export function runNewryFuelTests() {
   });
   s.assert("heating cross border", heatCmp && heatCmp.savingsGbp > 0 && heatCmp.cheaperRegion === "ni");
 
+  const watchAdvice = buildWatchlistDieselAdvice(merged.stations);
+  s.assert(
+    "murphy cheaper than gregory",
+    watchAdvice?.pick?.watchlistId === "murphy-forkhill" && watchAdvice.savingsVsUsualPpl > 10
+  );
+  s.assert("murphy headline", watchAdvice.headline.includes("Tom Murphy"));
+
   const dieselCmp = buildDieselCrossBorder({
     stations: merged.stations,
     eurGbp: 0.8574,
     usualId: "dan-gregorys",
   });
-  s.assert("diesel cross border savings", dieselCmp.savingsVsUsualPpl > 0 && dieselCmp.usual?.usual);
+  s.assert("diesel cross border picks murphy", dieselCmp.pick?.watchlistId === "murphy-forkhill");
+
+  const topPick = buildDieselTopPick({
+    ok: true,
+    recommendedStation: merged.stations.find((s) => s.watchlistId === "murphy-forkhill"),
+    watchlistAdvice: watchAdvice,
+    usualStation: merged.stations.find((s) => s.watchlistId === "dan-gregorys"),
+  });
+  s.assert("diesel top pick murphy", topPick?.watchlistId === "murphy-forkhill" && topPick.tel.includes("888760"));
+  s.assert("diesel top pick call label", topPick.callLabel.includes("Murphy"));
+
+  s.assert("legal notice sections", FUEL_LEGAL_NOTICE.sections.length >= 4);
+  s.assert("legal attribution fuel near you", FUEL_LEGAL_NOTICE.sections[1].text.includes("CC BY 4.0"));
 
   const dieselHold = buildDieselHoldExplain(
     {
@@ -257,7 +318,34 @@ export function runNewryFuelTests() {
 
   s.assert("pickNearTermDip rejects higher forecast", pickNearTermDip(107, [{ day: 1, estimate: 107.1, dateLabel: "Tomorrow" }]) === null);
   s.assert("pickNearTermDip accepts lower forecast", pickNearTermDip(107, [{ day: 3, estimate: 105.5, dateLabel: "In 3 days" }])?.estimate === 105.5);
+  s.assert("pickNearTermDip rejects tiny dip", pickNearTermDip(107, [{ day: 2, estimate: 106.8, dateLabel: "Soon" }]) === null);
   s.assert("hasForecastDip false when higher", !hasForecastDip(107, 107.1));
+  s.assert("isMeaningfulDip needs min ppl", isMeaningfulDip(107, 106.8) === false);
+  s.assert("isMeaningfulDip accepts real dip", isMeaningfulDip(107, 105.5) === true);
+  s.assert("MIN_DIP_PPL exported", MIN_DIP_PPL === 0.5);
+
+  const momBuy = buildMomSummary({
+    verdict: "buy",
+    current: 105,
+    kind: "heating",
+    guide: { summary: "Buy at 105.0p/L now — good price." },
+  });
+  s.assert("mom buy action", momBuy.action === "BUY NOW" && momBuy.emoji === "✅");
+  const momWait = buildMomSummary({
+    verdict: "wait",
+    current: 120,
+    kind: "diesel",
+    guide: { hasNearTermDip: true, savingsVsNowPpl: 2, targetPricePpl: 118, nearTermDay: 5 },
+    holdOutlook: { holdDaysMin: 5 },
+  });
+  s.assert("mom wait dip", momWait.action === "WAIT" && momWait.oneLiner.includes("5 day"));
+  const momNoDip = buildMomSummary({
+    verdict: "wait",
+    current: 120,
+    kind: "heating",
+    guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
+  });
+  s.assert("mom fill if low", momNoDip.action === "FILL IF LOW");
 
   const noDipGuide = buildBuyGuide({
     current: 107,
@@ -505,7 +593,8 @@ export function runNewryFuelTests() {
   s.assert("html title", html.includes("Newry Fuel Watch"));
   s.assert("html noindex", html.includes("noindex,nofollow"));
   s.assert("html safe fuels", html.includes("Safe Fuels"));
-  s.assert("html push btn", html.includes("pushBtn"));
+  s.assert("html no push btn", !html.includes("pushBtn") && !html.includes("Optional phone alerts"));
+  s.assert("html auto refresh copy", html.includes("Refreshes automatically every 15 minutes"));
   s.assert("html top alert", html.includes("topAlert") && html.includes("top-alert"));
   s.assert("html fixed alert copy", html.includes("fixed alert bar"));
   s.assert("html alert flash anim", html.includes("alertFlash"));
@@ -524,20 +613,29 @@ export function runNewryFuelTests() {
   s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
-  s.assert("html sw register", html.includes("/newry-fuel/sw.js"));
+  s.assert("html no sw register", !html.includes("serviceWorker.register"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));
   s.assert("html alert dismiss", html.includes("topAlertDismiss") && html.includes("alertShowBtn"));
   s.assert("html alert hide copy", html.includes("Hide alert bar"));
   s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
   s.assert("html alert updating guard", html.includes("is-updating"));
-  s.assert("html memory note", html.includes("memoryNote") && html.includes("persistent memory"));
+  s.assert("html memory note", html.includes("memoryNote") && html.includes("Expert view"));
+  s.assert("html mom guide", html.includes("momGuide") && html.includes("Simple advice"));
+  s.assert("html expert fold", html.includes("expertFold") && html.includes("expert details"));
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));
   s.assert("html diesel hold explain", html.includes("diesel-hold-box") && html.includes("Why hold off on diesel"));
   s.assert("html mullaghbane", html.includes("Mullaghbane") && html.includes("Dan Gregory"));
   s.assert("html cross border", html.includes("cross-border") && html.includes("fmtEuroLitres"));
   s.assert("html station watchlist", html.includes("station-badge") && html.includes("dieselCrossBorder"));
+  s.assert("html diesel tip", html.includes("diesel-tip") && html.includes("Cheaper &amp; convenient"));
+  s.assert("html diesel call bar", html.includes("dieselCallBar") && html.includes("diesel-call-btn"));
+  s.assert("html station call", html.includes("station-call") && html.includes("confirm price"));
+  s.assert("html diesel top pick", html.includes("dieselTopPick") && html.includes("diesel-top-call"));
+  s.assert("html legal footer", html.includes("legalFooter") && html.includes("Disclaimer, privacy"));
+  s.assert("html heating compare", html.includes("heatingCompareCard") && html.includes("price comparison"));
+  s.assert("html heating call link", html.includes("confirm quote") && html.includes("station-call"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));
