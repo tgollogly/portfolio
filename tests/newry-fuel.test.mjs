@@ -380,6 +380,16 @@ export function runNewryFuelTests() {
     guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
   });
   s.assert("mom order before rise", momNoDip.action === "ORDER SOON" && momNoDip.short.includes("Before prices rise"));
+  s.assert("mom oneLiner not truncated at decimal", buildMomSummary({
+    verdict: "wait",
+    current: 111.6,
+    kind: "heating",
+    guide: {
+      hasNearTermDip: false,
+      savingsVsNowPpl: 0,
+      summary: "Today's 111.6p/L is 2.1p/L above the recent average — no cheaper dip is forecast; order before prices rise further.",
+    },
+  }).oneLiner.includes("111.6p/L"));
   const momRise = buildMomSummary({
     verdict: "watch",
     current: 107.2,
