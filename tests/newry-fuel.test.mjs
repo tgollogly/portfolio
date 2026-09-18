@@ -346,6 +346,15 @@ export function runNewryFuelTests() {
     guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
   });
   s.assert("mom fill if low", momNoDip.action === "ORDER IF LOW");
+  const momRise = buildMomSummary({
+    verdict: "watch",
+    current: 107.2,
+    kind: "heating",
+    rising: true,
+    vs7Pct: 1.2,
+  });
+  s.assert("mom prices up", momRise.action === "PRICES UP" && momRise.oneLiner.includes("not cheap"));
+  s.assert("legal music section", FUEL_LEGAL_NOTICE.sections.some((sec) => /Music/i.test(sec.heading)));
 
   const momHold = buildMomSummary({
     verdict: "hold",
@@ -647,6 +656,9 @@ export function runNewryFuelTests() {
   s.assert("html action hero", html.includes("actionHero") && html.includes("What to do right now"));
   s.assert("html robin mascot", html.includes("robin-scene"));
   s.assert("html fuel melody", html.includes("soundBtn") && html.includes("playFuelMelody"));
+  s.assert("html official abba", html.includes("abbaBtn") && html.includes("youtube-nocookie.com"));
+  s.assert("html boot not blocked by chart", html.includes("boot();") && !html.includes("if(window.Chart) boot()"));
+  s.assert("server serveFuelPrices", server.includes("serveFuelPrices"));
   s.assert("html expert fold", html.includes("expertFold") && html.includes("expert details"));
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));

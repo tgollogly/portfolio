@@ -222,6 +222,14 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .ind-note{margin-top:14px;font-size:.82rem;color:#64748b;text-align:center}
 .memory-note{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.25);font-size:.82rem;color:#ccfbf1;line-height:1.45}
 .memory-note strong{color:#5eead4}
+.btn-sound.playing{animation:pulse 1s ease-in-out infinite}
+.music-dock{margin-top:16px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.78);border:1px solid var(--line)}
+.music-dock h3{font-family:var(--display);margin:0 0 6px;font-size:1.25rem}
+.music-embed{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--line);min-height:152px;background:#000}
+.music-embed iframe{width:100%;height:152px;border:0;display:block}
+.music-legal{font-size:.72rem;color:var(--muted);margin:8px 0 0;line-height:1.4}
+.skel{height:14px;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,.4),rgba(255,255,255,.85),rgba(255,255,255,.4));background-size:200% 100%;animation:shimmer 1.2s infinite;margin:8px 0}
+@keyframes floatDust{0%{transform:translateY(0)}100%{transform:translateY(-12px)}}
 .card.reveal{animation:cardReveal .7s var(--ease) both}
 .price.counting{animation:pricePop .5s var(--ease)}
 @keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -467,9 +475,22 @@ body.alert-active .diesel-top-pick{top:76px}
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
-    <button type="button" class="btn btn-sound" id="soundBtn" title="Play cheerful fuel-watch melody (original tune)">🎵 Fuel melody</button>
+    <button type="button" class="btn btn-sound" id="soundBtn" title="Play original fuel-watch chime">🎵 Original chime</button>
+    <button type="button" class="btn btn-sound" id="abbaBtn" title="Open official ABBA player (YouTube/Spotify — not hosted here)">♪ ABBA (official)</button>
   </div>
 </header>
+
+<section class="music-dock" id="musicDock" hidden>
+  <h3>ABBA · official players only</h3>
+  <p class="meta">We never copy or host ABBA songs. This uses YouTube and Spotify official embeds. Their terms apply.</p>
+  <div class="music-embed">
+    <iframe id="abbaYt" title="Official ABBA on YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen src=""></iframe>
+  </div>
+  <div class="music-embed" style="margin-top:8px;min-height:152px">
+    <iframe id="abbaSpotify" title="Official ABBA on Spotify" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src=""></iframe>
+  </div>
+  <p class="music-legal">Legal: no unlicensed MP3s on this site. Playback is streamed by YouTube/Spotify under their licences. Original chime is our own short melody — not an ABBA composition.</p>
+</section>
 
 <div id="error" class="err" hidden></div>
 
@@ -598,6 +619,8 @@ body.alert-active .diesel-top-pick{top:76px}
   var ALERT_HIDE_KEY="newry_fuel_alert_hidden";
   var lastAlertKey=null;
   var lastAlertData=null;
+  var fetchTries=0;
+  var audioCtx=null;
 
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
@@ -1138,6 +1161,7 @@ body.alert-active .diesel-top-pick{top:76px}
     if(action.indexOf("BUY")===0) return "buy";
     if(action.indexOf("WAIT")===0) return "wait";
     if(action.indexOf("ORDER")===0||action.indexOf("FILL")===0) return "fill";
+    if(action.indexOf("PRICES")===0) return "wait";
     if(action.indexOf("WATCH")===0) return "watch";
     if(action.indexOf("NO RUSH")===0||action.indexOf("ALL GOOD")===0) return "hold";
     if(action.indexOf("LOADING")===0) return "loading";
@@ -1393,13 +1417,17 @@ body.alert-active .diesel-top-pick{top:76px}
   }
 
   function fetchPrices(){
-    return fetch(API,{headers:{Accept:"application/json"}})
+    var ctrl=typeof AbortController!=="undefined"?new AbortController():null;
+    var to=ctrl?setTimeout(function(){ctrl.abort()},20000):null;
+    fetchTries+=1;
+    return fetch(API,{headers:{Accept:"application/json"},signal:ctrl?ctrl.signal:undefined})
       .then(function(r){if(!r.ok) throw new Error("API "+r.status);return r.json()})
-      .then(function(d){if(!d.ok) throw new Error(d.error||"failed");render(d)})
+      .then(function(d){if(!d.ok) throw new Error(d.error||"failed");fetchTries=0;render(d)})
       .catch(function(err){
-        showError("Fuel data unavailable: "+err.message,cached=loadCached());
-        setTimeout(fetchPrices,8000);
-      });
+        showError("Fuel data unavailable: "+err.message,loadCached());
+        if(fetchTries<4) setTimeout(fetchPrices,4000);
+      })
+      .finally(function(){if(to) clearTimeout(to)});
   }
 
   function maybeAutoDial(){
@@ -1416,33 +1444,58 @@ body.alert-active .diesel-top-pick{top:76px}
   function playFuelMelody(){
     try{
       var Ctx=window.AudioContext||window.webkitAudioContext;
-      if(!Ctx) return;
-      var ctx=new Ctx();
-      var notes=[523.25,659.25,783.99,659.25,783.99,987.77,783.99];
-      var t=ctx.currentTime;
-      notes.forEach(function(freq,i){
-        var osc=ctx.createOscillator();
-        var gain=ctx.createGain();
-        osc.type="triangle";
-        osc.frequency.value=freq;
-        gain.gain.setValueAtTime(0,t+i*0.14);
-        gain.gain.linearRampToValueAtTime(0.18,t+i*0.14+0.04);
-        gain.gain.exponentialRampToValueAtTime(0.001,t+i*0.14+0.35);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t+i*0.14);
-        osc.stop(t+i*0.14+0.4);
-      });
-      setTimeout(function(){ctx.close()},2000);
-    }catch(e){}
+      if(!Ctx){alert("This phone blocked the chime. Tap ABBA (official) instead.");return}
+      if(!audioCtx) audioCtx=new Ctx();
+      var ctx=audioCtx;
+      var start=function(){
+        var notes=[392,523.25,659.25,783.99,659.25,523.25,659.25,784];
+        var t=ctx.currentTime+0.02;
+        notes.forEach(function(freq,i){
+          var osc=ctx.createOscillator();
+          var gain=ctx.createGain();
+          osc.type="triangle";
+          osc.frequency.value=freq;
+          gain.gain.setValueAtTime(0.0001,t+i*0.18);
+          gain.gain.exponentialRampToValueAtTime(0.22,t+i*0.18+0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001,t+i*0.18+0.42);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t+i*0.18);
+          osc.stop(t+i*0.18+0.45);
+        });
+      };
+      if(ctx.state==="suspended") ctx.resume().then(start).catch(start);
+      else start();
+    }catch(e){
+      var b=$("soundBtn");
+      if(b) b.textContent="Chime blocked — tap ABBA official";
+    }
+  }
+
+  function openOfficialAbba(){
+    var dock=$("musicDock");
+    var yt=$("abbaYt");
+    var sp=$("abbaSpotify");
+    if(!dock) return;
+    dock.hidden=false;
+    if(yt && !yt.getAttribute("src")) yt.src="https://www.youtube-nocookie.com/embed/xFrGuyw1Vlc?rel=0";
+    if(sp && !sp.getAttribute("src")) sp.src="https://open.spotify.com/embed/artist/0LcJLqbBmaGUft1e9Mm8HV?utm_source=generator";
+    dock.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
 
   function initSoundBtn(){
     var btn=$("soundBtn");
-    if(!btn) return;
-    btn.addEventListener("click",function(e){
+    if(btn) btn.addEventListener("click",function(e){
       e.preventDefault();
+      btn.classList.add("playing");
+      btn.textContent="♪ Playing chime";
       playFuelMelody();
+      setTimeout(function(){btn.classList.remove("playing");btn.textContent="🎵 Original chime";},1800);
+    });
+    var abba=$("abbaBtn");
+    if(abba) abba.addEventListener("click",function(e){
+      e.preventDefault();
+      openOfficialAbba();
     });
   }
 
@@ -1467,6 +1520,8 @@ body.alert-active .diesel-top-pick{top:76px}
   }
 
   function boot(){
+    var cached=loadCached();
+    if(cached) render(cached);
     fetchPrices();
     initAlertDismiss();
     initSoundBtn();
@@ -1475,8 +1530,7 @@ body.alert-active .diesel-top-pick{top:76px}
       if(!document.hidden) fetchPrices();
     });
   }
-  if(window.Chart) boot();
-  else window.addEventListener("load", boot);
+  boot();
 })();
 </script>
 </body>
