@@ -42,6 +42,7 @@ import {
   analyzeHeadlineDirection,
   buildLiveTrendSeries,
   buildTrendSnapshot,
+  buildAdviceTrendSnapshot,
   buildPredictionOutlook,
   buildShortForecast,
   buildExtendedForecast,
@@ -267,6 +268,14 @@ export function runNewryFuelTests() {
   const snap = buildTrendSnapshot(trend);
   s.assert("trend snapshot", snap && snap.label.includes("trend"));
 
+  const downSnap = buildTrendSnapshot([{ price: 112 }, { price: 111 }, { price: 110 }]);
+  const alignedUp = buildAdviceTrendSnapshot(downSnap, {
+    current: 110,
+    forecast: [{ day: 1, estimate: 110.2 }, { day: 7, estimate: 111.5 }],
+    guide: { hasNearTermDip: false },
+  });
+  s.assert("advice trend aligns up with forecast", alignedUp.direction === "up" && alignedUp.label.includes("GOING UP"));
+
   const pred = buildPredictionOutlook({
     current: 180,
     forecast: [{ day: 1, estimate: 181 }, { day: 7, estimate: 185 }],
@@ -398,6 +407,8 @@ export function runNewryFuelTests() {
   s.assert("no-dip guide hasNearTermDip false", noDipGuide.hasNearTermDip === false);
   s.assert("no-dip guide target is today", noDipGuide.targetPricePpl === 107);
   s.assert("no-dip guide savings zero", noDipGuide.savingsVsNowPpl === 0);
+  s.assert("no-dip guide summary no false hold", !noDipGuide.summary.includes("hold if you can"));
+  s.assert("no-dip guide summary warns no dip", noDipGuide.summary.includes("no cheaper dip"));
   s.assert("no-dip why no forecast dip line", !buildVerdictWhy({
     current: 107,
     verdict: "wait",
@@ -702,7 +713,7 @@ export function runNewryFuelTests() {
   s.assert("html memory note", html.includes("memoryNote") && html.includes("Expert view"));
   s.assert("html action hero", html.includes("actionHero") && html.includes("What to do right now"));
   s.assert("html robin mascot", html.includes("robin-scene"));
-  s.assert("html fuel melody", html.includes("soundBtn") && html.includes("playFuelMelody"));
+  s.assert("html no chime", !html.includes("soundBtn") && !html.includes("playFuelMelody") && !html.includes("Original chime"));
   s.assert("html official abba", html.includes("abbaBtn") && html.includes("open.spotify.com/embed") && !html.includes("youtube-nocookie"));
   s.assert("html boot not blocked by chart", html.includes("boot();") && !html.includes("if(window.Chart) boot()"));
   s.assert("server serveFuelPrices", server.includes("serveFuelPrices"));
