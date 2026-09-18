@@ -529,9 +529,11 @@ body.alert-active .diesel-top-pick{top:76px}
     var total=q.region==="roi"
       ?fmtEuro(q.totalNative)+' (≈ '+fmtMoney(q.totalGbp)+')'
       :fmtMoney(q.totalNative);
+    var call=q.tel?'<a class="station-call" href="tel:'+esc(String(q.tel).replace(/\s/g,""))+'">📞 '+
+      esc(q.phone||q.tel)+' · confirm quote</a>':"";
     return '<div class="heating-quote'+(isBest?" cheapest":"")+'"><div>'+
       '<div class="hq-name">'+esc(q.supplier)+(isBest?'<span class="meta"> · cheapest</span>':"")+'</div>'+
-      '<div class="hq-meta">'+esc(q.area)+' · '+(forLitres||900)+'L delivery · '+esc(total)+'</div></div>'+
+      '<div class="hq-meta">'+esc(q.area)+' · '+(forLitres||900)+'L delivery · '+esc(total)+'</div>'+call+'</div>'+
       '<div class="hq-price">'+native+
       (q.region==="roi"?'<div class="hq-sub">≈ '+fmtP(q.pplGbp)+'/L in £</div>':"")+
       '</div></div>';
@@ -564,6 +566,11 @@ body.alert-active .diesel-top-pick{top:76px}
     var cmp=heating.comparison;
     if(cmp&&cmp.savingsGbp>0){
       $("heatingCompareList").innerHTML+='<p class="cross-save">'+esc(cmp.headline)+'</p>';
+    }
+    var bestNi=live.niBest;
+    if(bestNi&&bestNi.tel){
+      note.textContent=(note.textContent?note.textContent+" · ":"")+
+        "Cheapest Newry: tap "+bestNi.supplier+" · "+(bestNi.phone||bestNi.tel);
     }
   }
 

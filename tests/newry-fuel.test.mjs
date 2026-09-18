@@ -16,6 +16,8 @@ import {
   euroToGbp,
   parseCheapestOilIeCounty,
   parseCheapestOilUkPostcode,
+  parseDistributorPhone,
+  normalizeTelForHref,
   buildHeatingLiveComparison,
   matchDieselWatchlist,
   applyWatchlistContact,
@@ -164,14 +166,20 @@ export function runNewryFuelTests() {
   s.assert("format euro", formatEuro(4.97) === "€4.97");
 
   const ieHtml =
-    '<div data-price300="497.0000" data-price500="814.0000" data-price1000="1623.0000" data-supplier="Morgan Fuels"></div>';
+    '<div data-price300="497.0000" data-price500="814.0000" data-price1000="1623.0000" data-supplier="Morgan Fuels">' +
+    '<a href="/distributors/Louth/morgan-fuels">Morgan Fuels</a></div>';
   const louth = parseCheapestOilIeCounty(ieHtml, 900);
   s.assert("parse louth heating", louth.length === 1 && louth[0].supplier === "Morgan Fuels");
   s.assert("louth cents per litre", louth[0].centsPerLitre > 160);
 
   const niHtml =
-    '<div data-price300="345" data-price500="545" data-price900="965" data-supplier="AMG Fuels"></div>' +
-    '<div data-price300="335" data-price500="545" data-price900="965" data-supplier="Donnelly Fuels"></div>';
+    '<div data-price300="345" data-price500="545" data-price900="965" data-supplier="AMG Fuels">' +
+    '<a href="/distributors/AMG-Fuels">AMG</a></div>' +
+    '<div data-price300="335" data-price500="545" data-price900="965" data-supplier="Donnelly Fuels">' +
+    '<a href="/distributors/Donnelly-Fuels">Donnelly</a></div>';
+  s.assert("parse distributor phone", parseDistributorPhone('Phone: <a href="tel:028 3083 9869">028 3083 9869</a>')?.phone.includes("9869"));
+  s.assert("normalize ni tel", normalizeTelForHref("028 3088 8760") === "+442830888760");
+  s.assert("normalize roi freephone", normalizeTelForHref("1800 444 447") === "+3531800444447");
   const newry = parseCheapestOilUkPostcode(niHtml, 900);
   s.assert("parse newry heating", newry.length === 2 && newry[0].pencePerLitre >= 107);
   s.assert("newry ppl calc", Math.abs(newry[0].pencePerLitre - 107.22) < 0.1);
@@ -185,6 +193,7 @@ export function runNewryFuelTests() {
   });
   s.assert("heating live comparison", liveHeat.quotes.length === 3 && liveHeat.niBest?.region === "ni");
   s.assert("heating live headline", liveHeat.headline.includes("Newry") || liveHeat.headline.includes("Cheapest"));
+  s.assert("heating compare distributor path", newry[0].distributorPath === "/distributors/AMG-Fuels");
 
   const gregory = matchDieselWatchlist({ name: "Gregory service station ltd", region: "ni" });
   s.assert("match gregory", gregory?.id === "dan-gregorys");
@@ -594,6 +603,7 @@ export function runNewryFuelTests() {
   s.assert("html diesel top pick", html.includes("dieselTopPick") && html.includes("diesel-top-call"));
   s.assert("html legal footer", html.includes("legalFooter") && html.includes("Disclaimer, privacy"));
   s.assert("html heating compare", html.includes("heatingCompareCard") && html.includes("price comparison"));
+  s.assert("html heating call link", html.includes("confirm quote") && html.includes("station-call"));
 
   const lib = readFileSync(join(root, "lib/newry-fuel.js"), "utf8");
   s.assert("lib pick a pump", lib.includes("fetchPickAPumpDiesel"));
