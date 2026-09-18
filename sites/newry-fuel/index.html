@@ -222,7 +222,6 @@ h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;m
 .ind-note{margin-top:14px;font-size:.82rem;color:#64748b;text-align:center}
 .memory-note{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.25);font-size:.82rem;color:#ccfbf1;line-height:1.45}
 .memory-note strong{color:#5eead4}
-.btn-sound.playing{animation:pulse 1s ease-in-out infinite}
 .music-dock{margin-top:16px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.78);border:1px solid var(--line)}
 .music-dock h3{font-family:var(--display);margin:0 0 6px;font-size:1.25rem}
 .music-embed{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--line);min-height:152px;background:#000}
@@ -475,7 +474,6 @@ body.alert-active .diesel-top-pick{top:76px}
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
-    <button type="button" class="btn btn-sound" id="soundBtn" title="Play original fuel-watch chime">🎵 Original chime</button>
     <button type="button" class="btn btn-sound" id="abbaBtn" title="Open official ABBA player on Spotify (not hosted here)">♪ ABBA (official)</button>
   </div>
 </header>
@@ -486,7 +484,7 @@ body.alert-active .diesel-top-pick{top:76px}
   <div class="music-embed">
     <iframe id="abbaSpotify" title="Official ABBA on Spotify" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src=""></iframe>
   </div>
-  <p class="music-legal">Legal: no unlicensed MP3s on this site. Playback is streamed by Spotify under their licence. Original chime is our own short melody — not an ABBA composition.</p>
+  <p class="music-legal">Legal: no unlicensed MP3s on this site. Playback is streamed by Spotify under their licence.</p>
 </section>
 
 <div id="error" class="err" hidden></div>
@@ -617,8 +615,6 @@ body.alert-active .diesel-top-pick{top:76px}
   var lastAlertKey=null;
   var lastAlertData=null;
   var fetchTries=0;
-  var audioCtx=null;
-
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
   function fmtP(v){return v==null||!Number.isFinite(Number(v))?"—":Number(v).toFixed(1)+"p"}
@@ -823,6 +819,16 @@ body.alert-active .diesel-top-pick{top:76px}
     $("whenSixMonth").textContent=w.sixMonthOutlook||"";
   }
 
+  function forecastSubText(g){
+    if(!g||g.hasNearTermDip) return "";
+    var low=g.forecastLowPpl, cur=g.currentPricePpl;
+    if(low==null||cur==null) return "Flat or rising";
+    var delta=Math.round((low-cur)*10)/10;
+    if(delta>0.4) return "Rising ahead";
+    if(delta>-0.5) return "Flat or rising";
+    return "No meaningful dip";
+  }
+
   function buyGuideHtml(signal, kind){
     var g=signal&&signal.guide;
     if(!g) return "";
@@ -867,8 +873,8 @@ body.alert-active .diesel-top-pick{top:76px}
       }else{
         hero='<div class="guide-hero">'+
           '<div class="hero-stat"><div class="lbl">Today</div><div class="val">'+fmtP(g.currentPricePpl)+'/L</div></div>'+
-          '<div class="hero-stat"><div class="lbl">Forecast</div><div class="val muted">No dip</div><div class="sub">Flat or rising</div></div>'+
-          '<div class="hero-stat"><div class="lbl">Advice</div><div class="val warn">Don\'t wait</div><div class="sub">Fill if you need oil</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Forecast</div><div class="val muted">No dip</div><div class="sub">'+esc(forecastSubText(g))+'</div></div>'+
+          '<div class="hero-stat"><div class="lbl">Advice</div><div class="val warn">Don\'t wait</div><div class="sub">'+(kind==="diesel"?"Fill if you need diesel":"Fill if you need oil")+'</div></div>'+
         '</div>';
       }
     }
@@ -1438,37 +1444,6 @@ body.alert-active .diesel-top-pick{top:76px}
     },600);
   }
 
-  function playFuelMelody(){
-    try{
-      var Ctx=window.AudioContext||window.webkitAudioContext;
-      if(!Ctx){alert("This phone blocked the chime. Tap ABBA (official) instead.");return}
-      if(!audioCtx) audioCtx=new Ctx();
-      var ctx=audioCtx;
-      var start=function(){
-        var notes=[392,523.25,659.25,783.99,659.25,523.25,659.25,784];
-        var t=ctx.currentTime+0.02;
-        notes.forEach(function(freq,i){
-          var osc=ctx.createOscillator();
-          var gain=ctx.createGain();
-          osc.type="triangle";
-          osc.frequency.value=freq;
-          gain.gain.setValueAtTime(0.0001,t+i*0.18);
-          gain.gain.exponentialRampToValueAtTime(0.22,t+i*0.18+0.05);
-          gain.gain.exponentialRampToValueAtTime(0.0001,t+i*0.18+0.42);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(t+i*0.18);
-          osc.stop(t+i*0.18+0.45);
-        });
-      };
-      if(ctx.state==="suspended") ctx.resume().then(start).catch(start);
-      else start();
-    }catch(e){
-      var b=$("soundBtn");
-      if(b) b.textContent="Chime blocked — tap ABBA official";
-    }
-  }
-
   function openOfficialAbba(){
     var dock=$("musicDock");
     var sp=$("abbaSpotify");
@@ -1478,15 +1453,7 @@ body.alert-active .diesel-top-pick{top:76px}
     dock.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
 
-  function initSoundBtn(){
-    var btn=$("soundBtn");
-    if(btn) btn.addEventListener("click",function(e){
-      e.preventDefault();
-      btn.classList.add("playing");
-      btn.textContent="♪ Playing chime";
-      playFuelMelody();
-      setTimeout(function(){btn.classList.remove("playing");btn.textContent="🎵 Original chime";},1800);
-    });
+  function initAbbaBtn(){
     var abba=$("abbaBtn");
     if(abba) abba.addEventListener("click",function(e){
       e.preventDefault();
@@ -1519,7 +1486,7 @@ body.alert-active .diesel-top-pick{top:76px}
     if(cached) render(cached);
     fetchPrices();
     initAlertDismiss();
-    initSoundBtn();
+    initAbbaBtn();
     maybeAutoDial();
     document.addEventListener("visibilitychange",function(){
       if(!document.hidden) fetchPrices();
