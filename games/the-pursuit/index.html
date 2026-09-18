@@ -782,10 +782,37 @@ function beginRound(questionCount,msg,next){
   });
 }
 
+function bindSoundBtn(){
+  var btn=$("soundBtn");
+  if(!btn)return;
+  btn.onclick=function(){musicOn=!musicOn;btn.textContent=musicOn?"🔊 Sound on":"🔇 Sound off";if(musicOn)startMusic();else stopMusic();};
+}
+
+function showPlayControls(){
+  $("controls").innerHTML=
+    '<button type="button" class="btn secondary" id="soundBtn">'+(musicOn?"🔊 Sound on":"🔇 Sound off")+'</button>';
+  bindSoundBtn();
+}
+
+function showMenuControls(nameEl){
+  $("controls").innerHTML=
+    '<button type="button" class="btn btn-start" id="startBtn">▶ Start game</button>'+
+    '<button type="button" class="btn secondary" id="soundBtn">'+(musicOn?"🔊 Sound on":"🔇 Sound off")+'</button>';
+  $("startBtn").onclick=function(){
+    initAudio();
+    if(!state.diff)state.diff="standard";
+    var n=(nameEl.value||"").trim();
+    if(n){saveName(n);state.playerName=n;}
+    startCashBuilder();
+  };
+  bindSoundBtn();
+}
+
 function startCashBuilder(){
   document.body.classList.remove("phase-menu");
   document.body.classList.add("phase-play");
   var msgEl=$("msg");if(msgEl)msgEl.classList.remove("menu-msg");
+  showPlayControls();
   initAudio();startMusic();
   state.round=0;state.phase="play";state.pot=0;state.qIndex=0;state.usedIds=new Set();
   state.playerName=(loadName()||"").trim();
@@ -838,17 +865,7 @@ function showMenu(){
   fetchBankStats();
   fetchFeedPanel();
   loadRemoteMemory();
-  $("controls").innerHTML=
-    '<button type="button" class="btn btn-start" id="startBtn">▶ Start game</button>'+
-    '<button type="button" class="btn secondary" id="soundBtn">'+(musicOn?"🔊 Sound on":"🔇 Sound off")+'</button>';
-  $("startBtn").onclick=function(){
-    initAudio();
-    if(!state.diff)state.diff="standard";
-    var n=(nameEl.value||"").trim();
-    if(n){saveName(n);state.playerName=n;}
-    startCashBuilder();
-  };
-  $("soundBtn").onclick=function(){musicOn=!musicOn;$("soundBtn").textContent=musicOn?"🔊 Sound on":"🔇 Sound off";if(musicOn)startMusic();else stopMusic();};
+  showMenuControls(nameEl);
   setMsg("Enter your name, pick difficulty, then tap Start.");
   $("msg").classList.add("menu-msg");
 }
