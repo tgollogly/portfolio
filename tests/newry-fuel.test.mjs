@@ -31,6 +31,7 @@ import {
   movingAverage,
   typicalPrice,
   typicalFromStations,
+  typicalHeatingPrice,
   smoothForecastSeries,
   linearTrend,
   analyzeBuySignal,
@@ -110,6 +111,8 @@ export function runNewryFuelTests() {
       { pricePpl: 179, region: "ni" },
     ]) === 178
   );
+  s.assert("single NI heating quote is typical", typicalHeatingPrice([111.6], 109.5, 107.2) === 111.6);
+  s.assert("heating API average is fallback only", typicalHeatingPrice([], 109.5, 107.2) === 109.5);
   const spiked = [
     { day: 1, estimate: 110 },
     { day: 3, estimate: 90 },
@@ -313,6 +316,7 @@ export function runNewryFuelTests() {
   );
   s.assert("diesel hold explain", dieselHold.title.includes("hold off") && dieselHold.save50L > 2);
   s.assert("diesel hold lead", dieselHold.lead.includes("176.9"));
+  s.assert("diesel hold does not assign typical price to cheapest station", !dieselHold.lead.includes("Test Station"));
 
   const snap = buildTrendSnapshot(trend);
   s.assert("trend snapshot", snap && snap.label.includes("trend"));
@@ -804,7 +808,9 @@ export function runNewryFuelTests() {
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("Cormorant Garamond") && html.includes("Outfit"));
   s.assert("html ma strip", html.includes("ma-strip") && html.includes("Typical now"));
-  s.assert("html typical copy", html.includes("moving average"));
+  s.assert("html typical copy uses median", html.includes("Typical area prices (median)"));
+  s.assert("html when-to-buy windows return markup", html.includes("return '<div class=\"when-window"));
+  s.assert("html forecast includes day one", !html.includes("if(i===0) continue"));
   s.assert("html no sw register", !html.includes("serviceWorker.register"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));

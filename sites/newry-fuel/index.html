@@ -483,7 +483,7 @@ body.alert-active .diesel-top-pick{top:76px}
 <header class="hero">
   <div class="badge"><span class="dot"></span> Mullaghbane · BT35 · NI &amp; Louth</div>
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
-  <p class="subtitle">Typical area prices (moving average), not a one-off cheapest quote. Heating oil &amp; diesel for <strong>Mullaghbane &amp; Forkhill</strong> — <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> plus NI &amp; Louth oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
+  <p class="subtitle">Typical area prices (median), not a one-off cheapest quote. Heating oil &amp; diesel for <strong>Mullaghbane &amp; Forkhill</strong> — <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> plus NI &amp; Louth oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
@@ -768,7 +768,7 @@ body.alert-active .diesel-top-pick{top:76px}
 
   function whenToBuyWindowHtml(w, isBest){
     if(!w) return "";
-      '<div class="when-window'+(isBest?" best":"")+'" style="animation-delay:'+(w.day?Math.min(w.day,8)*0.05:0)+'s">'+
+    return '<div class="when-window'+(isBest?" best":"")+'" style="animation-delay:'+(w.day?Math.min(w.day,8)*0.05:0)+'s">'+
       (isBest?'<span class="when-badge">Best window</span>':"")+
       '<div class="when-lbl">'+esc(w.label||("Day "+w.day))+'</div>'+
       (w.dateLabel?'<div class="when-date">'+esc(w.dateLabel)+'</div>':"")+
@@ -1237,7 +1237,7 @@ body.alert-active .diesel-top-pick{top:76px}
     function vs(avg){
       if(avg==null||typical==null) return "";
       var d=Math.round((typical-avg)*10)/10;
-      if(Math.abs(d)<0.15) return "in line with average";
+      if(Math.abs(d)<=0.2) return "in line with average";
       return d<0?fmtP(Math.abs(d))+" below avg":fmtP(d)+" above avg";
     }
     function chipCls(avg){
@@ -1308,7 +1308,6 @@ body.alert-active .diesel-top-pick{top:76px}
     for(i=0;i<labels.length-1;i++){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
     if(past.length){forecastData.push(past[past.length-1]);bandLow.push(past[past.length-1]);bandHigh.push(past[past.length-1])}
     for(i=0;i<fc.length;i++){
-      if(i===0) continue;
       forecastData.push(fc[i].estimate);
       bandLow.push(fc[i].low!=null?fc[i].low:fc[i].estimate);
       bandHigh.push(fc[i].high!=null?fc[i].high:fc[i].estimate);
@@ -1317,8 +1316,8 @@ body.alert-active .diesel-top-pick{top:76px}
     var ma7Line=allLabels.map(function(){return signal&&signal.ma7!=null?signal.ma7:null});
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
-    var ma7Label=(signal&&signal.ma7Days?signal.ma7Days:7)+"-day avg";
-    var ma30Label=(signal&&signal.ma30Days?signal.ma30Days:30)+"-day avg";
+    var ma7Label="Current "+(signal&&signal.ma7Days?signal.ma7Days:7)+"-day avg";
+    var ma30Label="Current "+(signal&&signal.ma30Days?signal.ma30Days:30)+"-day avg";
     var ukRef=trendPack&&trendPack.ukReferencePpl;
     var ukLine=ukRef!=null?allLabels.map(function(){return ukRef}):null;
     var chartRef=canvasId==="heatingChart"?heatingChart:dieselChart;
