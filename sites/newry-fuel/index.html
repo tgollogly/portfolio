@@ -490,20 +490,17 @@ body.alert-active .diesel-top-pick{top:76px}
   <div class="toolbar">
     <a class="btn btn-call" id="callBtn" href="tel:+442830830691">📞 Call Safe Fuels</a>
     <button type="button" class="btn btn-sound" id="soundBtn" title="Play original fuel-watch chime">🎵 Original chime</button>
-    <button type="button" class="btn btn-sound" id="abbaBtn" title="Open official ABBA player (YouTube/Spotify — not hosted here)">♪ ABBA (official)</button>
+    <button type="button" class="btn btn-sound" id="abbaBtn" title="Open official ABBA player on Spotify (not hosted here)">♪ ABBA (official)</button>
   </div>
 </header>
 
 <section class="music-dock" id="musicDock" hidden>
   <h3>ABBA · official players only</h3>
-  <p class="meta">We never copy or host ABBA songs. This uses YouTube and Spotify official embeds. Their terms apply.</p>
-  <div class="music-embed">
-    <iframe id="abbaYt" title="Official ABBA on YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen src=""></iframe>
-  </div>
-  <div class="music-embed" style="margin-top:8px;min-height:152px">
+  <p class="meta">We never copy or host ABBA songs. This uses the official Spotify embed. Their terms apply.</p>
+  <div class="music-embed" style="min-height:152px">
     <iframe id="abbaSpotify" title="Official ABBA on Spotify" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src=""></iframe>
   </div>
-  <p class="music-legal">Legal: no unlicensed MP3s on this site. Playback is streamed by YouTube/Spotify under their licences. Original chime is our own short melody — not an ABBA composition.</p>
+  <p class="music-legal">Legal: no unlicensed MP3s on this site. Playback is streamed by Spotify under their licence. Original chime is our own short melody — not an ABBA composition.</p>
 </section>
 
 <div id="error" class="err" hidden></div>
@@ -1527,11 +1524,9 @@ body.alert-active .diesel-top-pick{top:76px}
 
   function openOfficialAbba(){
     var dock=$("musicDock");
-    var yt=$("abbaYt");
     var sp=$("abbaSpotify");
     if(!dock) return;
     dock.hidden=false;
-    if(yt && !yt.getAttribute("src")) yt.src="https://www.youtube-nocookie.com/embed/xFrGuyw1Vlc?rel=0";
     if(sp && !sp.getAttribute("src")) sp.src="https://open.spotify.com/embed/artist/0LcJLqbBmaGUft1e9Mm8HV?utm_source=generator";
     dock.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
