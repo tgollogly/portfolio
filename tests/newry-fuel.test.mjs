@@ -29,6 +29,9 @@ import {
   FUEL_LEGAL_NOTICE,
   parseGovDieselCsv,
   movingAverage,
+  typicalPrice,
+  typicalFromStations,
+  smoothForecastSeries,
   linearTrend,
   analyzeBuySignal,
   buildBuyGuide,
@@ -94,6 +97,24 @@ export function runNewryFuelTests() {
   const series = parseGovDieselCsv(csv);
   s.assert("parse gov csv", series.length === 2 && series[1].dieselPpl === 151);
   s.assert("moving avg", movingAverage([100, 110, 120], 3) === 110);
+  s.assert("typical median odd", typicalPrice([176, 180, 179]) === 179);
+  s.assert("typical median even", typicalPrice([176, 180]) === 178);
+  s.assert(
+    "typical from stations ignores cheapest outlier",
+    typicalFromStations([
+      { pricePpl: 150, region: "ni" },
+      { pricePpl: 178, region: "ni" },
+      { pricePpl: 179, region: "ni" },
+    ]) === 178
+  );
+  const spiked = [
+    { day: 1, estimate: 110 },
+    { day: 3, estimate: 90 },
+    { day: 7, estimate: 109 },
+    { day: 14, estimate: 108 },
+  ];
+  s.assert("smooth drops cheapest spike", smoothForecastSeries(spiked).find((p) => p.day === 3).typical >= 108);
+  s.assert("pickNearTermBest not spike day", pickNearTermBest(spiked).day !== 3);
   s.assert("linear trend", linearTrend([100, 102, 104]).slope > 0);
 
   const buy = analyzeBuySignal({
@@ -147,16 +168,18 @@ export function runNewryFuelTests() {
     {
       ok: true,
       cheapestPpl: 176.9,
+      typicalPpl: 178.2,
       highestPpl: 179.5,
       stationCount: 3,
       postcode: "BT35",
+      locationName: "Mullaghbane",
       searchRadiusMiles: 12,
       cheapestStation: { name: "Test Station", brand: "Brand X", distanceMiles: 2.1 },
     },
     gov
   );
-  s.assert("diesel display meta", dieselMeta.headline.includes("BT35") && dieselMeta.vsUkLabel.includes("above"));
-  s.assert("diesel display note", dieselMeta.note.includes("not home heating"));
+  s.assert("diesel display meta", dieselMeta.headline.includes("Typical") && dieselMeta.vsUkLabel.includes("above"));
+  s.assert("diesel display note", dieselMeta.note.includes("typical") && dieselMeta.typicalPpl === 178.2);
 
   s.assert("home is mullaghbane", HOME.name === "Mullaghbane" && MULLAGHBANE.postcode === "BT35");
   s.assert("watchlist gregory", DIESEL_WATCHLIST.some((w) => w.id === "dan-gregorys" && w.usual));
@@ -703,6 +726,8 @@ export function runNewryFuelTests() {
   s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
   s.assert("html typography", html.includes("Cormorant Garamond") && html.includes("Outfit"));
+  s.assert("html ma strip", html.includes("ma-strip") && html.includes("Typical now"));
+  s.assert("html typical copy", html.includes("moving average"));
   s.assert("html no sw register", !html.includes("serviceWorker.register"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));

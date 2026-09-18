@@ -365,6 +365,20 @@ body.alert-active .diesel-top-pick{top:76px}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes barFill{from{width:0}to{width:var(--w,50%)}}
+@keyframes countGlow{0%{text-shadow:none}40%{text-shadow:0 0 18px rgba(234,88,12,.35)}100%{text-shadow:none}}
+.ma-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 8px}
+@media(max-width:520px){.ma-strip{grid-template-columns:1fr}}
+.ma-chip{padding:10px 10px;border-radius:12px;background:rgba(255,255,255,.75);border:1px solid var(--line);text-align:center;animation:rise .6s var(--ease) both}
+.ma-chip .lbl{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:4px}
+.ma-chip .val{font-size:.98rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--orange-deep)}
+.ma-chip .sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.ma-chip.below{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.25)}
+.ma-chip.above{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.2)}
+.price.counting{animation:countGlow 1.2s var(--ease) both}
+.when-window{animation:rise .55s var(--ease) both}
+.ind-fill{animation:barFill .9s var(--ease) forwards}
+.price small{display:block;margin-top:4px}
 @keyframes momPop{0%{opacity:0;transform:scale(.94) translateY(8px)}100%{opacity:1;transform:none}}
 .mom-guide{margin-top:20px;padding:20px 22px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(254,243,199,.88));
   border:1px solid rgba(234,88,12,.18);box-shadow:0 14px 36px rgba(15,23,42,.08);animation:rise .7s var(--ease) both}
@@ -469,7 +483,7 @@ body.alert-active .diesel-top-pick{top:76px}
 <header class="hero">
   <div class="badge"><span class="dot"></span> Mullaghbane · BT35 · NI &amp; Louth</div>
   <h1><span class="title-main">Newry Fuel Watch</span><span class="title-accent">Heating oil &amp; diesel</span></h1>
-  <p class="subtitle">Live prices for <strong>Mullaghbane &amp; Forkhill</strong> — tracks <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> diesel plus NI &amp; Louth heating oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
+  <p class="subtitle">Typical area prices (moving average), not a one-off cheapest quote. Heating oil &amp; diesel for <strong>Mullaghbane &amp; Forkhill</strong> — <strong>Dan Gregory's</strong>, <strong>Tom Murphy's</strong>, and <strong>Dundalk</strong> plus NI &amp; Louth oil in <strong>€ and £</strong>. Refreshes automatically every 15 minutes (every 5 when a buy alert shows).</p>
   <div class="status" id="status"><span class="loader"></span> Loading live fuel data…</div>
   <button type="button" class="alert-show-btn" id="alertShowBtn" hidden title="Show the fixed alert bar again">Show alert bar</button>
   <div class="toolbar">
@@ -554,6 +568,7 @@ body.alert-active .diesel-top-pick{top:76px}
   <div class="legend">
     <span><i style="background:#ea580c"></i> Live trend (weekly + now)</span>
     <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#0ea5e9"></i> 7-day moving average</span>
     <span><i style="background:#059669"></i> Target buy</span>
     <span><i style="background:#94a3b8"></i> Average</span>
   </div>
@@ -566,6 +581,7 @@ body.alert-active .diesel-top-pick{top:76px}
   <div class="legend">
     <span><i style="background:#0284c7"></i> Live trend (weekly + now)</span>
     <span><i style="background:#7c3aed"></i> 7-day prediction</span>
+    <span><i style="background:#0ea5e9"></i> 7-day moving average</span>
     <span><i style="background:#059669"></i> Target buy</span>
     <span><i style="background:#94a3b8"></i> Your 30-day avg</span>
     <span class="dash"><i style="background:#64748b"></i> UK weekly avg</span>
@@ -752,7 +768,7 @@ body.alert-active .diesel-top-pick{top:76px}
 
   function whenToBuyWindowHtml(w, isBest){
     if(!w) return "";
-    return '<div class="when-window'+(isBest?" best":"")+'">'+
+      '<div class="when-window'+(isBest?" best":"")+'" style="animation-delay:'+(w.day?Math.min(w.day,8)*0.05:0)+'s">'+
       (isBest?'<span class="when-badge">Best window</span>':"")+
       '<div class="when-lbl">'+esc(w.label||("Day "+w.day))+'</div>'+
       (w.dateLabel?'<div class="when-date">'+esc(w.dateLabel)+'</div>':"")+
@@ -1210,6 +1226,40 @@ body.alert-active .diesel-top-pick{top:76px}
     $("momRows").innerHTML=html;
   }
 
+  function maStripHtml(signal, fuelData){
+    if(!signal) return "";
+    var typical=signal.typicalPpl!=null?signal.typicalPpl:signal.current;
+    var cheap=signal.cheapestPpl!=null?signal.cheapestPpl:(fuelData&&fuelData.cheapestPpl);
+    var ma7=signal.ma7;
+    var ma30=signal.ma30;
+    function vs(avg){
+      if(avg==null||typical==null) return "";
+      var d=Math.round((typical-avg)*10)/10;
+      if(Math.abs(d)<0.15) return "in line with average";
+      return d<0?fmtP(Math.abs(d))+" below avg":fmtP(d)+" above avg";
+    }
+    function chipCls(avg){
+      if(avg==null||typical==null) return "";
+      if(typical<avg-0.2) return " below";
+      if(typical>avg+0.2) return " above";
+      return "";
+    }
+    return '<div class="ma-strip">'+
+      '<div class="ma-chip">'+
+        '<div class="lbl">Typical now</div><div class="val">'+fmtP(typical)+'/L</div>'+
+        '<div class="sub">Area average</div></div>'+
+      '<div class="ma-chip'+chipCls(ma7)+'">'+
+        '<div class="lbl">7-day avg</div><div class="val">'+(ma7!=null?fmtP(ma7)+"/L":"—")+'</div>'+
+        '<div class="sub">'+esc(vs(ma7))+'</div></div>'+
+      '<div class="ma-chip'+chipCls(ma30)+'">'+
+        '<div class="lbl">30-day avg</div><div class="val">'+(ma30!=null?fmtP(ma30)+"/L":"—")+'</div>'+
+        '<div class="sub">'+esc(vs(ma30))+'</div></div>'+
+      (cheap!=null&&typical!=null&&Math.abs(cheap-typical)>=0.2
+        ?'<div class="ma-chip" style="grid-column:1/-1"><div class="lbl">Cheapest quote</div><div class="val">'+fmtP(cheap)+'/L</div><div class="sub">Shown for shopping — advice uses the typical price</div></div>'
+        :"")+
+    '</div>';
+  }
+
   function signalCard(kind, signal, extra, trend, fuelData){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
@@ -1222,7 +1272,8 @@ body.alert-active .diesel-top-pick{top:76px}
     return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.06:0.12)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Diesel at the pump (B7)")+'</h2>'+
-      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre at pump</small></div>'+
+      '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre · typical area price</small></div>'+
+      maStripHtml(signal,fuelData)+
       momHead+
       priceCtx+
       trendPill(trend&&trend.snapshot)+
@@ -1261,6 +1312,7 @@ body.alert-active .diesel-top-pick{top:76px}
       bandHigh.push(fc[i].high!=null?fc[i].high:fc[i].estimate);
     }
     while(forecastData.length<allLabels.length){forecastData.push(null);bandLow.push(null);bandHigh.push(null)}
+    var ma7Line=allLabels.map(function(){return signal&&signal.ma7!=null?signal.ma7:null});
     var targetLine=allLabels.map(function(){return g?g.targetPricePpl:null});
     var avgLine=allLabels.map(function(){return g?g.averagePpl:null});
     var ukRef=trendPack&&trendPack.ukReferencePpl;
@@ -1272,6 +1324,7 @@ body.alert-active .diesel-top-pick{top:76px}
       {label:"Band low",data:bandLow,borderColor:"transparent",pointRadius:0,spanGaps:false,borderWidth:0},
       {label:"Confidence band",data:bandHigh,borderColor:"transparent",backgroundColor:"rgba(124,58,237,.14)",tension:.35,fill:"-1",pointRadius:0,spanGaps:false,borderWidth:0},
       {label:"7-day prediction",data:forecastData,borderColor:"#7c3aed",borderWidth:2.5,borderDash:[8,4],tension:.35,fill:false,pointRadius:4,spanGaps:false,animation:{duration:1100,easing:"easeOutQuart"}},
+      {label:"7-day MA",data:ma7Line,borderColor:"#0ea5e9",borderWidth:2,borderDash:[10,4],pointRadius:0,fill:false,animation:{duration:1200,easing:"easeOutCubic"}},
       {label:"Target buy",data:targetLine,borderColor:"#059669",borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false},
       {label:isDiesel?"Your 30-day avg":"Average",data:avgLine,borderColor:"#94a3b8",borderWidth:1.5,borderDash:[2,3],pointRadius:0,fill:false}
     ];
