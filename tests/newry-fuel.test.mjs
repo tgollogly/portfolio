@@ -33,6 +33,8 @@ import {
   analyzeBuySignal,
   buildBuyGuide,
   buildBuyAlertState,
+  buildAlertHowWeKnow,
+  isMaDeltaReason,
   buildVerdictWhy,
   buildSharePreviewMeta,
   buildSavingsTable,
@@ -603,6 +605,51 @@ export function runNewryFuelTests() {
   s.assert("verdict why sources", why.sources.length >= 3);
   s.assert("buy signal has why", buy.why && buy.why.reasons.length >= 0);
   s.assert("buy alert inactive", buildBuyAlertState({ alertWorthy: false, signals: {} }).active === false);
+  s.assert("ma delta reason detect", isMaDeltaReason("3.2% above the 7-day average (103.5p/L)"));
+  s.assert("ma delta reason skip percentile", !isMaDeltaReason("In the top 14% of recent readings — near recent highs"));
+  s.assert("soft hold how we know", buildAlertHowWeKnow("watch", { softHold: true }).includes("no cheaper dip"));
+  s.assert("soft hold alert no ma copy", !buildBuyAlertState({
+    alertWorthy: false,
+    signals: {
+      heating: {
+        verdict: "wait",
+        current: 107,
+        guide: noDipGuide,
+        holdOutlook: { hasDip: false, headline: "High price — no dip forecast" },
+        why: buildVerdictWhy({
+          current: 107,
+          vs7Pct: 3.2,
+          ma7: 103.5,
+          vs30Pct: 4,
+          ma30: 102.8,
+          percentile: 86,
+          verdict: "wait",
+          trendSlope: 0.1,
+          guide: noDipGuide,
+        }),
+      },
+    },
+  }).howWeKnow.includes("7 & 30-day"));
+  s.assert("soft hold alert filters ma reasons", !buildBuyAlertState({
+    alertWorthy: false,
+    signals: {
+      heating: {
+        verdict: "wait",
+        current: 107,
+        guide: noDipGuide,
+        holdOutlook: { hasDip: false },
+        why: buildVerdictWhy({
+          current: 107,
+          vs7Pct: 3.2,
+          ma7: 103.5,
+          percentile: 86,
+          verdict: "wait",
+          trendSlope: 0,
+          guide: noDipGuide,
+        }),
+      },
+    },
+  }).why.some((r) => r.includes("7-day average")));
 
   const share = buildSharePreviewMeta(
     { signals: { heating: { current: 107 }, diesel: { current: 176.9 } } },
