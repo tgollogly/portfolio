@@ -45,6 +45,7 @@ import {
 } from "./lib/bettystown-weather.js";
 import {
   buildFuelResponse,
+  serveFuelPrices,
   buildNewryFuelManifest,
   buildSharePreviewMeta,
   getDebugSnapshot,
@@ -1124,7 +1125,7 @@ async function handleBettystownHealthGet(env) {
 }
 
 async function handleNewryFuelPricesGet(env) {
-  const data = await buildFuelResponse(env);
+  const data = await serveFuelPrices(env);
   if (!data.ok) return json(data, 503);
   return jsonGet(data);
 }
