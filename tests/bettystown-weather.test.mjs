@@ -122,7 +122,10 @@ export function runBettystownWeatherTests() {
     s.assert("best days chronological", best[0].date <= best[1].date);
   }
 
-  const body = buildForecastResponse(samplePayload, { fetchedAt: 1 });
+  const body = buildForecastResponse(samplePayload, {
+    fetchedAt: 1,
+    now: "2026-09-16T15:00:00Z",
+  });
   s.assert("bestDays chronological", body.bestDays.every((d, i, arr) => i === 0 || arr[i - 1].date <= d.date));
   s.assert("response ok", body.ok === true);
   s.assert("has current", body.current.temp === 16);

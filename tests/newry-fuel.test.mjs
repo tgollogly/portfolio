@@ -48,6 +48,9 @@ import {
   pickNearTermBest,
   pickNearTermDip,
   hasForecastDip,
+  isMeaningfulDip,
+  MIN_DIP_PPL,
+  buildMomSummary,
   isFirmHold,
   createEmptyFuelMemory,
   appendFuelMemory,
@@ -315,7 +318,34 @@ export function runNewryFuelTests() {
 
   s.assert("pickNearTermDip rejects higher forecast", pickNearTermDip(107, [{ day: 1, estimate: 107.1, dateLabel: "Tomorrow" }]) === null);
   s.assert("pickNearTermDip accepts lower forecast", pickNearTermDip(107, [{ day: 3, estimate: 105.5, dateLabel: "In 3 days" }])?.estimate === 105.5);
+  s.assert("pickNearTermDip rejects tiny dip", pickNearTermDip(107, [{ day: 2, estimate: 106.8, dateLabel: "Soon" }]) === null);
   s.assert("hasForecastDip false when higher", !hasForecastDip(107, 107.1));
+  s.assert("isMeaningfulDip needs min ppl", isMeaningfulDip(107, 106.8) === false);
+  s.assert("isMeaningfulDip accepts real dip", isMeaningfulDip(107, 105.5) === true);
+  s.assert("MIN_DIP_PPL exported", MIN_DIP_PPL === 0.5);
+
+  const momBuy = buildMomSummary({
+    verdict: "buy",
+    current: 105,
+    kind: "heating",
+    guide: { summary: "Buy at 105.0p/L now — good price." },
+  });
+  s.assert("mom buy action", momBuy.action === "BUY NOW" && momBuy.emoji === "✅");
+  const momWait = buildMomSummary({
+    verdict: "wait",
+    current: 120,
+    kind: "diesel",
+    guide: { hasNearTermDip: true, savingsVsNowPpl: 2, targetPricePpl: 118, nearTermDay: 5 },
+    holdOutlook: { holdDaysMin: 5 },
+  });
+  s.assert("mom wait dip", momWait.action === "WAIT" && momWait.oneLiner.includes("5 day"));
+  const momNoDip = buildMomSummary({
+    verdict: "wait",
+    current: 120,
+    kind: "heating",
+    guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
+  });
+  s.assert("mom fill if low", momNoDip.action === "FILL IF LOW");
 
   const noDipGuide = buildBuyGuide({
     current: 107,
@@ -590,7 +620,9 @@ export function runNewryFuelTests() {
   s.assert("html alert hide copy", html.includes("Hide alert bar"));
   s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
   s.assert("html alert updating guard", html.includes("is-updating"));
-  s.assert("html memory note", html.includes("memoryNote") && html.includes("persistent memory"));
+  s.assert("html memory note", html.includes("memoryNote") && html.includes("Expert view"));
+  s.assert("html mom guide", html.includes("momGuide") && html.includes("Simple advice"));
+  s.assert("html expert fold", html.includes("expertFold") && html.includes("expert details"));
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));
   s.assert("html diesel hold explain", html.includes("diesel-hold-box") && html.includes("Why hold off on diesel"));

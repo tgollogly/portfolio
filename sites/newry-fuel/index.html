@@ -357,6 +357,40 @@ body.alert-active .diesel-top-pick{top:76px}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes momPop{0%{opacity:0;transform:scale(.94) translateY(8px)}100%{opacity:1;transform:none}}
+.mom-guide{margin-top:20px;padding:20px 22px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(254,243,199,.88));
+  border:1px solid rgba(234,88,12,.18);box-shadow:0 14px 36px rgba(15,23,42,.08);animation:rise .7s var(--ease) both}
+.mom-guide-kicker{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:10px}
+.mom-rows{display:grid;gap:12px}
+@media(min-width:640px){.mom-rows{grid-template-columns:1fr 1fr}}
+.mom-row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.82);
+  border:1px solid var(--line);animation:momPop .55s var(--ease) both;transition:transform .3s var(--ease),box-shadow .3s}
+.mom-row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+.mom-row.buy{border-left:4px solid var(--buy)}.mom-row.wait{border-left:4px solid var(--wait)}
+.mom-row.watch{border-left:4px solid var(--watch)}.mom-row.neutral{border-left:4px solid var(--faint)}
+.mom-emoji{font-size:1.6rem;line-height:1;flex-shrink:0}
+.mom-body{flex:1;min-width:0}
+.mom-action{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;margin-bottom:6px}
+.mom-action.buy{background:rgba(5,150,105,.15);color:#047857}
+.mom-action.wait{background:rgba(220,38,38,.12);color:#b91c1c}
+.mom-action.watch{background:rgba(217,119,6,.15);color:#b45309}
+.mom-action.fill{background:rgba(100,116,139,.12);color:#475569}
+.mom-line{font-size:.95rem;font-weight:600;color:var(--slate);margin:0;line-height:1.45}
+.mom-card-head{margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.mom-card-badge{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--slate);
+  padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--line)}
+.expert-fold{margin-top:20px;border-radius:22px;border:1px solid var(--line);background:rgba(255,255,255,.55);
+  overflow:hidden;animation:rise .75s var(--ease) .15s both}
+.expert-fold>summary{cursor:pointer;padding:16px 20px;font-size:.92rem;font-weight:700;color:var(--slate);
+  list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:linear-gradient(135deg,rgba(255,247,237,.95),rgba(255,255,255,.9));transition:background .25s}
+.expert-fold>summary::-webkit-details-marker{display:none}
+.expert-fold>summary::after{content:"+";font-size:1.2rem;font-weight:400;color:var(--muted);transition:transform .3s var(--ease)}
+.expert-fold[open]>summary::after{transform:rotate(45deg)}
+.expert-fold>summary:hover{background:rgba(254,243,199,.6)}
+.expert-inner{padding:0 16px 16px;display:grid;gap:16px}
+.expert-inner .card{margin-top:0!important;animation:fadeSlide .5s var(--ease) both}
 @media(prefers-reduced-motion:reduce){
   .glow,.badge .dot,.top-alert,.top-alert-icon{animation:none}
   *{animation-duration:.01ms!important}
@@ -410,10 +444,19 @@ body.alert-active .diesel-top-pick{top:76px}
   </div>
 </section>
 
+<section class="mom-guide reveal" id="momGuide" hidden style="animation-delay:.02s">
+  <div class="mom-guide-kicker">Simple advice · in plain English</div>
+  <div class="mom-rows" id="momRows"></div>
+</section>
+
 <section class="grid two" id="liveCards"></section>
 
+<details class="expert-fold" id="expertFold">
+<summary>📊 Charts &amp; expert details</summary>
+<div class="expert-inner">
+
 <section class="card indicators-card reveal" id="indicatorsCard" hidden style="animation-delay:.12s">
-  <div class="card-kicker">Prediction engine v3 · persistent memory</div>
+  <div class="card-kicker">Expert view · 6 price signals</div>
   <div class="indicators-head">
     <h2>6 signals · next few days &amp; weeks</h2>
     <div class="ind-bias" id="indBias"></div>
@@ -482,6 +525,9 @@ body.alert-active .diesel-top-pick{top:76px}
   <div id="stationList"></div>
   <p class="meta" id="dieselAttr"></p>
 </section>
+
+</div>
+</details>
 
 <section class="card supplier" id="supplierCard">
   <div class="card-kicker">Your supplier</div>
@@ -672,7 +718,7 @@ body.alert-active .diesel-top-pick{top:76px}
       '<p class="hold-q">How long to hold — predictable or risky?</p>'+
       '<p class="hold-a">'+esc(ho.predictable||"Recheck often — fuel can move on news overnight.")+'</p>'+
       '<div class="hold-pills">'+
-        '<span class="hold-pill '+confCls+'">Confidence · '+esc(ho.confidence||"medium")+'</span>'+
+        '<span class="hold-pill '+confCls+'">Guide strength · '+esc(ho.confidence||"medium")+'</span>'+
         '<span class="hold-pill '+riskCls+'">'+esc(ho.riskLabel||"Moderate risk")+'</span>'+
       '</div>'+
       '<div class="hold-stats">'+
@@ -724,9 +770,10 @@ body.alert-active .diesel-top-pick{top:76px}
     var isBuy=signal.verdict==="buy";
     var whenCls=isBuy?"buy":isHold?"wait":"";
     var acc=g.accuracy;
+    var strengthLbl=acc&&(acc.label||"Guide strength");
     var accHtml=acc?'<div class="accuracy-pill'+(acc.highConfidence?" high":"")+'">'+
-      (acc.highConfidence?"✓ ":"")+"Confidence "+acc.score+"%"+
-      (acc.highConfidence?" · high accuracy tier":"")+
+      (acc.highConfidence?"✓ ":"")+esc(strengthLbl)+" "+acc.score+"%"+
+      (acc.highConfidence?" · strong match to past patterns":"")+
       '</div>':"";
     var banner=(isBuy&&g.savingsHeadline)?'<div class="savings-banner">💷 '+esc(g.savingsHeadline)+'</div>':"";
     var table="";
@@ -1046,15 +1093,54 @@ body.alert-active .diesel-top-pick{top:76px}
     '</div>';
   }
 
+  function momActionClass(action){
+    if(!action) return "neutral";
+    if(action.indexOf("BUY")===0) return "buy";
+    if(action.indexOf("WAIT")===0) return "wait";
+    if(action.indexOf("FILL")===0) return "fill";
+    if(action.indexOf("WATCH")===0) return "watch";
+    return "neutral";
+  }
+
+  function momRowHtml(kind, signal){
+    var m=signal&&signal.momSummary;
+    if(!m||!signal.current) return "";
+    var icon=kind==="heating"?"🛢️":"⛽";
+    var title=kind==="heating"?"Heating oil":"Diesel";
+    var delay=kind==="heating"?0.04:0.1;
+    return '<div class="mom-row '+momActionClass(m.action)+'" style="animation-delay:'+delay+'s">'+
+      '<span class="mom-emoji" aria-hidden="true">'+esc(m.emoji||icon)+'</span>'+
+      '<div class="mom-body">'+
+        '<div class="mom-action '+momActionClass(m.action)+'">'+esc(m.action)+'</div>'+
+        '<p class="mom-line"><strong>'+title+':</strong> '+esc(m.oneLiner)+'</p>'+
+      '</div></div>';
+  }
+
+  function renderMomGuide(data){
+    var h=data.signals&&data.signals.heating;
+    var d=data.signals&&data.signals.diesel;
+    var html="";
+    if(h&&h.current!=null) html+=momRowHtml("heating",h);
+    if(d&&d.current!=null) html+=momRowHtml("diesel",d);
+    var el=$("momGuide");
+    if(!html){el.hidden=true;return}
+    el.hidden=false;
+    $("momRows").innerHTML=html;
+  }
+
   function signalCard(kind, signal, extra, trend, fuelData){
     if(!signal||signal.current==null) return "";
     var cls=signal.verdict||"neutral";
     if(cls==="wait"&&signal.guide&&signal.guide.hasNearTermDip===false) cls="watch";
     var priceCtx=kind==="diesel"?dieselPriceContextHtml(fuelData):"";
-    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.04:0.1)+'s">'+
+    var m=signal.momSummary;
+    var momHead=m?'<div class="mom-card-head"><span class="mom-card-badge">'+
+      esc(m.emoji||"")+' '+esc(m.action||"")+' · '+esc(m.short||"")+'</span></div>':"";
+    return '<article class="card reveal '+cls+'" style="animation-delay:'+(kind==="heating"?0.06:0.12)+'s">'+
       '<div class="card-kicker">'+esc(signal.label)+'</div>'+
       '<h2>'+(kind==="heating"?"🛢️ Home heating oil":"⛽ Diesel at the pump (B7)")+'</h2>'+
       '<div class="price counting" data-price="'+signal.current+'">'+fmtP(signal.current)+'<small>/litre at pump</small></div>'+
+      momHead+
       priceCtx+
       trendPill(trend&&trend.snapshot)+
       '<div class="verdict '+cls+'">'+esc(signal.headline)+'</div>'+
@@ -1159,6 +1245,7 @@ body.alert-active .diesel-top-pick{top:76px}
     var cards="";
     var trends=data.trends||{};
     renderHeatingCompare(data.heating);
+    renderMomGuide(data);
     cards+=signalCard("heating",data.signals&&data.signals.heating,
       (data.heating&&data.heating.ok?heatingCrossBorderHtml(data.heating):""),
       trends.heating,null);
