@@ -59,6 +59,9 @@ import {
   buildMomSummary,
   isFirmHold,
   createEmptyFuelMemory,
+  normalizeFuelMemoryBasis,
+  FUEL_MEMORY_VERSION,
+  FUEL_MEMORY_PRICE_BASIS,
   appendFuelMemory,
   flattenMemoryPrices,
   migrateLegacyHistory,
@@ -126,6 +129,13 @@ export function runNewryFuelTests() {
   s.assert("buy has headline", buy.headline.length > 5);
   s.assert("buy has guide", buy.guide && buy.guide.summary.length > 10);
   s.assert("buy guide target", buy.guide.targetPricePpl === buy.current);
+  const noDuplicateCurrent = analyzeBuySignal({
+    current: 110,
+    history: [{ price: 100 }, { price: 110 }],
+    label: "No duplicate current",
+  });
+  s.assert("current not double weighted in MA", noDuplicateCurrent.ma7 === 105);
+  s.assert("MA reports actual days available", noDuplicateCurrent.ma7Days === 2 && noDuplicateCurrent.ma30Days === 2);
 
   const guide = buildBuyGuide({
     current: 120,
@@ -139,6 +149,22 @@ export function runNewryFuelTests() {
   s.assert("wait guide savings", guide.savingsVsNowPpl > 0);
   s.assert("wait guide summary matches target", guide.summary.includes(String(guide.targetPricePpl)));
   s.assert("wait guide target equals savings math", guide.savingsVsNowPpl === Math.round((120 - guide.targetPricePpl) * 10) / 10);
+  const smoothedGuide = buildBuyGuide({
+    current: 120,
+    verdict: "wait",
+    trend: { slope: -0.1, intercept: 120 },
+    forecast: spiked,
+    extendedForecast: spiked,
+    ma7: 121,
+    ma30: 122,
+    prices: [122, 121, 120],
+  });
+  s.assert("guide target uses smoothed forecast not raw spike", smoothedGuide.targetPricePpl > 100);
+  s.assert("guide forecast low uses smoothed path", smoothedGuide.forecastLowPpl > 100);
+  s.assert(
+    "smoothed guide savings match target",
+    smoothedGuide.savingsVsNowPpl === Math.round((120 - smoothedGuide.targetPricePpl) * 10) / 10
+  );
 
   const news = analyzeNewsSentiment([
     "Oil prices fall as demand drops",
@@ -298,6 +324,19 @@ export function runNewryFuelTests() {
     guide: { hasNearTermDip: false },
   });
   s.assert("advice trend aligns up with forecast", alignedUp.direction === "up" && alignedUp.label.includes("GOING UP"));
+  const datedTrend = buildTrendSnapshot([
+    { price: 107.2, date: "2026-09-17", at: "2026-09-17T10:00:00Z", type: "live" },
+    { price: 110, date: "2026-09-11", at: "2026-09-11T10:00:00Z", type: "live" },
+    { price: 111.6, date: "2026-09-18", at: "2026-09-18T10:00:00Z", type: "now" },
+  ]);
+  s.assert("weekly change uses date not third-last point", datedTrend.change7d === 1.6);
+  s.assert("weekly label matches dated change", datedTrend.label.includes("+1.6p/L vs last week"));
+  const shortHistoryTrend = buildTrendSnapshot([
+    { price: 107.2, date: "2026-09-17", at: "2026-09-17T10:00:00Z", type: "live" },
+    { price: 111.6, date: "2026-09-18", at: "2026-09-18T10:00:00Z", type: "now" },
+  ]);
+  s.assert("short history does not invent weekly change", shortHistoryTrend.change7d === null);
+  s.assert("short history label says building", shortHistoryTrend.label.includes("building 7 days"));
 
   const pred = buildPredictionOutlook({
     current: 180,
@@ -514,11 +553,25 @@ export function runNewryFuelTests() {
   s.assert("buy has indicators", buy.predictionIndicators && buy.predictionIndicators.indicators.length === 6);
 
   let mem = createEmptyFuelMemory();
+  s.assert(
+    "memory price basis versioned",
+    mem.version === FUEL_MEMORY_VERSION && mem.priceBasis === FUEL_MEMORY_PRICE_BASIS
+  );
+  const oldBasisMemory = {
+    ...mem,
+    version: 1,
+    priceBasis: undefined,
+    daily: { heating: [{ date: "2026-01-01", close: 107.2 }], diesel: [] },
+  };
+  s.assert(
+    "old cheapest-basis memory reset",
+    normalizeFuelMemoryBasis(oldBasisMemory).daily.heating.length === 0
+  );
   mem = appendFuelMemory(mem, "heating", { at: "2026-01-01T06:00:00Z", date: "2026-01-01", price: 110 });
   mem = appendFuelMemory(mem, "heating", { at: "2026-01-01T18:00:00Z", date: "2026-01-01", price: 108 });
   mem = appendFuelMemory(mem, "heating", { at: "2026-01-02T06:00:00Z", date: "2026-01-02", price: 105 });
   s.assert("memory daily rollup", mem.daily.heating.length === 2 && mem.daily.heating[0].low === 108);
-  s.assert("memory flatten", flattenMemoryPrices(mem, "heating").length >= 2);
+  s.assert("memory flatten one close per day", flattenMemoryPrices(mem, "heating").length === 2);
   mem = migrateLegacyHistory(createEmptyFuelMemory(), {
     heating: [{ at: "2026-01-03T12:00:00Z", date: "2026-01-03", price: 112 }],
     diesel: [],
@@ -530,11 +583,25 @@ export function runNewryFuelTests() {
     guide: { targetPricePpl: 105 },
   });
   s.assert("memory record prediction", mem.predictions.length === 1);
+  mem = recordFuelPrediction(mem, "heating", {
+    verdict: "wait",
+    current: 112,
+    guide: { targetPricePpl: 105 },
+  });
+  s.assert("duplicate prediction suppressed for six hours", mem.predictions.length === 1);
   mem = updateFuelMemoryOutcomes(mem, "heating", 104);
   s.assert("memory outcomes pending", mem.outcomes.heating.tracked === 0);
   mem.predictions[0].at = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
   mem = updateFuelMemoryOutcomes(mem, "heating", 104);
   s.assert("memory outcomes scored", mem.outcomes.heating.tracked === 1 && mem.outcomes.heating.wins === 1);
+  let buyMem = recordFuelPrediction(createEmptyFuelMemory(), "heating", {
+    verdict: "buy",
+    current: 100,
+    guide: { targetPricePpl: 100 },
+  });
+  buyMem.predictions[0].at = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+  buyMem = updateFuelMemoryOutcomes(buyMem, "heating", 103);
+  s.assert("buy advice wins when later price rises", buyMem.outcomes.heating.wins === 1);
   const memStats = computeMemoryStats(mem, "heating");
   s.assert("memory stats days", memStats.days >= 1);
   s.assert("memory payload", buildMemoryPayload(mem).summary.length > 20);

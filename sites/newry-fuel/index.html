@@ -1232,6 +1232,8 @@ body.alert-active .diesel-top-pick{top:76px}
     var cheap=signal.cheapestPpl!=null?signal.cheapestPpl:(fuelData&&fuelData.cheapestPpl);
     var ma7=signal.ma7;
     var ma30=signal.ma30;
+    var ma7Days=signal.ma7Days||7;
+    var ma30Days=signal.ma30Days||30;
     function vs(avg){
       if(avg==null||typical==null) return "";
       var d=Math.round((typical-avg)*10)/10;
@@ -1247,12 +1249,12 @@ body.alert-active .diesel-top-pick{top:76px}
     return '<div class="ma-strip">'+
       '<div class="ma-chip">'+
         '<div class="lbl">Typical now</div><div class="val">'+fmtP(typical)+'/L</div>'+
-        '<div class="sub">Area average</div></div>'+
+        '<div class="sub">Area typical (median)</div></div>'+
       '<div class="ma-chip'+chipCls(ma7)+'">'+
-        '<div class="lbl">7-day avg</div><div class="val">'+(ma7!=null?fmtP(ma7)+"/L":"—")+'</div>'+
+        '<div class="lbl">'+ma7Days+'-day avg</div><div class="val">'+(ma7!=null?fmtP(ma7)+"/L":"—")+'</div>'+
         '<div class="sub">'+esc(vs(ma7))+'</div></div>'+
       '<div class="ma-chip'+chipCls(ma30)+'">'+
-        '<div class="lbl">30-day avg</div><div class="val">'+(ma30!=null?fmtP(ma30)+"/L":"—")+'</div>'+
+        '<div class="lbl">'+ma30Days+'-day avg</div><div class="val">'+(ma30!=null?fmtP(ma30)+"/L":"—")+'</div>'+
         '<div class="sub">'+esc(vs(ma30))+'</div></div>'+
       (cheap!=null&&typical!=null&&Math.abs(cheap-typical)>=0.2
         ?'<div class="ma-chip" style="grid-column:1/-1"><div class="lbl">Cheapest quote</div><div class="val">'+fmtP(cheap)+'/L</div><div class="sub">Shown for shopping — advice uses the typical price</div></div>'
