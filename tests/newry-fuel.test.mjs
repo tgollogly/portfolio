@@ -379,7 +379,7 @@ export function runNewryFuelTests() {
     kind: "heating",
     guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
   });
-  s.assert("mom fill if low", momNoDip.action === "ORDER IF LOW");
+  s.assert("mom order before rise", momNoDip.action === "ORDER SOON" && momNoDip.short.includes("Before prices rise"));
   const momRise = buildMomSummary({
     verdict: "watch",
     current: 107.2,
