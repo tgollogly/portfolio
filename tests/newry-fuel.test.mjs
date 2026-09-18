@@ -345,7 +345,30 @@ export function runNewryFuelTests() {
     kind: "heating",
     guide: { hasNearTermDip: false, savingsVsNowPpl: 0 },
   });
-  s.assert("mom fill if low", momNoDip.action === "FILL IF LOW");
+  s.assert("mom fill if low", momNoDip.action === "ORDER IF LOW");
+
+  const momHold = buildMomSummary({
+    verdict: "hold",
+    current: 107.2,
+    kind: "heating",
+    guide: {
+      summary: "107.2p/L looks fair today — no rush unless your tank is getting low.",
+      savingsVsAveragePpl: 0.5,
+    },
+  });
+  s.assert("mom hold not loading", momHold.action === "ALL GOOD" && momHold.loading === false);
+  s.assert("mom hold has do list", momHold.doNow.length >= 1);
+  s.assert("hold guide summary fair", buildBuyGuide({
+    current: 107,
+    verdict: "hold",
+    trend: { slope: 0, intercept: 107 },
+    forecast: [{ day: 1, estimate: 107 }],
+    extendedForecast: [{ day: 1, estimate: 107, dateLabel: "Tomorrow", label: "Tomorrow" }],
+    ma7: 106,
+    ma30: 106.5,
+    prices: [105, 106, 107],
+    kind: "heating",
+  }).summary.includes("fair"));
 
   const noDipGuide = buildBuyGuide({
     current: 107,
@@ -612,7 +635,7 @@ export function runNewryFuelTests() {
   s.assert("html news verdict", html.includes("newsVerdict"));
   s.assert("lib fuel news feeds", FUEL_NEWS_FEEDS.length >= 3);
   s.assert("html call tel", html.includes("tel:+442830830691"));
-  s.assert("html typography", html.includes("DM Serif Display") && html.includes("Plus Jakarta Sans"));
+  s.assert("html typography", html.includes("Cormorant Garamond") && html.includes("Outfit"));
   s.assert("html no sw register", !html.includes("serviceWorker.register"));
   s.assert("html hold outlook", html.includes("hold-outlook") && html.includes("predictable or risky"));
   s.assert("html hold alert meta", html.includes("topAlertHold"));
@@ -621,7 +644,9 @@ export function runNewryFuelTests() {
   s.assert("html alert no default buy", !html.includes('id="topAlert" class="top-alert buy"'));
   s.assert("html alert updating guard", html.includes("is-updating"));
   s.assert("html memory note", html.includes("memoryNote") && html.includes("Expert view"));
-  s.assert("html mom guide", html.includes("momGuide") && html.includes("Simple advice"));
+  s.assert("html action hero", html.includes("actionHero") && html.includes("What to do right now"));
+  s.assert("html robin mascot", html.includes("robin-scene"));
+  s.assert("html fuel melody", html.includes("soundBtn") && html.includes("playFuelMelody"));
   s.assert("html expert fold", html.includes("expertFold") && html.includes("expert details"));
   s.assert("html diesel clarity", html.includes("Diesel at the pump") && html.includes("price-context"));
   s.assert("html diesel range", html.includes("dieselRange"));
