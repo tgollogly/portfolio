@@ -131,9 +131,33 @@ h1{
   border:1px solid var(--line);box-shadow:var(--shadow-md);
   animation:riseIn .65s var(--ease-out) both;
 }
-.max-walk-hero h2{font-family:var(--display);font-size:1.55rem;margin:0 0 8px;font-weight:400;font-style:italic;color:var(--ocean-deep);display:flex;align-items:center;gap:10px}
-.max-walk-hero p{margin:0;font-size:1.05rem;color:var(--ocean);line-height:1.5}
-.max-walk-hero .walk-detail{font-size:.9rem;color:var(--muted);margin-top:10px}
+.max-walk-hero h2{font-family:var(--display);font-size:1.55rem;margin:0 0 12px;font-weight:400;font-style:italic;color:var(--ocean-deep);display:flex;align-items:center;gap:10px}
+.max-walk-summary{font-size:1.02rem;font-weight:600;color:var(--ocean-deep);margin:0 0 14px;line-height:1.45}
+.walk-days{display:flex;flex-direction:column;gap:16px}
+.walk-day-block{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.walk-day-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 10px}
+.walk-day-name{font-family:var(--display);font-size:1.15rem;font-style:italic;color:var(--ocean-deep);margin:0 0 10px}
+.walk-windows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:520px){.walk-windows{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.walk-win{
+  border-radius:14px;padding:12px 10px;text-align:center;border:2px solid transparent;
+  min-height:72px;display:flex;flex-direction:column;justify-content:center;gap:4px;
+}
+.walk-win .win-time{font-size:.78rem;font-weight:600;color:var(--ink);line-height:1.25}
+.walk-win .win-label{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.walk-win.good{background:rgba(204,251,241,.85);border-color:#5eead4;color:#0f766e}
+.walk-win.good .win-label{color:#0d9488}
+.walk-win.watch{background:rgba(254,243,199,.9);border-color:#fcd34d;color:#92400e}
+.walk-win.watch .win-label{color:#b45309}
+.walk-win.wet{background:rgba(254,226,226,.9);border-color:#fca5a5;color:#9f1239}
+.walk-win.wet .win-label{color:#be123c}
+.max-walk-hero .walk-detail{font-size:.85rem;color:var(--muted);margin-top:14px;line-height:1.45}
+.walk-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:.78rem;color:var(--muted)}
+.walk-legend span{display:inline-flex;align-items:center;gap:6px}
+.walk-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.walk-legend i.l-good{background:#5eead4}
+.walk-legend i.l-watch{background:#fcd34d}
+.walk-legend i.l-wet{background:#fca5a5}
 .met-oneliner{
   margin-top:16px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.7);
   border:1px solid var(--line);font-size:.95rem;color:var(--ink);line-height:1.5;
@@ -335,11 +359,16 @@ tr:hover td{background:rgba(240,249,255,.85)}
   <div id="staleBanner" class="stale-banner" hidden></div>
   <section class="max-walk-hero" id="maxWalkHero" hidden aria-labelledby="maxWalkTitle">
     <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> Max walk score</h2>
-    <p id="maxWalkHeadline">—</p>
+    <p class="max-walk-summary" id="maxWalkSummary">—</p>
+    <div id="maxWalkWindows" class="walk-days" aria-live="polite"></div>
+    <div class="walk-legend" aria-hidden="true">
+      <span><i class="l-good"></i> Good for Max</span>
+      <span><i class="l-watch"></i> Watch the sky</span>
+      <span><i class="l-wet"></i> Wet likely</span>
+    </div>
     <p class="walk-detail" id="maxWalkDetail"></p>
     <div class="action-row">
       <a class="btn-action primary" id="rainRadarBtn" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener">Raining now? · Met Éireann &amp; radar</a>
-      <button type="button" class="btn-action" id="copySmsBtn">Copy SMS for Mum</button>
     </div>
   </section>
   <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
@@ -470,12 +499,49 @@ tr:hover td{background:rgba(240,249,255,.85)}
     }).join("");
   }
 
+  function walkWinClass(label){
+    if(label==="Good") return "good";
+    if(label==="Watch") return "watch";
+    return "wet";
+  }
+
   function renderMaxWalk(data){
     var hero=$("maxWalkHero");
     var mw=data.maxWalkScore;
     hero.hidden=false;
-    $("maxWalkHeadline").textContent=(mw&&mw.headline)||"Walk windows loading…";
-    $("maxWalkDetail").textContent=TIME_LABEL+" · coastal gusts counted for exposed beach walks";
+    var host=$("maxWalkWindows");
+    host.innerHTML="";
+    if(!mw||!mw.days||!mw.days.length){
+      $("maxWalkSummary").textContent="Walk windows loading…";
+      $("maxWalkDetail").textContent="";
+      return;
+    }
+    var summaryParts=[];
+    mw.days.forEach(function(day){
+      var good=day.blocks.filter(function(b){return b.label==="Good"});
+      if(good.length){
+        var dayName=day.relative==="today"?"Today":day.relative==="tomorrow"?"Tomorrow":day.dateShort;
+        summaryParts.push(dayName+": try "+good.map(function(g){return g.range}).join(" or "));
+      }
+    });
+    $("maxWalkSummary").textContent=summaryParts.length
+      ? summaryParts.join(" · ")
+      : "No perfect windows — use Watch slots or check radar before you go.";
+    mw.days.forEach(function(day){
+      var section=document.createElement("div");
+      section.className="walk-day-block";
+      var title=day.relative==="today"?"Today":day.relative==="tomorrow"?"Tomorrow":day.dateShort;
+      var html='<p class="walk-day-title">'+TIME_LABEL+'</p><p class="walk-day-name">'+esc(title)+'</p><div class="walk-windows">';
+      day.blocks.forEach(function(b){
+        html+='<div class="walk-win '+walkWinClass(b.label)+'">'+
+          '<div class="win-time">'+esc(b.range)+'</div>'+
+          '<div class="win-label">'+esc(b.label)+'</div></div>';
+      });
+      html+="</div>";
+      section.innerHTML=html;
+      host.appendChild(section);
+    });
+    $("maxWalkDetail").textContent="Coastal gusts counted for exposed beach walks · times are Irish (Dublin).";
   }
 
   function renderMet(data){
@@ -683,24 +749,6 @@ tr:hover td{background:rgba(240,249,255,.85)}
     },{threshold:.08,rootMargin:"0px 0px -24px 0px"});
     document.querySelectorAll(".day-card,.pattern-card,.table-wrap tbody tr").forEach(function(el){io.observe(el)});
   }
-
-  $("copySmsBtn").addEventListener("click",function(){
-    var d=window.__bettystownLast;
-    if(!d) return;
-    var lines=["Bettystown weather for Mom & Max 🐕"];
-    if(d.maxWalkScore&&d.maxWalkScore.headline) lines.push(d.maxWalkScore.headline);
-    if(d.metEireann&&d.metEireann.oneLiner) lines.push("Met Éireann: "+d.metEireann.oneLiner.slice(0,160));
-    (d.alerts||[]).slice(0,3).forEach(function(a){lines.push(a.title+": "+(a.message||"").slice(0,120))});
-    lines.push("Radar: https://www.met.ie/weather-forecast/bettystown-meath");
-    lines.push("("+TIME_LABEL+")");
-    var text=lines.join("\n");
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(function(){
-        $("copySmsBtn").textContent="Copied!";
-        setTimeout(function(){$("copySmsBtn").textContent="Copy SMS for Mum"},2500);
-      });
-    }
-  });
 
   fetchWeather().then(revealRows).catch(function(){setTimeout(revealRows,400)});
   setInterval(fetchWeather, REFRESH_MS);

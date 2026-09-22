@@ -240,7 +240,8 @@ export function runBettystownWeatherTests() {
   s.assert("html localStorage cache", html.includes("localStorage"));
   s.assert("html max walk hero", html.includes("maxWalkHero"));
   s.assert("html met oneliner", html.includes("metOneLiner"));
-  s.assert("html copy sms", html.includes("copySmsBtn"));
+  s.assert("html walk windows grid", html.includes("maxWalkWindows") && html.includes("walk-win"));
+  s.assert("html no copy sms", !html.includes("copySmsBtn"));
   s.assert("html radar link", html.includes("bettystown-meath"));
   s.assert("html irish time label", html.includes("Irish time / Dublin"));
   s.assert("html tomorrow card", html.includes("tomorrowCard"));
