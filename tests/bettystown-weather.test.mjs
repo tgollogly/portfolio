@@ -4,6 +4,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   BETTYSTOWN,
+  buildBettystownLegal,
   buildBettystownManifest,
   buildDailyRows,
   buildForecastResponse,
@@ -35,6 +36,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 export function runBettystownWeatherTests() {
   const s = createSuite("bettystown-weather");
+
+  const legal = buildBettystownLegal();
+  s.assert("legal copyright thomas", legal.copyright.includes("Thomas Gollogly"));
+  s.assert("legal open-meteo license", legal.dataSources.some((d) => d.name === "Open-Meteo" && d.license.includes("CC BY")));
+  s.assert("legal disclaimer personal", legal.disclaimer.includes("personal"));
 
   s.assert("coords bettystown pin", BETTYSTOWN.latitude === 53.604 && BETTYSTOWN.longitude === -6.246);
   s.assert("timezone dublin", BETTYSTOWN.timezone === "Europe/Dublin");
@@ -262,6 +268,10 @@ export function runBettystownWeatherTests() {
   s.assert("html aurora layer", html.includes("auroraShift"));
   s.assert("html now date label", html.includes("nowDate") && html.includes("Right now"));
   s.assert("html walk-first hint", html.includes("coloured times") && html.includes("What Met Éireann says"));
+  s.assert("html legal disclaimer", html.includes("legalDisclaimer") && html.includes("Disclaimer"));
+  s.assert("html legal copyright", html.includes("Thomas Gollogly") || html.includes("legalCopyright"));
+  s.assert("html open-meteo license link", html.includes("open-meteo.com/en/license"));
+  s.assert("html esc helper", html.includes("function esc("));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));

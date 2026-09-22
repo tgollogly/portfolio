@@ -70,3 +70,14 @@ Verify: `node tests/security-audit.test.mjs` or `node tests/run-all.mjs`.
 - Pursuit leaderboard/memory POSTs are unauthenticated (demo scope)
 
 Run tests: `node tests/run-all.mjs` (includes security-audit, privacy, pursuit, bettystown).
+
+## Mom's Bettystown Weather
+
+| Topic | Status |
+|-------|--------|
+| API surface | Read-only `GET /api/bettystown-weather` and health — no secrets, no user-controlled fetch URLs |
+| XSS | Forecast UI uses `esc()` before dynamic `innerHTML`; tier CSS classes whitelisted |
+| Data sources | Fixed HTTPS endpoints only (Open-Meteo, Met Éireann open JSON) in `lib/bettystown-weather.js` |
+| Legal | Footer + API `legal` object: copyright (Thomas Gollogly), disclaimer, Open-Meteo CC BY 4.0 + Met Éireann text attribution |
+| Crawlers | `noindex,nofollow` meta + site `robots.txt` |
+| Residual | Public JSON API could be scraped — acceptable for personal app; Cloudflare rate limits if needed |
