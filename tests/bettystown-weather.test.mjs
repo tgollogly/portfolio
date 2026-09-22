@@ -14,6 +14,7 @@ import {
   mergeTrustedHourly,
   sanitizeHourlyPrecip,
   confidenceForLeadDays,
+  momConfidencePlain,
   detectDrySunnySpells,
   detectHeatEvents,
   explainWalkDay,
@@ -106,6 +107,7 @@ export function runBettystownWeatherTests() {
   const bands = buildDayRainBands(merged, "2026-09-17", new Date("2026-09-16T15:00:00Z"));
   s.assert("rain bands daytime", bands.daytime && typeof bands.daytime.mm === "number");
   s.assert("confidence day 1", confidenceForLeadDays(1).text.includes("60"));
+  s.assert("mom confidence plain", momConfidencePlain(1).includes("Fairly"));
 
   const samplePayload = {
     timezone: "Europe/Dublin",
@@ -238,7 +240,7 @@ export function runBettystownWeatherTests() {
   s.assert("html mom max", html.includes("Max"));
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
-  s.assert("html max walk hero", html.includes("maxWalkHero"));
+  s.assert("html max walk hero", html.includes("maxWalkHero") && html.includes("When to walk Max"));
   s.assert("html met oneliner", html.includes("metOneLiner"));
   s.assert("html walk windows grid", html.includes("maxWalkWindows") && html.includes("walk-win"));
   s.assert("html no copy sms", !html.includes("copySmsBtn"));
@@ -255,7 +257,7 @@ export function runBettystownWeatherTests() {
   s.assert("html coastal palette", html.includes("--ocean:#0e7490") && html.includes("--sea-glass:#14b8a6"));
   s.assert("html aurora layer", html.includes("auroraShift"));
   s.assert("html now date label", html.includes("nowDate") && html.includes("Right now"));
-  s.assert("html today forecast hint", html.includes("Today") && html.includes("full-day forecast"));
+  s.assert("html walk-first hint", html.includes("coloured times") && html.includes("What Met Éireann says"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));
