@@ -53,6 +53,12 @@ export function runSecurityAuditTests() {
   s.assert("privacy noindex", read("privacy.html").includes('content="noindex,nofollow'));
   s.assert("index noindex", read("index.html").includes('content="noindex,nofollow'));
   s.assert("bettystown noindex", read("sites/bettystown/index.html").includes('content="noindex,nofollow'));
+  const btHtml = read("sites/bettystown/index.html");
+  s.assert("bettystown esc before innerHTML", btHtml.includes("function esc(") && btHtml.includes("esc(a.message)"));
+  s.assert("bettystown legal disclaimer block", btHtml.includes("legalDisclaimer") && btHtml.includes("not an official Met"));
+  s.assert("bettystown rel noopener links", btHtml.includes('rel="noopener noreferrer"'));
+  s.assert("bettystown api read-only route", server.includes("/api/bettystown-weather") && server.includes("GET only"));
+  s.assert("bettystown fixed geocode in lib", read("lib/bettystown-weather.js").includes("latitude: BETTYSTOWN.latitude"));
   s.assert("newry fuel noindex", read("sites/newry-fuel/index.html").includes('content="noindex,nofollow'));
   s.assert("newry fuel alert secret", server.includes("NEWRY_FUEL_ALERT_SECRET"));
   s.assert("newry fuel push sanitize", server.includes("sanitizePushSubscription"));

@@ -303,8 +303,15 @@ tr:hover td{background:rgba(240,249,255,.85)}
 .row-why{font-size:.78rem;color:var(--muted);margin-top:4px;max-width:22em}
 .mini-bar{height:7px;border-radius:4px;background:rgba(14,116,144,.12);margin-top:5px;overflow:hidden}
 .mini-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sea-glass),var(--coral),var(--sun));transition:width 1s var(--ease-out)}
-.foot{text-align:center;padding:28px 20px;font-size:.78rem;color:var(--faint)}
+.foot{text-align:center;padding:28px 20px 36px;font-size:.82rem;color:var(--muted);line-height:1.55;max-width:42rem;margin:0 auto}
 .foot a{color:var(--ocean);text-decoration:none;border-bottom:1px solid rgba(14,116,144,.25)}
+.foot-legal{margin-top:18px;padding:18px 20px;text-align:left;background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:16px;font-size:.8rem;color:var(--muted);line-height:1.55}
+.foot-legal h3{font-family:var(--sans);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ocean);margin:0 0 10px}
+.foot-legal p{margin:0 0 10px}
+.foot-legal p:last-child{margin-bottom:0}
+.foot-legal ul{margin:8px 0 0;padding-left:1.1rem}
+.foot-legal li{margin:4px 0}
+.foot-copy{margin-top:14px;font-size:.78rem;color:var(--faint)}
 
 .music-host{position:fixed;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1}
 .music-toggle{
@@ -416,9 +423,17 @@ tr:hover td{background:rgba(240,249,255,.85)}
 </main>
 
 <footer class="foot">
-  Open-Meteo + <a href="https://www.met.ie/" target="_blank" rel="noopener">Met Éireann</a> text ·
-  Refreshes every 45 min ·
-  <span id="updatedAt">—</span> · <span id="metIssued">—</span>
+  <p><span id="updatedAt">—</span> · Refreshes every 45 minutes · <span id="metIssued"></span></p>
+  <div class="foot-legal" id="legalBlock" aria-labelledby="legalHeading">
+    <h3 id="legalHeading">Disclaimer &amp; data sources</h3>
+    <p id="legalDisclaimer">For personal planning only — not an official Met Éireann forecast, weather warning, or veterinary advice. Walk scores are automated hints; use your own judgment and check official sources before travel.</p>
+    <p><strong>Data attribution</strong></p>
+    <ul id="legalSources">
+      <li><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> — hourly/daily weather models (<a href="https://open-meteo.com/en/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)</li>
+      <li><a href="https://www.met.ie/" target="_blank" rel="noopener noreferrer">Met Éireann</a> — regional forecast text (Leinster/National open data). Not affiliated with Met Éireann.</li>
+    </ul>
+    <p class="foot-copy" id="legalCopyright">© Thomas Gollogly. All rights reserved.</p>
+  </div>
 </footer>
 </div>
 
@@ -475,8 +490,15 @@ tr:hover td{background:rgba(240,249,255,.85)}
     return ({storm:"⛈️",heavy_rain:"🌧️",high_wind:"💨",high_wind_hint:"💨",heat:"🥵",uv:"☀️",frost:"🧊",live_wind:"💨",walk_ok:"🐕",walk_watch:"👀",rain_timing:"🌧️",source_conflict:"⚖️"})[type]||"⚠️";
   }
 
+  var ALLOWED_TIERS={green:1,amber:1,red:1,grey:1,low:1,moderate:1,high:1,excellent:1,good:1,okay:1,poor:1};
+
+  function safeTier(t,fallback){
+    t=t||fallback||"moderate";
+    return ALLOWED_TIERS[t]?t:fallback||"moderate";
+  }
+
   function alertTierClass(a){
-    return a.tier||a.severity||"moderate";
+    return safeTier(a.tier,a.severity);
   }
 
   function patternIcon(type){
@@ -632,11 +654,26 @@ tr:hover td{background:rgba(240,249,255,.85)}
     row.innerHTML=cards.join("");
   }
 
+  function renderLegal(legal){
+    if(!legal) return;
+    if(legal.disclaimer) $("legalDisclaimer").textContent=legal.disclaimer;
+    if(legal.copyright) $("legalCopyright").textContent=legal.copyright;
+    if(legal.dataSources&&legal.dataSources.length){
+      $("legalSources").innerHTML=legal.dataSources.map(function(src){
+        var lic=src.licenseUrl
+          ?('<a href="'+esc(src.licenseUrl)+'" target="_blank" rel="noopener noreferrer">'+esc(src.license)+'</a>')
+          :esc(src.license||"");
+        return '<li><a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a> — '+esc(src.use)+' ('+lic+')</li>';
+      }).join("");
+    }
+  }
+
   function render(data){
     $("error").hidden=true;
     $("nowCard").hidden=false;
 
     window.__bettystownLast=data;
+    renderLegal(data.legal);
     renderMaxWalk(data);
     renderMet(data);
     renderAlerts(data.alerts);
@@ -663,7 +700,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
     picks.forEach(function(d,i){
       var why=(d.explanation&&d.explanation.positives&&d.explanation.positives[0])||d.summary;
       var card=document.createElement("article");
-      card.className="day-card "+d.walkTier+(d.relative==="today"?" is-today":"");
+      card.className="day-card "+safeTier(d.walkTier,"okay")+(d.relative==="today"?" is-today":"");
       card.style.animationDelay=(i*0.07)+"s";
       card.innerHTML=
         '<div class="day-top">'+
@@ -671,7 +708,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
           '<div class="day-icon">'+esc(d.icon)+'</div>'+
         '</div>'+
         (d.relative==="today"?'<span class="day-badge">Today\'s forecast</span>':'')+
-        '<div class="score-pill '+d.walkTier+'">'+d.walkScore+' · '+tierLabel(d.walkTier)+'</div>'+
+        '<div class="score-pill '+safeTier(d.walkTier,"okay")+'">'+d.walkScore+' · '+tierLabel(safeTier(d.walkTier,"okay"))+'</div>'+
         '<div class="day-stats">'+
           '<span><strong>'+formatTempC(d.tempMax)+'</strong> high</span>'+
           '<span>Rain <strong>'+Math.round(d.rainProb||0)+'%</strong></span>'+
