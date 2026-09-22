@@ -501,9 +501,10 @@ tr:hover td{background:rgba(240,249,255,.85)}
     });
     bar.innerHTML=filtered.slice(0,5).map(function(a,i){
       var conf=a.confidence?('<div class="hint" style="margin-top:6px">'+esc(a.confidence)+'</div>'):"";
+      var lead=a.leadDays>=6?('<div class="hint">'+esc(a.label||"")+' · long-range</div>'):"";
       return '<div class="alert-chip '+esc(alertTierClass(a))+'" style="animation-delay:'+(i*0.05)+'s">'+
         '<span class="alert-icon">'+alertIcon(a.type)+'</span>'+
-        '<div><strong>'+esc(a.title)+'</strong> '+esc(a.message)+conf+'</div></div>';
+        '<div><strong>'+esc(a.title)+'</strong> '+esc(a.message)+lead+conf+'</div></div>';
     }).join("");
   }
 
@@ -586,8 +587,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
     if(mw&&mw.days){
       var md=mw.days.find(function(x){return x.date===t.date});
       if(md&&md.blocks.length){
-        var best=md.blocks.filter(function(b){return b.label==="Good"}).map(function(b){return b.range});
-        if(best.length) walkNote='<p class="tips">Matches walk times above: good around '+esc(best.join(", "))+".</p>";
+        var good=md.blocks.filter(function(b){return b.label==="Good"});
+        var watch=md.blocks.filter(function(b){return b.label==="Watch"});
+        var wet=md.blocks.filter(function(b){return b.label==="Wet likely"});
+        if(good.length) walkNote='<p class="tips">Same as coloured times above: <strong>good</strong> '+esc(good.map(function(b){return b.range}).join(", "))+'.</p>';
+        else if(watch.length&&!wet.length) walkNote='<p class="tips">Same as above: mostly <strong>watch the sky</strong> — '+esc(watch[0].range)+' and nearby slots.</p>';
+        else if(wet.length) walkNote='<p class="tips">Same as above: <strong>wet likely</strong> '+esc(wet.map(function(b){return b.range}).join(", "))+' — pick a green time or wait.</p>';
       }
     }
     el.innerHTML=
@@ -601,7 +606,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
         '<span><strong>'+formatTempC(t.tempMax)+'</strong> high · '+formatTempC(t.tempMin)+' low</span>'+
         (bandLine?bandLine:'')+
         '<span>Wind <strong>'+Math.round(t.windMax||0)+'</strong> km/h</span>'+
-        '<span>Day score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
+        '<span>Walk-day score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+' <span class="hint">(uses daytime rain, not overnight)</span></span>'+
       '</div>'+
       walkNote+
       (reasons?'<ul class="reason-list">'+reasons+'</ul>':'')+
