@@ -137,8 +137,12 @@ export function runBettystownWeatherTests() {
     },
   };
 
-  const rows = buildDailyRows(samplePayload);
+  const rows = buildDailyRows(samplePayload, new Date("2026-09-16T15:00:00Z"), merged);
   s.assert("daily rows count", rows.length === 2);
+  const tomorrowRow = rows.find((r) => r.relative === "tomorrow");
+  if (tomorrowRow?.rainBands?.daytime?.mm < 1 && tomorrowRow.rainBands.overnight.mm >= 2) {
+    s.assert("overnight rain day headline kind", /overnight|good for Max/i.test(tomorrowRow.explanation.headline));
+  }
   s.assert("forecast chronological", rows[0].date <= rows[1].date);
 
   const best = pickBestDaysChronological(rows);
