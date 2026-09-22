@@ -58,7 +58,7 @@ strong{font-weight:600;color:var(--ocean-deep)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{
-  font-family:var(--sans);color:var(--ink);line-height:1.55;font-size:16px;
+  font-family:var(--sans);color:var(--ink);line-height:1.55;font-size:17px;
   background:linear-gradient(175deg,var(--sand) 0%,var(--sky) 38%,var(--sky-deep) 100%);
   overflow-x:hidden;-webkit-font-smoothing:antialiased;
 }
@@ -121,8 +121,34 @@ h1{
   transition:transform .3s var(--ease-out),box-shadow .3s;
 }
 .alert-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
-.alert-chip.high{background:rgba(254,226,226,.88);border-color:#fecaca;color:#9f1239}
-.alert-chip.moderate{background:rgba(254,243,199,.88);border-color:#fde68a;color:#92400e}
+.alert-chip.red,.alert-chip.high{background:rgba(254,226,226,.88);border-color:#fecaca;color:#9f1239}
+.alert-chip.amber,.alert-chip.moderate{background:rgba(254,243,199,.88);border-color:#fde68a;color:#92400e}
+.alert-chip.green,.alert-chip.low{background:rgba(204,251,241,.75);border-color:#99f6e4;color:#0f766e}
+.alert-chip.grey{background:rgba(241,245,249,.9);border-color:#cbd5e1;color:#475569}
+.max-walk-hero{
+  margin-top:22px;padding:22px 24px;border-radius:22px;
+  background:linear-gradient(145deg,rgba(204,251,241,.55),var(--card));
+  border:1px solid var(--line);box-shadow:var(--shadow-md);
+  animation:riseIn .65s var(--ease-out) both;
+}
+.max-walk-hero h2{font-family:var(--display);font-size:1.55rem;margin:0 0 8px;font-weight:400;font-style:italic;color:var(--ocean-deep);display:flex;align-items:center;gap:10px}
+.max-walk-hero p{margin:0;font-size:1.05rem;color:var(--ocean);line-height:1.5}
+.max-walk-hero .walk-detail{font-size:.9rem;color:var(--muted);margin-top:10px}
+.met-oneliner{
+  margin-top:16px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.7);
+  border:1px solid var(--line);font-size:.95rem;color:var(--ink);line-height:1.5;
+}
+.met-oneliner cite{display:block;font-size:.75rem;color:var(--faint);margin-top:8px;font-style:normal}
+.action-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.btn-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:12px 18px;border-radius:14px;font-family:inherit;font-size:.92rem;font-weight:600;
+  text-decoration:none;border:1px solid var(--line);background:var(--card);color:var(--ocean-deep);
+  cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .25s var(--ease-out);
+}
+.btn-action.primary{background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));color:#fff;border:none}
+.btn-action:hover{transform:translateY(-2px)}
+.stale-banner{font-size:.85rem;color:#92400e;background:rgba(254,243,199,.85);padding:10px 14px;border-radius:12px;margin-top:12px}
 .alert-chip .alert-icon{font-size:1.1rem;flex-shrink:0}
 .alert-chip strong{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;font-weight:700;opacity:.9}
 
@@ -306,6 +332,17 @@ tr:hover td{background:rgba(240,249,255,.85)}
   <h1><span class="title-main">Mom's Bettystown</span><span class="title-accent">Weather</span></h1>
   <p class="subtitle">Warm, dry beach days for <span class="mom">Mom</span> &amp; her dog <span class="paw">🐕 Max</span> — with plain-English reasons, heat alerts &amp; sunny-spell detection.</p>
   <div class="status" id="status"><span class="loader"></span> Loading fresh forecast…</div>
+  <div id="staleBanner" class="stale-banner" hidden></div>
+  <section class="max-walk-hero" id="maxWalkHero" hidden aria-labelledby="maxWalkTitle">
+    <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> Max walk score</h2>
+    <p id="maxWalkHeadline">—</p>
+    <p class="walk-detail" id="maxWalkDetail"></p>
+    <div class="action-row">
+      <a class="btn-action primary" id="rainRadarBtn" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener">Raining now? · Met Éireann &amp; radar</a>
+      <button type="button" class="btn-action" id="copySmsBtn">Copy SMS for Mum</button>
+    </div>
+  </section>
+  <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
 </header>
 
 <main class="panel">
@@ -347,9 +384,9 @@ tr:hover td{background:rgba(240,249,255,.85)}
 </main>
 
 <footer class="foot">
-  Data: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) ·
-  Auto-refreshes every 15 min ·
-  <span id="updatedAt">—</span>
+  Open-Meteo + <a href="https://www.met.ie/" target="_blank" rel="noopener">Met Éireann</a> text ·
+  Refreshes every 45 min ·
+  <span id="updatedAt">—</span> · <span id="metIssued">—</span>
 </footer>
 </div>
 
@@ -366,11 +403,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
 (function(){
   var API="/api/bettystown-weather";
   var CACHE_KEY="bettystown_weather_v2";
-  var REFRESH_MS=15*60*1000;
+  var REFRESH_MS=45*60*1000;
   var TZ="Europe/Dublin";
+  var TIME_LABEL="Irish time / Dublin";
 
   function formatIrelandDate(ms, opts){
-    return new Date(ms).toLocaleDateString("en-IE", Object.assign({timeZone:TZ}, opts||{}));
+    return new Date(ms).toLocaleString("en-IE", Object.assign({timeZone:TZ}, opts||{}));
   }
 
   function formatTempC(v){
@@ -401,7 +439,11 @@ tr:hover td{background:rgba(240,249,255,.85)}
   }
 
   function alertIcon(type){
-    return ({storm:"⛈️",heavy_rain:"🌧️",high_wind:"💨",heat:"🥵",uv:"☀️",frost:"🧊",live_wind:"💨"})[type]||"⚠️";
+    return ({storm:"⛈️",heavy_rain:"🌧️",high_wind:"💨",high_wind_hint:"💨",heat:"🥵",uv:"☀️",frost:"🧊",live_wind:"💨",walk_ok:"🐕",walk_watch:"👀",rain_timing:"🌧️",source_conflict:"⚖️"})[type]||"⚠️";
+  }
+
+  function alertTierClass(a){
+    return a.tier||a.severity||"moderate";
   }
 
   function patternIcon(type){
@@ -412,11 +454,38 @@ tr:hover td{background:rgba(240,249,255,.85)}
     var bar=$("alertsBar");
     if(!alerts||!alerts.length){bar.hidden=true;bar.innerHTML="";return}
     bar.hidden=false;
-    bar.innerHTML=alerts.slice(0,6).map(function(a,i){
-      return '<div class="alert-chip '+esc(a.severity)+'" style="animation-delay:'+(i*0.05)+'s">'+
+    var tierRank={green:0,amber:1,grey:2,red:3,high:3,moderate:1,low:0};
+    var sorted=alerts.slice().sort(function(a,b){
+      return (tierRank[alertTierClass(a)]??4)-(tierRank[alertTierClass(b)]??4);
+    });
+    bar.innerHTML=sorted.slice(0,8).map(function(a,i){
+      var conf=a.confidence?('<div class="hint" style="margin-top:4px">'+esc(a.confidence)+'</div>'):"";
+      var bands="";
+      if(a.bands&&a.bands.daytime){
+        bands='<div class="hint">Overnight '+esc(a.bands.overnight.text)+' · Daytime '+esc(a.bands.daytime.text)+'</div>';
+      }
+      return '<div class="alert-chip '+esc(alertTierClass(a))+'" style="animation-delay:'+(i*0.05)+'s">'+
         '<span class="alert-icon">'+alertIcon(a.type)+'</span>'+
-        '<div><strong>'+esc(a.title)+'</strong>'+esc(a.message)+'</div></div>';
+        '<div><strong>'+esc(a.title)+'</strong>'+esc(a.message)+bands+conf+'</div></div>';
     }).join("");
+  }
+
+  function renderMaxWalk(data){
+    var hero=$("maxWalkHero");
+    var mw=data.maxWalkScore;
+    hero.hidden=false;
+    $("maxWalkHeadline").textContent=(mw&&mw.headline)||"Walk windows loading…";
+    $("maxWalkDetail").textContent=TIME_LABEL+" · coastal gusts counted for exposed beach walks";
+  }
+
+  function renderMet(data){
+    var el=$("metOneLiner");
+    var met=data.metEireann;
+    if(!met||!met.oneLiner){el.hidden=true;el.innerHTML="";return}
+    el.hidden=false;
+    var issued=met.issuedAt?formatIrelandDate(met.issuedAt,{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"}):"";
+    el.innerHTML=esc(met.oneLiner)+'<cite>Met Éireann Leinster/National'+(issued?(" · issued "+issued+" ("+TIME_LABEL+")"):"")+'</cite>';
+    $("metIssued").textContent=issued?("Met issued "+issued+" ("+TIME_LABEL+")"):"";
   }
 
   function renderTomorrow(t){
@@ -432,17 +501,22 @@ tr:hover td{background:rgba(240,249,255,.85)}
     (ex.positives||[]).forEach(function(r,i){
       reasons+='<li class="good" style="animation-delay:'+((ex.negatives||[]).length+i)*0.04+'s"><span class="ri">✓</span>'+esc(r)+'</li>';
     });
-    var dateLine=esc(t.dateLong||t.dateShort||"");
+    var dateLine=esc(t.dateShort||t.dateLong||"");
+    var bandLine="";
+    if(t.rainBands){
+      bandLine='<span>Overnight <strong>'+esc(t.rainBands.overnight.text)+'</strong> · Daytime <strong>'+esc(t.rainBands.daytime.text)+'</strong></span>';
+    }
     el.innerHTML=
       '<div class="tomorrow-head">'+
-        '<div><h2>'+esc(t.label)+'</h2>'+
-        '<span class="day-date">'+dateLine+' · full-day forecast</span>'+
+        '<div><h2>'+esc(t.dateShort||t.label)+'</h2>'+
+        '<span class="day-date">'+dateLine+' · full-day forecast ('+TIME_LABEL+')</span>'+
         '<div class="tomorrow-verdict">'+esc(ex.headline)+'</div></div>'+
         '<div class="big-icon">'+esc(t.icon)+'</div>'+
       '</div>'+
       '<div class="tomorrow-stats">'+
         '<span><strong>'+formatTempC(t.tempMax)+'</strong> high · '+formatTempC(t.tempMin)+' low</span>'+
-        '<span>Rain <strong>'+Math.round(t.rainProb||0)+'%</strong></span>'+
+        (bandLine?bandLine:'')+
+        '<span>Rain <strong>'+Math.round(t.rainProb||0)+'%</strong> · '+((t.rainMm||0).toFixed(1))+' mm/day</span>'+
         '<span>Wind <strong>'+Math.round(t.windMax||0)+'</strong> km/h</span>'+
         '<span>Score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
       '</div>'+
@@ -472,9 +546,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
     $("error").hidden=true;
     $("nowCard").hidden=false;
 
+    renderMaxWalk(data);
+    renderMet(data);
     renderAlerts(data.alerts);
     renderTomorrow(data.tomorrow);
     renderPatterns(data.drySpells, data.heatEvents);
+    window.__bettystownLast=data;
 
     var c=data.current||{};
     var todayInfo=data.today||{};
@@ -548,8 +625,13 @@ tr:hover td{background:rgba(240,249,255,.85)}
 
     var stale=data.stale?" (cached backup)":"";
     var todayLine=data.today&&data.today.dateLong?(' · Today is '+esc(data.today.dateLong)):"";
-    $("status").innerHTML='<span class="live">● Live</span> · '+data.forecast.length+'-day forecast'+todayLine+stale;
-    $("updatedAt").textContent="Updated "+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short"})+" (Ireland)";
+    $("status").innerHTML='<span class="live">● Live</span> · Bettystown · County Meath · Updated at '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' ('+TIME_LABEL+')'+todayLine+stale;
+    $("updatedAt").textContent="Updated "+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short"})+" ("+TIME_LABEL+")";
+    var staleEl=$("staleBanner");
+    if(data.stale||data.staleHint){
+      staleEl.hidden=false;
+      staleEl.textContent=data.staleHint||"Forecast may be stale — pull to refresh or tap Try again.";
+    }else{staleEl.hidden=true}
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:data}))}catch(e){}
   }
 
@@ -601,6 +683,24 @@ tr:hover td{background:rgba(240,249,255,.85)}
     },{threshold:.08,rootMargin:"0px 0px -24px 0px"});
     document.querySelectorAll(".day-card,.pattern-card,.table-wrap tbody tr").forEach(function(el){io.observe(el)});
   }
+
+  $("copySmsBtn").addEventListener("click",function(){
+    var d=window.__bettystownLast;
+    if(!d) return;
+    var lines=["Bettystown weather for Mom & Max 🐕"];
+    if(d.maxWalkScore&&d.maxWalkScore.headline) lines.push(d.maxWalkScore.headline);
+    if(d.metEireann&&d.metEireann.oneLiner) lines.push("Met Éireann: "+d.metEireann.oneLiner.slice(0,160));
+    (d.alerts||[]).slice(0,3).forEach(function(a){lines.push(a.title+": "+(a.message||"").slice(0,120))});
+    lines.push("Radar: https://www.met.ie/weather-forecast/bettystown-meath");
+    lines.push("("+TIME_LABEL+")");
+    var text=lines.join("\n");
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        $("copySmsBtn").textContent="Copied!";
+        setTimeout(function(){$("copySmsBtn").textContent="Copy SMS for Mum"},2500);
+      });
+    }
+  });
 
   fetchWeather().then(revealRows).catch(function(){setTimeout(revealRows,400)});
   setInterval(fetchWeather, REFRESH_MS);
