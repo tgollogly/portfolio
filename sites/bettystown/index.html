@@ -114,8 +114,8 @@ h1{
 
 .alerts-bar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
 .alert-chip{
-  display:flex;align-items:flex-start;gap:8px;padding:11px 15px;border-radius:16px;
-  font-size:.82rem;line-height:1.35;flex:1 1 220px;max-width:100%;
+  display:flex;align-items:flex-start;gap:8px;padding:14px 16px;border-radius:16px;
+  font-size:.92rem;line-height:1.45;flex:1 1 260px;max-width:100%;
   background:var(--card);backdrop-filter:var(--glass);border:1px solid var(--line);
   box-shadow:var(--shadow-sm);animation:slideIn .55s var(--ease-out) both;
   transition:transform .3s var(--ease-out),box-shadow .3s;
@@ -160,9 +160,11 @@ h1{
 .walk-legend i.l-wet{background:#fca5a5}
 .met-oneliner{
   margin-top:16px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.7);
-  border:1px solid var(--line);font-size:.95rem;color:var(--ink);line-height:1.5;
+  border:1px solid var(--line);font-size:1rem;color:var(--ink);line-height:1.55;
 }
-.met-oneliner cite{display:block;font-size:.75rem;color:var(--faint);margin-top:8px;font-style:normal}
+.met-oneliner .met-kicker{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ocean);margin:0 0 8px}
+.met-oneliner cite{display:block;font-size:.78rem;color:var(--faint);margin-top:10px;font-style:normal}
+.day-badge-inline{font-size:.72rem;font-weight:600;color:var(--sea-glass);text-transform:uppercase;letter-spacing:.06em}
 .action-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .btn-action{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -354,11 +356,11 @@ tr:hover td{background:rgba(240,249,255,.85)}
 <header class="hero">
   <div class="badge"><span class="dot"></span> Bettystown · County Meath</div>
   <h1><span class="title-main">Mom's Bettystown</span><span class="title-accent">Weather</span></h1>
-  <p class="subtitle">Warm, dry beach days for <span class="mom">Mom</span> &amp; her dog <span class="paw">🐕 Max</span> — with plain-English reasons, heat alerts &amp; sunny-spell detection.</p>
+  <p class="subtitle">When to walk <span class="paw">🐕 Max</span> on Bettystown Beach — plain English, Irish times, no weather jargon.</p>
   <div class="status" id="status"><span class="loader"></span> Loading fresh forecast…</div>
   <div id="staleBanner" class="stale-banner" hidden></div>
   <section class="max-walk-hero" id="maxWalkHero" hidden aria-labelledby="maxWalkTitle">
-    <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> Max walk score</h2>
+    <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> When to walk Max</h2>
     <p class="max-walk-summary" id="maxWalkSummary">—</p>
     <div id="maxWalkWindows" class="walk-days" aria-live="polite"></div>
     <div class="walk-legend" aria-hidden="true">
@@ -371,14 +373,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
       <a class="btn-action primary" id="rainRadarBtn" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener">Raining now? · Met Éireann &amp; radar</a>
     </div>
   </section>
-  <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
 </header>
 
 <main class="panel">
   <div id="error" class="err" hidden></div>
+  <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
   <div class="alerts-bar" id="alertsBar" hidden></div>
-  <section class="tomorrow-card" id="tomorrowCard" hidden></section>
-  <div class="patterns" id="patternsRow" hidden></div>
 
   <section class="now-card" id="nowCard" hidden>
     <div>
@@ -390,8 +390,11 @@ tr:hover td{background:rgba(240,249,255,.85)}
     <div class="now-icon" id="nowIcon">🌤️</div>
   </section>
 
-  <h2 class="section-title"><span>⭐</span> Best days for a beach walk</h2>
-  <p class="section-hint" id="bestHint">Full-day forecasts ranked by walk score · nearest day first. “Today” means this calendar day in Ireland — not the live reading above.</p>
+  <section class="tomorrow-card" id="tomorrowCard" hidden></section>
+  <div class="patterns" id="patternsRow" hidden></div>
+
+  <h2 class="section-title"><span>⭐</span> Nicest days for a beach walk</h2>
+  <p class="section-hint" id="bestHint">Whole-day scores — use the coloured times at the top for when to go.</p>
   <div class="best-grid" id="bestDays"></div>
 
   <h2 class="section-title"><span>📅</span> 14-day outlook</h2>
@@ -402,7 +405,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
           <th>Day</th>
           <th>Conditions</th>
           <th>Temp</th>
-          <th>Rain</th>
+          <th>Walk-time rain</th>
           <th>Wind</th>
           <th>Walk score</th>
         </tr>
@@ -453,18 +456,19 @@ tr:hover td{background:rgba(240,249,255,.85)}
   }
 
   function tierLabel(t){
-    return t==="excellent"?"Perfect for Max":t==="good"?"Great walk":t==="okay"?"Maybe":"Stay home";
+    return t==="excellent"?"Lovely for Max":t==="good"?"Good walk":t==="okay"?"Maybe short walk":"Best stay in";
+  }
+
+  function walkLabelPlain(label){
+    if(label==="Good") return "Good for Max";
+    if(label==="Watch") return "Watch the sky";
+    return label;
   }
 
   function dayHeading(d){
-    var dateLine=esc(d.dateLong||d.dateShort||"");
-    if(d.relative==="today"){
-      return '<div class="day-name">Today</div><div class="day-date">'+dateLine+' · full-day forecast</div>';
-    }
-    if(d.relative==="tomorrow"){
-      return '<div class="day-name">Tomorrow</div><div class="day-date">'+dateLine+'</div>';
-    }
-    return '<div class="day-name">'+esc(d.label)+'</div><div class="day-date">'+dateLine+'</div>';
+    var short=esc(d.dateShort||d.label);
+    var extra=d.relative==="today"?' <span class="day-badge-inline">today</span>':"";
+    return '<div class="day-name">'+short+extra+'</div><div class="day-date">'+esc(d.dateLong||"")+'</div>';
   }
 
   function alertIcon(type){
@@ -487,15 +491,19 @@ tr:hover td{background:rgba(240,249,255,.85)}
     var sorted=alerts.slice().sort(function(a,b){
       return (tierRank[alertTierClass(a)]??4)-(tierRank[alertTierClass(b)]??4);
     });
-    bar.innerHTML=sorted.slice(0,8).map(function(a,i){
-      var conf=a.confidence?('<div class="hint" style="margin-top:4px">'+esc(a.confidence)+'</div>'):"";
-      var bands="";
-      if(a.bands&&a.bands.daytime){
-        bands='<div class="hint">Overnight '+esc(a.bands.overnight.text)+' · Daytime '+esc(a.bands.daytime.text)+'</div>';
-      }
+    var seenDateType={};
+    var filtered=sorted.filter(function(a){
+      var k=(a.date||"")+":"+a.type;
+      if(a.type==="walk_ok"&&seenDateType[a.date+"rain_timing"]) return false;
+      if(seenDateType[k]) return false;
+      seenDateType[k]=true;
+      return true;
+    });
+    bar.innerHTML=filtered.slice(0,5).map(function(a,i){
+      var conf=a.confidence?('<div class="hint" style="margin-top:6px">'+esc(a.confidence)+'</div>'):"";
       return '<div class="alert-chip '+esc(alertTierClass(a))+'" style="animation-delay:'+(i*0.05)+'s">'+
         '<span class="alert-icon">'+alertIcon(a.type)+'</span>'+
-        '<div><strong>'+esc(a.title)+'</strong>'+esc(a.message)+bands+conf+'</div></div>';
+        '<div><strong>'+esc(a.title)+'</strong> '+esc(a.message)+conf+'</div></div>';
     }).join("");
   }
 
@@ -520,8 +528,8 @@ tr:hover td{background:rgba(240,249,255,.85)}
     mw.days.forEach(function(day){
       var good=day.blocks.filter(function(b){return b.label==="Good"});
       if(good.length){
-        var dayName=day.relative==="today"?"Today":day.relative==="tomorrow"?"Tomorrow":day.dateShort;
-        summaryParts.push(dayName+": try "+good.map(function(g){return g.range}).join(" or "));
+        var dayName=day.relative==="today"?"Today":day.dateShort;
+        summaryParts.push("Best on "+dayName+": "+good.map(function(g){return g.range}).join(" or "));
       }
     });
     $("maxWalkSummary").textContent=summaryParts.length
@@ -530,12 +538,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
     mw.days.forEach(function(day){
       var section=document.createElement("div");
       section.className="walk-day-block";
-      var title=day.relative==="today"?"Today":day.relative==="tomorrow"?"Tomorrow":day.dateShort;
+      var title=day.relative==="today"?"Today":day.dateShort;
       var html='<p class="walk-day-title">'+TIME_LABEL+'</p><p class="walk-day-name">'+esc(title)+'</p><div class="walk-windows">';
       day.blocks.forEach(function(b){
         html+='<div class="walk-win '+walkWinClass(b.label)+'">'+
           '<div class="win-time">'+esc(b.range)+'</div>'+
-          '<div class="win-label">'+esc(b.label)+'</div></div>';
+          '<div class="win-label">'+esc(walkLabelPlain(b.label))+'</div></div>';
       });
       html+="</div>";
       section.innerHTML=html;
@@ -550,8 +558,9 @@ tr:hover td{background:rgba(240,249,255,.85)}
     if(!met||!met.oneLiner){el.hidden=true;el.innerHTML="";return}
     el.hidden=false;
     var issued=met.issuedAt?formatIrelandDate(met.issuedAt,{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"}):"";
-    el.innerHTML=esc(met.oneLiner)+'<cite>Met Éireann Leinster/National'+(issued?(" · issued "+issued+" ("+TIME_LABEL+")"):"")+'</cite>';
-    $("metIssued").textContent=issued?("Met issued "+issued+" ("+TIME_LABEL+")"):"";
+    el.innerHTML='<p class="met-kicker">What Met Éireann says (Leinster)</p>'+esc(met.oneLiner)+
+      '<cite>'+(issued?("Updated "+issued+" · "+TIME_LABEL):"Met Éireann regional forecast")+'</cite>';
+    $("metIssued").textContent="";
   }
 
   function renderTomorrow(t){
@@ -572,20 +581,29 @@ tr:hover td{background:rgba(240,249,255,.85)}
     if(t.rainBands){
       bandLine='<span>Overnight <strong>'+esc(t.rainBands.overnight.text)+'</strong> · Daytime <strong>'+esc(t.rainBands.daytime.text)+'</strong></span>';
     }
+    var walkNote="";
+    var mw=window.__bettystownLast&&window.__bettystownLast.maxWalkScore;
+    if(mw&&mw.days){
+      var md=mw.days.find(function(x){return x.date===t.date});
+      if(md&&md.blocks.length){
+        var best=md.blocks.filter(function(b){return b.label==="Good"}).map(function(b){return b.range});
+        if(best.length) walkNote='<p class="tips">Matches walk times above: good around '+esc(best.join(", "))+".</p>";
+      }
+    }
     el.innerHTML=
       '<div class="tomorrow-head">'+
         '<div><h2>'+esc(t.dateShort||t.label)+'</h2>'+
-        '<span class="day-date">'+dateLine+' · full-day forecast ('+TIME_LABEL+')</span>'+
+        '<span class="day-date">Whole-day summary · '+TIME_LABEL+' · use coloured times above for walks</span>'+
         '<div class="tomorrow-verdict">'+esc(ex.headline)+'</div></div>'+
         '<div class="big-icon">'+esc(t.icon)+'</div>'+
       '</div>'+
       '<div class="tomorrow-stats">'+
         '<span><strong>'+formatTempC(t.tempMax)+'</strong> high · '+formatTempC(t.tempMin)+' low</span>'+
         (bandLine?bandLine:'')+
-        '<span>Rain <strong>'+Math.round(t.rainProb||0)+'%</strong> · '+((t.rainMm||0).toFixed(1))+' mm/day</span>'+
         '<span>Wind <strong>'+Math.round(t.windMax||0)+'</strong> km/h</span>'+
-        '<span>Score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
+        '<span>Day score <strong>'+t.walkScore+'</strong> · '+tierLabel(t.walkTier)+'</span>'+
       '</div>'+
+      walkNote+
       (reasons?'<ul class="reason-list">'+reasons+'</ul>':'')+
       (ex.tips&&ex.tips.length?'<p class="tips">💡 '+esc(ex.tips.join(" · "))+'</p>':'');
   }
@@ -599,8 +617,9 @@ tr:hover td{background:rgba(240,249,255,.85)}
         '<p>'+esc(s.message)+' — great stretch for beach walks!</p></article>');
     });
     (heatEvents||[]).forEach(function(e,i){
+      var heatTitle=e.type==="heat_wave"?"Warm spell":e.type==="extreme_heat"?"Very hot days":e.type==="heat_dome"?"Hot settled weather":"Heat notice";
       cards.push('<article class="pattern-card heat" style="animation-delay:'+((drySpells||[]).length+i)*0.06+'s">'+
-        '<h3>'+patternIcon(e.type)+' '+esc(e.type.replace(/_/g," "))+'</h3>'+
+        '<h3>'+patternIcon(e.type)+' '+esc(heatTitle)+'</h3>'+
         '<p>'+esc(e.message)+'</p></article>');
     });
     if(!cards.length){row.hidden=true;row.innerHTML="";return}
@@ -612,12 +631,10 @@ tr:hover td{background:rgba(240,249,255,.85)}
     $("error").hidden=true;
     $("nowCard").hidden=false;
 
+    window.__bettystownLast=data;
     renderMaxWalk(data);
     renderMet(data);
     renderAlerts(data.alerts);
-    renderTomorrow(data.tomorrow);
-    renderPatterns(data.drySpells, data.heatEvents);
-    window.__bettystownLast=data;
 
     var c=data.current||{};
     var todayInfo=data.today||{};
@@ -628,13 +645,15 @@ tr:hover td{background:rgba(240,249,255,.85)}
     void tempEl.offsetWidth;
     tempEl.classList.add("updated");
     $("nowIcon").textContent=c.icon||"🌤️";
-    $("nowMeta").textContent=(c.summary||"—")+" · feels "+formatTempC(c.feels||c.temp)+" · wind "+Math.round(c.wind||0)+" km/h · humidity "+Math.round(c.humidity||0)+"%";
+    $("nowMeta").textContent=(c.summary||"—")+" · feels like "+formatTempC(c.feels||c.temp)+" · wind "+Math.round(c.wind||0)+" km/h";
+    renderTomorrow(data.tomorrow);
+    renderPatterns(data.drySpells, data.heatEvents);
 
     var best=$("bestDays");
     best.innerHTML="";
     var picks=(data.bestDays||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);}).slice(0,4);
     if(!picks.length){
-      best.innerHTML='<p class="hint">No standout warm dry days in the next fortnight — check tomorrow\'s breakdown and the full outlook below.</p>';
+      best.innerHTML='<p class="hint">No standout warm dry days in the next two weeks — use the coloured walk times and Met Éireann note above.</p>';
     }
     picks.forEach(function(d,i){
       var why=(d.explanation&&d.explanation.positives&&d.explanation.positives[0])||d.summary;
@@ -663,14 +682,17 @@ tr:hover td{background:rgba(240,249,255,.85)}
     (data.forecast||[]).forEach(function(d){
       var why=d.explanation?(d.explanation.negatives[0]||d.explanation.positives[0]||d.explanation.headline):"";
       var tr=document.createElement("tr");
-      var dayCell='<strong>'+esc(d.label)+'</strong>';
-      if(d.dateLong) dayCell+='<div class="row-why">'+esc(d.dateLong)+'</div>';
+      var dayCell='<strong>'+esc(d.dateShort||d.label)+'</strong>';
+      if(d.relative==="today") dayCell+=' <span class="day-badge-inline">today</span>';
+      var rainCell=d.rainBands
+        ?("Walk hrs: "+esc(d.rainBands.daytime.text))
+        :(Math.round(d.rainProb||0)+"% · "+((d.rainMm||0).toFixed(1))+"mm");
       tr.innerHTML=
         '<td>'+dayCell+'</td>'+
         '<td>'+esc(d.icon)+' '+esc(d.summary)+
           (why?'<div class="row-why">'+esc(why)+'</div>':'')+'</td>'+
         '<td>'+formatTempC(d.tempMax)+' / '+formatTempC(d.tempMin)+'</td>'+
-        '<td>'+Math.round(d.rainProb||0)+'% · '+((d.rainMm||0).toFixed(1))+'mm</td>'+
+        '<td>'+rainCell+'</td>'+
         '<td>'+Math.round(d.windMax||0)+' km/h</td>'+
         '<td><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
       body.appendChild(tr);
@@ -690,8 +712,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
     }
 
     var stale=data.stale?" (cached backup)":"";
-    var todayLine=data.today&&data.today.dateLong?(' · Today is '+esc(data.today.dateLong)):"";
-    $("status").innerHTML='<span class="live">● Live</span> · Bettystown · County Meath · Updated at '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' ('+TIME_LABEL+')'+todayLine+stale;
+    $("status").innerHTML='<span class="live">● Live</span> · Updated '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' · '+TIME_LABEL+stale;
     $("updatedAt").textContent="Updated "+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short"})+" ("+TIME_LABEL+")";
     var staleEl=$("staleBanner");
     if(data.stale||data.staleHint){
