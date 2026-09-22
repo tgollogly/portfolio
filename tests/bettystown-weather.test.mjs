@@ -8,6 +8,12 @@ import {
   buildDailyRows,
   buildForecastResponse,
   buildWeatherAlerts,
+  buildDayRainBands,
+  buildMaxWalkScore,
+  buildSmsForMum,
+  mergeTrustedHourly,
+  sanitizeHourlyPrecip,
+  confidenceForLeadDays,
   detectDrySunnySpells,
   detectHeatEvents,
   explainWalkDay,
@@ -29,7 +35,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 export function runBettystownWeatherTests() {
   const s = createSuite("bettystown-weather");
 
-  s.assert("coords ireland", BETTYSTOWN.latitude > 53 && BETTYSTOWN.longitude < 0);
+  s.assert("coords bettystown pin", BETTYSTOWN.latitude === 53.604 && BETTYSTOWN.longitude === -6.246);
+  s.assert("timezone dublin", BETTYSTOWN.timezone === "Europe/Dublin");
   s.assert("wmo clear", wmoInfo(0).icon === "☀️");
   s.assert("wmo unknown fallback", wmoInfo(999).label === "Unknown");
   s.assert("formatTempC value", formatTempC(13.2) === "13°C");
@@ -86,8 +93,23 @@ export function runBettystownWeatherTests() {
   s.assert("explain rainy has negatives", explain.negatives.length >= 2);
   s.assert("explain headline", explain.headline.length > 10);
 
+  const sampleHourly = {
+    time: ["2026-09-16T08:00", "2026-09-16T14:00", "2026-09-16T22:00", "2026-09-17T02:00", "2026-09-17T10:00"],
+    precipitation: [0, 0.2, 1.5, 2.0, 0.1],
+    precipitation_probability: [10, 40, 80, 70, 15],
+    wind_gusts_10m: [30, 35, 45, 40, 25],
+    wind_speed_10m: [20, 22, 30, 28, 15],
+  };
+  s.assert("sanitize drops prob-only", sanitizeHourlyPrecip({ time: ["2026-09-16T12:00"], precipitation: [0], precipitation_probability: [90] })[0].precipitation_probability <= 40);
+
+  const merged = mergeTrustedHourly(sampleHourly, []);
+  const bands = buildDayRainBands(merged, "2026-09-17", new Date("2026-09-16T15:00:00Z"));
+  s.assert("rain bands daytime", bands.daytime && typeof bands.daytime.mm === "number");
+  s.assert("confidence day 1", confidenceForLeadDays(1).text.includes("60"));
+
   const samplePayload = {
     timezone: "Europe/Dublin",
+    hourly: sampleHourly,
     current: {
       temperature_2m: 16,
       apparent_temperature: 15,
@@ -135,6 +157,9 @@ export function runBettystownWeatherTests() {
   s.assert("response has tomorrow", body.tomorrow != null || body.forecast.length <= 1);
   s.assert("response has today meta", body.today != null || body.forecast.length === 0);
   s.assert("forecast rows have dateLong", body.forecast.every((d) => d.dateLong && d.dateShort));
+  s.assert("response has maxWalkScore", body.maxWalkScore?.headline?.length > 5);
+  s.assert("response timezone dublin", body.timeZone === "Europe/Dublin");
+  s.assert("sms for mum", buildSmsForMum(body).includes("Max"));
   s.assert("response has alerts array", Array.isArray(body.alerts));
   s.assert("response has drySpells", Array.isArray(body.drySpells));
   s.assert("response has heatEvents", Array.isArray(body.heatEvents));
@@ -163,6 +188,20 @@ export function runBettystownWeatherTests() {
     sunshineHours: 10,
   }));
   s.assert("heat wave detect", detectHeatEvents(hotDays).some((e) => e.type === "heat_wave"));
+
+  const probOnlyAlerts = buildWeatherAlerts(
+    [{ date: "2026-08-02", dateShort: "Sun 2 Aug", label: "Sun 2 Aug", rainMm: 2, rainProb: 95, tempMax: 16, tempMin: 10, windMax: 10, windGust: 12, weatherCode: 3, uv: 2 }],
+    null,
+    { hourlyRows: [], now: "2026-08-01T12:00:00Z" },
+  );
+  s.assert("no prob-only heavy rain", !probOnlyAlerts.some((a) => a.type === "heavy_rain"));
+
+  const farWind = buildWeatherAlerts(
+    [{ date: "2026-10-01", dateShort: "Thu 1 Oct", label: "Thu 1 Oct", rainMm: 0, rainProb: 10, tempMax: 16, tempMin: 10, windMax: 40, windGust: 112, weatherCode: 3, uv: 2 }],
+    null,
+    { hourlyRows: [], now: "2026-09-16T15:00:00Z" },
+  );
+  s.assert("far wind grey not red storm", farWind.some((a) => a.tier === "grey") && !farWind.some((a) => a.tier === "red" && a.type === "high_wind"));
 
   s.assert("storm alert", buildWeatherAlerts([{
     date: "2026-08-01",
@@ -199,6 +238,12 @@ export function runBettystownWeatherTests() {
   s.assert("html mom max", html.includes("Max"));
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
+  s.assert("html max walk hero", html.includes("maxWalkHero"));
+  s.assert("html met oneliner", html.includes("metOneLiner"));
+  s.assert("html walk windows grid", html.includes("maxWalkWindows") && html.includes("walk-win"));
+  s.assert("html no copy sms", !html.includes("copySmsBtn"));
+  s.assert("html radar link", html.includes("bettystown-meath"));
+  s.assert("html irish time label", html.includes("Irish time / Dublin"));
   s.assert("html tomorrow card", html.includes("tomorrowCard"));
   s.assert("html alerts bar", html.includes("alertsBar"));
   s.assert("html fluid blobs", html.includes("blobDrift"));
