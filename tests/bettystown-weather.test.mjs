@@ -35,6 +35,7 @@ import {
   formatRadarFrameIrishLabel,
   buildBettystownRadarResponse,
   bettystownRadarImagePath,
+  hideOvernightPastForToday,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -279,10 +280,10 @@ export function runBettystownWeatherTests() {
   s.assert("html localStorage cache", html.includes("localStorage"));
   s.assert("html max walk hero", html.includes("maxWalkHero") && html.includes("When to walk Max"));
   s.assert("html met oneliner", html.includes("metOneLiner") && html.includes("met-part"));
-  s.assert("html met full link", html.includes("Full forecast for Bettystown"));
+  s.assert("html no met outbound links", !html.includes("href=\"https://www.met.ie"));
   s.assert("html walk windows grid", html.includes("maxWalkWindows") && html.includes("walk-win"));
   s.assert("html no copy sms", !html.includes("copySmsBtn"));
-  s.assert("html radar link", html.includes("bettystown-meath"));
+  s.assert("html radar in hero", html.includes("maxWalkHero") && html.includes("rainRadarPanel"));
   s.assert("html irish time label", html.includes("Irish time / Dublin"));
   s.assert("html tomorrow card", html.includes("tomorrowCard"));
   s.assert("html alerts bar", html.includes("alertsBar"));
@@ -298,13 +299,16 @@ export function runBettystownWeatherTests() {
   s.assert("html walk-first hint", html.includes("coloured time") && html.includes("Met Éireann forecast"));
   s.assert("html legal disclaimer", html.includes("legalDisclaimer") && html.includes("Disclaimer"));
   s.assert("html legal copyright", html.includes("Thomas Gollogly") || html.includes("legalCopyright"));
-  s.assert("html open-meteo license link", html.includes("open-meteo.com/en/license"));
+  s.assert("html no outbound license links", !html.includes("open-meteo.com/en/license"));
+  s.assert("html no radar play button", !html.includes("radarPlayBtn"));
+  s.assert("html walk tier blocks", html.includes("tier-excellent") && html.includes("walk-day-score"));
+  s.assert("hide last night after 8am", hideOvernightPastForToday("today", 0, new Date("2026-09-23T10:00:00+01:00")));
   s.assert("html esc helper", html.includes("function esc("));
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
   s.assert("html fetch in flight guard", html.includes("fetchInFlight"));
   s.assert("html mobile table labels", html.includes("data-label=\"Walk score\""));
   s.assert("html embedded radar panel", html.includes("rainRadarPanel") && html.includes("radarImg"));
-  s.assert("html radar api", html.includes("/api/bettystown-radar"));
+  s.assert("html radar bundled", html.includes("data.radar") && html.includes("renderRadar"));
   s.assert("server radar routes", server.includes("/api/bettystown-radar") && server.includes("bettystown-radar-image"));
 
   s.assert("radar filename whitelist", sanitizeRadarFilename("web17_radar15_202609231200.png") === "web17_radar15_202609231200.png");
