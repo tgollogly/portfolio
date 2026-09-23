@@ -13,6 +13,7 @@ import {
   buildMaxWalkScore,
   buildSmsForMum,
   mergeTrustedHourly,
+  rolling6hRainMaxWalkBand,
   sanitizeHourlyPrecip,
   confidenceForLeadDays,
   momConfidencePlain,
@@ -251,7 +252,8 @@ export function runBettystownWeatherTests() {
   s.assert("html auto refresh api", html.includes("/api/bettystown-weather"));
   s.assert("html localStorage cache", html.includes("localStorage"));
   s.assert("html max walk hero", html.includes("maxWalkHero") && html.includes("When to walk Max"));
-  s.assert("html met oneliner", html.includes("metOneLiner"));
+  s.assert("html met oneliner", html.includes("metOneLiner") && html.includes("met-part"));
+  s.assert("html met full link", html.includes("Full forecast for Bettystown"));
   s.assert("html walk windows grid", html.includes("maxWalkWindows") && html.includes("walk-win"));
   s.assert("html no copy sms", !html.includes("copySmsBtn"));
   s.assert("html radar link", html.includes("bettystown-meath"));
@@ -267,7 +269,7 @@ export function runBettystownWeatherTests() {
   s.assert("html coastal palette", html.includes("--ocean:#0e7490") && html.includes("--sea-glass:#14b8a6"));
   s.assert("html aurora layer", html.includes("auroraShift"));
   s.assert("html now date label", html.includes("nowDate") && html.includes("Right now"));
-  s.assert("html walk-first hint", html.includes("coloured times") && html.includes("What Met Éireann says"));
+  s.assert("html walk-first hint", html.includes("coloured time") && html.includes("Met Éireann forecast"));
   s.assert("html legal disclaimer", html.includes("legalDisclaimer") && html.includes("Disclaimer"));
   s.assert("html legal copyright", html.includes("Thomas Gollogly") || html.includes("legalCopyright"));
   s.assert("html open-meteo license link", html.includes("open-meteo.com/en/license"));

@@ -132,7 +132,7 @@ h1{
   animation:riseIn .65s var(--ease-out) both;
 }
 .max-walk-hero h2{font-family:var(--display);font-size:1.55rem;margin:0 0 12px;font-weight:400;font-style:italic;color:var(--ocean-deep);display:flex;align-items:center;gap:10px}
-.max-walk-summary{font-size:1.02rem;font-weight:600;color:var(--ocean-deep);margin:0 0 14px;line-height:1.45}
+.max-walk-summary{font-size:.95rem;color:var(--muted);margin:0 0 14px;line-height:1.45}
 .walk-days{display:flex;flex-direction:column;gap:16px}
 .walk-day-block{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
 .walk-day-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 10px}
@@ -164,6 +164,8 @@ h1{
 }
 .met-oneliner .met-kicker{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ocean);margin:0 0 8px}
 .met-oneliner cite{display:block;font-size:.78rem;color:var(--faint);margin-top:10px;font-style:normal}
+.met-oneliner .met-part{margin:0 0 12px;font-size:.95rem;line-height:1.55}
+.met-oneliner .met-part strong{display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ocean);margin-bottom:4px}
 .day-badge-inline{font-size:.72rem;font-weight:600;color:var(--sea-glass);text-transform:uppercase;letter-spacing:.06em}
 .action-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .btn-action{
@@ -368,14 +370,15 @@ tr:hover td{background:rgba(240,249,255,.85)}
   <div id="staleBanner" class="stale-banner" hidden></div>
   <section class="max-walk-hero" id="maxWalkHero" hidden aria-labelledby="maxWalkTitle">
     <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> When to walk Max</h2>
-    <p class="max-walk-summary" id="maxWalkSummary">—</p>
+    <p class="max-walk-summary" id="maxWalkSummary">Pick a coloured time below — green is best for Max.</p>
     <div id="maxWalkWindows" class="walk-days" aria-live="polite"></div>
-    <div class="walk-legend" aria-hidden="true">
-      <span><i class="l-good"></i> Good for Max</span>
-      <span><i class="l-watch"></i> Watch the sky</span>
-      <span><i class="l-wet"></i> Wet likely</span>
+    <div class="walk-legend" aria-label="Walk time key">
+      <span><i class="l-good"></i> Green — good for Max</span>
+      <span><i class="l-watch"></i> Yellow — watch the sky</span>
+      <span><i class="l-wet"></i> Pink — wet likely</span>
+      <span class="hint" style="width:100%;margin-top:4px">All times Irish (Dublin) · 8am–8pm walk hours</span>
     </div>
-    <p class="walk-detail" id="maxWalkDetail"></p>
+    <p class="walk-detail" id="maxWalkDetail" hidden></p>
     <div class="action-row">
       <a class="btn-action primary" id="rainRadarBtn" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener">Raining now? · Met Éireann &amp; radar</a>
     </div>
@@ -514,9 +517,15 @@ tr:hover td{background:rgba(240,249,255,.85)}
       return (tierRank[alertTierClass(a)]??4)-(tierRank[alertTierClass(b)]??4);
     });
     var seenDateType={};
+    var todayYmd=window.__bettystownLast&&window.__bettystownLast.today&&window.__bettystownLast.today.date;
     var filtered=sorted.filter(function(a){
       var k=(a.date||"")+":"+a.type;
       if(a.type==="walk_ok"&&seenDateType[a.date+"rain_timing"]) return false;
+      if(a.type==="walk_watch"&&a.date===todayYmd){
+        var mw=window.__bettystownLast&&window.__bettystownLast.maxWalkScore;
+        var td=mw&&mw.days&&mw.days.find(function(d){return d.relative==="today"});
+        if(td&&!td.blocks.some(function(b){return b.label==="Watch"||b.label==="Wet likely"})) return false;
+      }
       if(seenDateType[k]) return false;
       seenDateType[k]=true;
       return true;
@@ -547,22 +556,19 @@ tr:hover td{background:rgba(240,249,255,.85)}
       $("maxWalkDetail").textContent="";
       return;
     }
-    var summaryParts=[];
-    mw.days.forEach(function(day){
-      var good=day.blocks.filter(function(b){return b.label==="Good"});
-      if(good.length){
-        var dayName=day.relative==="today"?"Today":day.dateShort;
-        summaryParts.push("Best on "+dayName+": "+good.map(function(g){return g.range}).join(" or "));
-      }
-    });
-    $("maxWalkSummary").textContent=summaryParts.length
-      ? summaryParts.join(" · ")
-      : "No perfect windows — use Watch slots or check radar before you go.";
+    var todayDay=mw.days.find(function(d){return d.relative==="today"});
+    if(todayDay){
+      var hasWatch=todayDay.blocks.some(function(b){return b.label==="Watch"});
+      var hasWet=todayDay.blocks.some(function(b){return b.label==="Wet likely"});
+      if(hasWet) $("maxWalkSummary").textContent="Today: some pink slots — wait for green times or check radar.";
+      else if(hasWatch) $("maxWalkSummary").textContent="Today: yellow slots mean watch the sky — green is better for Max.";
+      else $("maxWalkSummary").textContent="Today: green slots are good for Max on the beach.";
+    }
     mw.days.forEach(function(day){
       var section=document.createElement("div");
       section.className="walk-day-block";
       var title=day.relative==="today"?"Today":day.dateShort;
-      var html='<p class="walk-day-title">'+TIME_LABEL+'</p><p class="walk-day-name">'+esc(title)+'</p><div class="walk-windows">';
+      var html='<p class="walk-day-name">'+esc(title)+'</p><div class="walk-windows">';
       day.blocks.forEach(function(b){
         html+='<div class="walk-win '+walkWinClass(b.label)+'">'+
           '<div class="win-time">'+esc(b.range)+'</div>'+
@@ -572,17 +578,23 @@ tr:hover td{background:rgba(240,249,255,.85)}
       section.innerHTML=html;
       host.appendChild(section);
     });
-    $("maxWalkDetail").textContent="Coastal gusts counted for exposed beach walks · times are Irish (Dublin).";
   }
 
   function renderMet(data){
     var el=$("metOneLiner");
     var met=data.metEireann;
-    if(!met||!met.oneLiner){el.hidden=true;el.innerHTML="";return}
+    var L=met&&met.leinster;
+    if(!met||(!L&&!met.oneLiner)){el.hidden=true;el.innerHTML="";return}
     el.hidden=false;
     var issued=met.issuedAt?formatIrelandDate(met.issuedAt,{hour:"2-digit",minute:"2-digit",day:"numeric",month:"short"}):"";
-    el.innerHTML='<p class="met-kicker">What Met Éireann says (Leinster)</p>'+esc(met.oneLiner)+
-      '<cite>'+(issued?("Updated "+issued+" · "+TIME_LABEL):"Met Éireann regional forecast")+'</cite>';
+    var parts="";
+    if(L&&L.today) parts+='<p class="met-part"><strong>Today</strong>'+esc(L.today)+'</p>';
+    if(L&&L.tonight) parts+='<p class="met-part"><strong>Tonight</strong>'+esc(L.tonight)+'</p>';
+    if(L&&L.tomorrow) parts+='<p class="met-part"><strong>Tomorrow</strong>'+esc(L.tomorrow)+'</p>';
+    if(!parts&&met.oneLiner) parts='<p class="met-part">'+esc(met.oneLiner)+'</p>';
+    el.innerHTML='<p class="met-kicker">Met Éireann forecast (Leinster)</p>'+parts+
+      '<cite>'+(issued?("Issued "+issued+" · "+TIME_LABEL):"")+
+      ' · <a href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener noreferrer">Full forecast for Bettystown on Met.ie</a></cite>';
     $("metIssued").textContent="";
   }
 
