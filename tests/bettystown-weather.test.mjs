@@ -38,6 +38,9 @@ import {
   hideOvernightPastForToday,
   buildTodayHourlyOutlook,
   formatHour12Irish,
+  latLonToRadarPinPct,
+  bettystownRadarPin,
+  radarFrameAgeMinutes,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -314,6 +317,11 @@ export function runBettystownWeatherTests() {
   s.assert("html today hourly ui", html.includes("todayHourlyRow") && html.includes("hour-chip"));
   s.assert("html radar live poll", html.includes("pollRadarLive"));
   s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-icon"));
+  s.assert("html pin not in scaled frame", html.includes("radar-pin-layer"));
+  const pin = bettystownRadarPin();
+  s.assert("pin from coords", pin.leftPct > 80 && pin.topPct > 40 && pin.topPct < 55);
+  s.assert("radar age minutes", radarFrameAgeMinutes("web17_radar15_202609231330.png", new Date("2026-09-23T12:45:00Z")) === 15);
+  s.assert("html radar latest time", html.includes("updateRadarTimeLabel"));
   s.assert("html radar time prominent", html.includes("radar-time") && html.includes("1.35rem"));
   s.assert("html esc helper", html.includes("function esc("));
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));

@@ -235,10 +235,13 @@ h1{
 .radar-zoom{position:absolute;inset:0;overflow:hidden}
 .radar-map-frame{
   position:absolute;left:0;top:0;width:100%;
-  transform:scale(2.35);transform-origin:64% 36%;
+  transform:scale(1.85);
   will-change:transform;
 }
 .radar-map-frame img{display:block;width:100%;height:auto;vertical-align:middle;opacity:.97}
+.radar-pin-layer{
+  position:absolute;inset:0;z-index:5;pointer-events:none;
+}
 .radar-vignette{
   pointer-events:none;position:absolute;inset:0;z-index:2;
   background:radial-gradient(ellipse 55% 45% at 50% 48%,transparent 35%,rgba(8,47,73,.35) 100%);
@@ -253,21 +256,18 @@ h1{
   pointer-events:none;
 }
 .radar-pin .pin-icon{
-  font-size:1.05rem;line-height:1;
-  filter:drop-shadow(0 0 2px #fff);
-}
-.radar-pin .pin-max{
-  font-size:.55rem;line-height:1;opacity:.95;
+  font-size:.95rem;line-height:1;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));
 }
 .radar-pin small{
-  font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  color:#fff;background:rgba(15,118,110,.92);padding:2px 6px;border-radius:999px;white-space:nowrap;
-  border:1px solid rgba(255,255,255,.35);
+  font-size:.48rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  color:#fff;background:rgba(15,118,110,.88);padding:1px 5px;border-radius:999px;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.3);max-width:72px;overflow:hidden;text-overflow:ellipsis;
 }
 .radar-pin-ring{
-  position:absolute;left:64%;top:36%;width:28px;height:28px;margin:-14px 0 0 -14px;
-  border:2px solid rgba(255,255,255,.85);border-radius:50%;z-index:3;pointer-events:none;
-  box-shadow:0 0 0 4px rgba(20,184,166,.35);animation:radarRingPulse 2.4s ease-in-out infinite;
+  position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;
+  border:2px solid rgba(255,255,255,.9);border-radius:50%;
+  box-shadow:0 0 0 3px rgba(20,184,166,.4);animation:radarRingPulse 2.4s ease-in-out infinite;
 }
 .radar-controls{
   display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;
@@ -560,16 +560,17 @@ body.stable-ui tr{opacity:1;transform:none}
     </section>
     <section class="radar-panel radar-loading" id="rainRadarPanel" aria-labelledby="radarTitle">
       <div class="radar-inner">
-        <p class="radar-kicker"><span class="radar-live-dot" id="radarLiveBadge">● Live</span> Rain radar · updates every few minutes</p>
+        <p class="radar-kicker"><span class="radar-live-dot" id="radarLiveBadge">● Live</span> Rain radar · refreshes about every minute</p>
         <h3 id="radarTitle"><span aria-hidden="true">🌧️</span> Is it raining toward Bettystown?</h3>
         <div class="radar-stage" id="radarStage">
           <div class="radar-zoom">
             <div class="radar-map-frame" id="radarMapFrame">
               <img id="radarImg" width="640" height="512" alt="Rainfall radar — Bettystown area" loading="lazy" decoding="async"/>
+            </div>
+            <div class="radar-pin-layer">
               <div class="radar-pin-ring" id="radarPinRing" aria-hidden="true"></div>
               <div class="radar-pin" id="radarPin" aria-label="Bettystown on radar">
                 <span class="pin-icon" aria-hidden="true">📍</span>
-                <span class="pin-max" aria-hidden="true">🐕</span>
                 <small>Bettystown</small>
               </div>
             </div>
@@ -1072,8 +1073,18 @@ body.stable-ui tr{opacity:1;transform:none}
   var radarIndex=0;
   var radarTimer=null;
   var lastRadarFile=null;
-  var RADAR_LIVE_MS=3*60*1000;
+  var RADAR_LIVE_MS=90*1000;
   var prefersReducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function updateRadarTimeLabel(extra){
+    if(!radarFrames.length) return;
+    var latest=radarFrames[radarFrames.length-1];
+    var timeEl=$("radarTime");
+    if(!timeEl||!latest) return;
+    var line=latest.label||"—";
+    if(extra) line+=" · "+extra;
+    timeEl.textContent=line;
+  }
 
   function showRadarFrame(i){
     if(!radarFrames.length) return;
@@ -1082,14 +1093,19 @@ body.stable-ui tr{opacity:1;transform:none}
     var img=$("radarImg");
     if(img&&fr.imageUrl) img.src=fr.imageUrl;
     if(img) img.alt="Rainfall radar — "+(fr.label||"Ireland");
-    var timeEl=$("radarTime");
-    if(timeEl) timeEl.textContent=fr.label||"—";
   }
 
   function startRadarLoop(){
     if(radarTimer) clearInterval(radarTimer);
     if(prefersReducedMotion||radarFrames.length<2) return;
-    radarTimer=setInterval(function(){ showRadarFrame(radarIndex+1); }, 900);
+    var start=Math.max(0,radarFrames.length-4);
+    radarIndex=start;
+    showRadarFrame(radarIndex);
+    radarTimer=setInterval(function(){
+      var end=radarFrames.length-1;
+      if(radarIndex>=end){ radarIndex=start; showRadarFrame(radarIndex); return; }
+      showRadarFrame(radarIndex+1);
+    }, 800);
   }
 
   function renderRadar(data,livePoll){
@@ -1121,7 +1137,7 @@ body.stable-ui tr{opacity:1;transform:none}
     var ring=$("radarPinRing");
     var frame=$("radarMapFrame");
     if(frame){
-      var zoom=data.pin&&data.pin.zoom?data.pin.zoom:2.35;
+      var zoom=data.pin&&data.pin.zoom?data.pin.zoom:1.85;
       frame.style.transform="scale("+zoom+")";
       frame.style.transformOrigin=pinPct.left+"% "+pinPct.top+"%";
     }
@@ -1135,7 +1151,14 @@ body.stable-ui tr{opacity:1;transform:none}
     }
     var attr=$("radarAttribution");
     if(attr) attr.textContent="Radar © Met Éireann · "+(data.attribution||"")+(data.stale?" · last good loop":"");
+    var ageNote="";
+    if(data.latestAgeMinutes!=null){
+      ageNote=data.latestAgeMinutes<=20
+        ?("updated ~"+data.latestAgeMinutes+" min ago")
+        :("Met Éireann feed ~"+data.latestAgeMinutes+" min behind now");
+    }
     showRadarFrame(radarFrames.length-1);
+    updateRadarTimeLabel(ageNote);
     if(!livePoll) startRadarLoop();
   }
 
