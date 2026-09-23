@@ -274,6 +274,8 @@ export function runBettystownWeatherTests() {
   s.assert("html legal copyright", html.includes("Thomas Gollogly") || html.includes("legalCopyright"));
   s.assert("html open-meteo license link", html.includes("open-meteo.com/en/license"));
   s.assert("html esc helper", html.includes("function esc("));
+  s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
+  s.assert("html fetch in flight guard", html.includes("fetchInFlight"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));

@@ -345,6 +345,14 @@ tr:hover td{background:rgba(240,249,255,.85)}
   .tomorrow-head .big-icon{font-size:2.4rem}
   .now-temp{font-size:3rem}
 }
+body.stable-ui .alert-chip,
+body.stable-ui .max-walk-hero,
+body.stable-ui .day-card,
+body.stable-ui .pattern-card,
+body.stable-ui .tomorrow-card,
+body.stable-ui .now-card{animation:none!important}
+body.stable-ui tr{opacity:1;transform:none}
+
 @media(prefers-reduced-motion:reduce){
   .blob,.big-icon,.now-icon,.aurora,.paw{animation:none}
   tr{opacity:1;transform:none}
@@ -456,6 +464,11 @@ tr:hover td{background:rgba(240,249,255,.85)}
   var REFRESH_MS=45*60*1000;
   var TZ="Europe/Dublin";
   var TIME_LABEL="Irish time / Dublin";
+  var fetchInFlight=false;
+  var retryCount=0;
+  var lastFingerprint=null;
+  var hasPainted=false;
+  var lastTempShown=null;
 
   function formatIrelandDate(ms, opts){
     return new Date(ms).toLocaleString("en-IE", Object.assign({timeZone:TZ}, opts||{}));
@@ -680,7 +693,24 @@ tr:hover td{background:rgba(240,249,255,.85)}
     }
   }
 
+  function forecastFingerprint(data){
+    if(!data) return "";
+    return [
+      data.fetchedAt,
+      data.stale?"s":"f",
+      data.current&&data.current.temp,
+      (data.alerts||[]).map(function(a){return a.type+":"+(a.date||"")+":"+(a.title||"")}).join("|"),
+      (data.maxWalkScore&&data.maxWalkScore.days||[]).map(function(d){
+        return d.date+":"+d.blocks.map(function(b){return b.label}).join(",");
+      }).join("|"),
+    ].join("~");
+  }
+
   function render(data){
+    var fp=forecastFingerprint(data);
+    if(fp&&fp===lastFingerprint) return;
+    lastFingerprint=fp;
+
     $("error").hidden=true;
     $("nowCard").hidden=false;
 
@@ -695,9 +725,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
     $("nowDate").textContent=todayInfo.dateLong||formatIrelandDate(data.fetchedAt,{weekday:"long",day:"numeric",month:"long"});
     var tempEl=$("nowTemp");
     tempEl.textContent=formatTempC(c.temp);
-    tempEl.classList.remove("updated");
-    void tempEl.offsetWidth;
-    tempEl.classList.add("updated");
+    if(c.temp!==lastTempShown){
+      lastTempShown=c.temp;
+      tempEl.classList.remove("updated");
+      void tempEl.offsetWidth;
+      tempEl.classList.add("updated");
+    }
     $("nowIcon").textContent=c.icon||"🌤️";
     $("nowMeta").textContent=(c.summary||"—")+" · feels like "+formatTempC(c.feels||c.temp)+" · wind "+Math.round(c.wind||0)+" km/h";
     renderTomorrow(data.tomorrow);
@@ -751,7 +784,9 @@ tr:hover td{background:rgba(240,249,255,.85)}
         '<td><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
       body.appendChild(tr);
     });
-    if("IntersectionObserver" in window){
+    if(hasPainted||document.body.classList.contains("stable-ui")){
+      body.querySelectorAll("tr").forEach(function(tr){tr.classList.add("revealed")});
+    }else if("IntersectionObserver" in window){
       var io=new IntersectionObserver(function(entries){
         entries.forEach(function(e){
           if(e.isIntersecting){e.target.classList.add("revealed");io.unobserve(e.target);}
@@ -764,6 +799,9 @@ tr:hover td{background:rgba(240,249,255,.85)}
     }else{
       body.querySelectorAll("tr").forEach(function(tr){tr.classList.add("revealed")});
     }
+
+    hasPainted=true;
+    document.body.classList.add("stable-ui");
 
     var stale=data.stale?" (cached backup)":"";
     $("status").innerHTML='<span class="live">● Live</span> · Updated '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' · '+TIME_LABEL+stale;
@@ -796,20 +834,31 @@ tr:hover td{background:rgba(240,249,255,.85)}
   }
 
   function fetchWeather(){
-    return fetch(API,{headers:{Accept:"application/json"}})
+    if(fetchInFlight) return Promise.resolve();
+    fetchInFlight=true;
+    return fetch(API,{headers:{Accept:"application/json"},cache:"no-store"})
       .then(function(r){
         if(!r.ok) throw new Error("API "+r.status);
         return r.json();
       })
       .then(function(data){
         if(!data.ok) throw new Error(data.error||"forecast failed");
+        retryCount=0;
         render(data);
       })
       .catch(function(err){
         var cached=loadCached();
-        showError("Forecast unavailable: "+err.message+". Retrying in background…", cached);
-        setTimeout(fetchWeather, 8000);
-      });
+        if(cached&&!hasPainted) render(cached);
+        if(retryCount<3){
+          retryCount+=1;
+          var wait=Math.min(8000*retryCount, 45000);
+          showError("Forecast unavailable: "+err.message+". Retrying in "+Math.round(wait/1000)+"s…", cached&&hasPainted?null:cached);
+          setTimeout(fetchWeather, wait);
+        }else{
+          showError("Forecast unavailable: "+err.message+". Showing last saved forecast.", cached);
+        }
+      })
+      .finally(function(){fetchInFlight=false});
   }
 
   function revealRows(){
@@ -825,8 +874,16 @@ tr:hover td{background:rgba(240,249,255,.85)}
     document.querySelectorAll(".day-card,.pattern-card,.table-wrap tbody tr").forEach(function(el){io.observe(el)});
   }
 
+  var bootCached=loadCached();
+  if(bootCached) render(bootCached);
   fetchWeather().then(revealRows).catch(function(){setTimeout(revealRows,400)});
   setInterval(fetchWeather, REFRESH_MS);
+  document.addEventListener("visibilitychange",function(){
+    if(document.visibilityState==="visible"&&!fetchInFlight){
+      var age=window.__bettystownLast&&window.__bettystownLast.fetchedAt?(Date.now()-window.__bettystownLast.fetchedAt):99999999;
+      if(age>20*60*1000) fetchWeather();
+    }
+  });
 })();
 
 (function initMusic(){
