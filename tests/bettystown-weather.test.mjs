@@ -36,6 +36,8 @@ import {
   buildBettystownRadarResponse,
   bettystownRadarImagePath,
   hideOvernightPastForToday,
+  buildTodayHourlyOutlook,
+  formatHour12Irish,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -303,6 +305,14 @@ export function runBettystownWeatherTests() {
   s.assert("html no radar play button", !html.includes("radarPlayBtn"));
   s.assert("html walk tier blocks", html.includes("tier-excellent") && html.includes("walk-day-score"));
   s.assert("hide last night after 8am", hideOvernightPastForToday("today", 0, new Date("2026-09-23T10:00:00+01:00")));
+  s.assert("hour12 irish", formatHour12Irish(15) === "3pm");
+  const hourlyOut = buildTodayHourlyOutlook(
+    [{ time: "2026-09-23T14:00", precipitation: 0, wind_gusts_10m: 30, weather_code: 2, temperature_2m: 16 }],
+    new Date("2026-09-23T12:00:00Z"),
+  );
+  s.assert("today hourly shape", hourlyOut.hours.some((h) => h.hour === 14 && h.walkClass === "good"));
+  s.assert("html today hourly ui", html.includes("todayHourlyRow") && html.includes("hour-chip"));
+  s.assert("html radar live poll", html.includes("pollRadarLive"));
   s.assert("html esc helper", html.includes("function esc("));
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
   s.assert("html fetch in flight guard", html.includes("fetchInFlight"));

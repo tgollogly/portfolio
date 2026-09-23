@@ -198,7 +198,32 @@ h1{
   font-family:var(--display);font-size:1.35rem;font-weight:400;font-style:italic;color:var(--ocean-deep);
   margin:0 0 10px;line-height:1.2;
 }
-.radar-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sea-glass);margin:0 0 4px}
+.radar-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sea-glass);margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.radar-live-dot{color:#059669;font-weight:700}
+.hourly-today{margin:20px 0 0}
+.hourly-today h3{font-family:var(--display);font-size:1.25rem;font-weight:400;font-style:italic;color:var(--ocean-deep);margin:0 0 8px}
+.hourly-today .hourly-sub{font-size:.82rem;color:var(--muted);margin:0 0 12px}
+.hourly-scroll{
+  display:flex;gap:10px;overflow-x:auto;padding:4px 2px 12px;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+}
+.hourly-scroll::-webkit-scrollbar{height:6px}
+.hourly-scroll::-webkit-scrollbar-thumb{background:rgba(14,116,144,.25);border-radius:999px}
+.hour-chip{
+  flex:0 0 auto;min-width:88px;scroll-snap-align:start;
+  border-radius:14px;padding:10px 10px 12px;text-align:center;border:2px solid var(--line);
+  background:rgba(255,255,255,.75);
+}
+.hour-chip.past{opacity:.55}
+.hour-chip.now{box-shadow:0 0 0 2px var(--ocean);transform:scale(1.03)}
+.hour-chip.good{background:rgba(204,251,241,.9);border-color:#5eead4}
+.hour-chip.watch{background:rgba(254,243,199,.95);border-color:#fcd34d}
+.hour-chip.wet{background:rgba(254,226,226,.95);border-color:#fca5a5}
+.hour-chip .h-time{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint)}
+.hour-chip .h-ico{font-size:1.35rem;line-height:1.2;margin:4px 0}
+.hour-chip .h-temp{font-size:.95rem;font-weight:700;color:var(--ocean-deep)}
+.hour-chip .h-rain{font-size:.72rem;color:var(--muted);margin-top:2px}
+.hour-chip .h-walk{font-size:.68rem;font-weight:700;margin-top:6px;text-transform:uppercase;letter-spacing:.03em}
 .radar-hint{font-size:.86rem;color:var(--muted);margin:12px 0 0;line-height:1.45}
 .radar-stage{
   position:relative;border-radius:16px;overflow:hidden;
@@ -506,9 +531,14 @@ body.stable-ui tr{opacity:1;transform:none}
       <span class="hint" style="width:100%;margin-top:4px">All times Irish (Dublin) · 8am–8pm walk hours</span>
     </div>
     <p class="walk-detail" id="maxWalkDetail" hidden></p>
+    <section class="hourly-today" id="todayHourlySection" hidden aria-labelledby="todayHourlyTitle">
+      <h3 id="todayHourlyTitle"><span aria-hidden="true">🕐</span> Today, hour by hour</h3>
+      <p class="hourly-sub" id="todayHourlySub">Irish time · scroll sideways for every hour</p>
+      <div class="hourly-scroll" id="todayHourlyRow" role="list"></div>
+    </section>
     <section class="radar-panel radar-loading" id="rainRadarPanel" aria-labelledby="radarTitle">
       <div class="radar-inner">
-        <p class="radar-kicker">Live rain · Irish time</p>
+        <p class="radar-kicker"><span class="radar-live-dot" id="radarLiveBadge">● Live</span> Rain radar · updates every few minutes</p>
         <h3 id="radarTitle"><span aria-hidden="true">🌧️</span> Is it raining toward Bettystown?</h3>
         <div class="radar-stage" id="radarStage">
           <img id="radarImg" width="640" height="512" alt="Rainfall radar over Ireland" loading="lazy" decoding="async"/>
@@ -632,7 +662,29 @@ body.stable-ui tr{opacity:1;transform:none}
   function walkLabelPlain(label){
     if(label==="Good") return "Good for Max";
     if(label==="Watch") return "Watch the sky";
+    if(label==="Wet likely") return "Wet likely";
     return label;
+  }
+
+  function renderTodayHourly(block){
+    var section=$("todayHourlySection");
+    var row=$("todayHourlyRow");
+    if(!section||!row) return;
+    if(!block||!block.hours||!block.hours.length){ section.hidden=true; row.innerHTML=""; return; }
+    section.hidden=false;
+    $("todayHourlySub").textContent=(block.label||"Today")+" · "+TIME_LABEL+" · green/yellow/pink = walk hint";
+    row.innerHTML=block.hours.map(function(h){
+      var cls="hour-chip "+h.walkClass+(h.isPast?" past":"")+(h.isNow?" now":"");
+      var rain=h.rainMm>=0.15?(h.rainMm.toFixed(1)+" mm"):"Dry";
+      return '<article class="'+cls+'" role="listitem">'+
+        '<div class="h-time">'+esc(h.timeLabel)+(h.isNow?" · now":"")+'</div>'+
+        '<div class="h-ico">'+esc(h.icon)+'</div>'+
+        '<div class="h-temp">'+(h.temp!=null?h.temp+"°C":"—")+'</div>'+
+        '<div class="h-rain">'+esc(rain)+'</div>'+
+        '<div class="h-walk">'+esc(walkLabelPlain(h.walkLabel))+'</div></article>';
+    }).join("");
+    var nowChip=row.querySelector(".hour-chip.now");
+    if(nowChip&&nowChip.scrollIntoView) nowChip.scrollIntoView({inline:"center",block:"nearest",behavior:hasPainted?"auto":"smooth"});
   }
 
   function dayHeading(d){
@@ -869,6 +921,7 @@ body.stable-ui tr{opacity:1;transform:none}
     renderLegal(data.legal);
     if(data.radar) renderRadar(data.radar);
     renderMaxWalk(data);
+    renderTodayHourly(data.todayHourly);
     renderMet(data);
     renderAlerts(data.alerts,data.today&&data.today.date);
 
@@ -988,6 +1041,8 @@ body.stable-ui tr{opacity:1;transform:none}
   var radarFrames=[];
   var radarIndex=0;
   var radarTimer=null;
+  var lastRadarFile=null;
+  var RADAR_LIVE_MS=3*60*1000;
   var prefersReducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function showRadarFrame(i){
@@ -1007,19 +1062,25 @@ body.stable-ui tr{opacity:1;transform:none}
     radarTimer=setInterval(function(){ showRadarFrame(radarIndex+1); }, 900);
   }
 
-  function renderRadar(data){
+  function renderRadar(data,livePoll){
     var panel=$("rainRadarPanel");
     if(!panel) return;
     panel.classList.remove("radar-loading");
     var fallback=$("radarFallback");
+    var liveBadge=$("radarLiveBadge");
     if(!data||!data.ok||!data.frames||!data.frames.length){
       if(fallback){
         fallback.hidden=false;
         fallback.textContent="Radar could not load just now — refresh in a minute.";
       }
+      if(liveBadge) liveBadge.textContent="○ Offline";
       return;
     }
     if(fallback) fallback.hidden=true;
+    if(liveBadge) liveBadge.textContent="● Live";
+    var latestFile=data.latest&&data.latest.file;
+    if(livePoll&&latestFile&&latestFile===lastRadarFile) return;
+    lastRadarFile=latestFile||null;
     radarFrames=data.frames;
     var pin=$("radarPin");
     if(data.pin&&pin){
@@ -1029,7 +1090,14 @@ body.stable-ui tr{opacity:1;transform:none}
     var attr=$("radarAttribution");
     if(attr) attr.textContent="Radar © Met Éireann · "+(data.attribution||"")+(data.stale?" · last good loop":"");
     showRadarFrame(radarFrames.length-1);
-    startRadarLoop();
+    if(!livePoll) startRadarLoop();
+  }
+
+  function pollRadarLive(){
+    fetch("/api/bettystown-radar",{headers:{Accept:"application/json"},cache:"no-store"})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){ if(d) renderRadar(d,true); })
+      .catch(function(){});
   }
 
   function loadCached(){
@@ -1087,6 +1155,7 @@ body.stable-ui tr{opacity:1;transform:none}
   if(bootCached) render(bootCached);
   fetchWeather().then(revealRows).catch(function(){setTimeout(revealRows,400)});
   setInterval(fetchWeather, REFRESH_MS);
+  setInterval(pollRadarLive, RADAR_LIVE_MS);
   document.addEventListener("visibilitychange",function(){
     if(document.visibilityState==="visible"&&!fetchInFlight){
       var age=window.__bettystownLast&&window.__bettystownLast.fetchedAt?(Date.now()-window.__bettystownLast.fetchedAt):99999999;
