@@ -313,6 +313,8 @@ export function runBettystownWeatherTests() {
   s.assert("today hourly shape", hourlyOut.hours.some((h) => h.hour === 14 && h.walkClass === "good"));
   s.assert("html today hourly ui", html.includes("todayHourlyRow") && html.includes("hour-chip"));
   s.assert("html radar live poll", html.includes("pollRadarLive"));
+  s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-icon"));
+  s.assert("html radar time prominent", html.includes("radar-time") && html.includes("1.35rem"));
   s.assert("html esc helper", html.includes("function esc("));
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
   s.assert("html fetch in flight guard", html.includes("fetchInFlight"));
