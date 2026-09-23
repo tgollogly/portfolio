@@ -83,7 +83,7 @@ body{
   100%{transform:translate(-3%,5%) scale(.96) rotate(-1deg)}
 }
 .shell{position:relative;z-index:1}
-.hero{max-width:980px;margin:0 auto;padding:32px 20px 10px;animation:riseIn .85s var(--ease-out) both}
+.hero{max-width:980px;margin:0 auto;padding:32px 16px 10px;animation:riseIn .85s var(--ease-out) both}
 .badge{
   display:inline-flex;align-items:center;gap:8px;background:var(--card);
   backdrop-filter:var(--glass);border:1px solid var(--line);border-radius:999px;
@@ -104,7 +104,7 @@ h1{
 .subtitle{font-size:1.05rem;color:var(--muted);max-width:40em;margin:0;font-weight:400}
 .mom{font-weight:600;color:var(--ocean);font-style:italic}
 .paw{font-weight:600;color:var(--coral);display:inline-block;animation:floatIcon 4s ease-in-out infinite}
-.panel{max-width:980px;margin:0 auto;padding:0 20px 52px}
+.panel{max-width:980px;margin:0 auto;padding:0 16px calc(88px + env(safe-area-inset-bottom,0px))}
 .status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--faint);margin:16px 0 0}
 .status .live{color:var(--sea-glass);font-weight:600}
 .loader{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--ocean);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}
@@ -113,6 +113,7 @@ h1{
 .retry:hover{transform:translateY(-1px)}
 
 .alerts-bar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
+@media(max-width:680px){.alert-chip{flex:1 1 100%;max-width:100%}}
 .alert-chip{
   display:flex;align-items:flex-start;gap:8px;padding:14px 16px;border-radius:16px;
   font-size:.92rem;line-height:1.45;flex:1 1 260px;max-width:100%;
@@ -302,7 +303,30 @@ tr:last-child td{border-bottom:none}
 tr{transition:background .25s,transform .25s;opacity:0;transform:translateY(6px)}
 tr.revealed{opacity:1;transform:none;transition:opacity .45s var(--ease-out),transform .45s var(--ease-out),background .25s}
 tr:hover td{background:rgba(240,249,255,.85)}
-.row-why{font-size:.78rem;color:var(--muted);margin-top:4px;max-width:22em}
+.row-why{font-size:.78rem;color:var(--muted);margin-top:4px;max-width:22em;line-height:1.45}
+.forecast-cards{display:none}
+@media(max-width:680px){
+  .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap tr,.table-wrap td{display:block;width:100%}
+  .table-wrap thead{display:none}
+  .table-wrap tr{
+    padding:14px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.4);
+  }
+  .table-wrap tr:last-child{border-bottom:none}
+  .table-wrap td{
+    display:flex;justify-content:space-between;gap:12px;padding:5px 0;border:none;
+    font-size:.88rem;text-align:right;align-items:flex-start;
+  }
+  .table-wrap td::before{
+    content:attr(data-label);font-weight:600;font-size:.72rem;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--faint);text-align:left;flex:1 1 40%;padding-right:8px;
+  }
+  .table-wrap td:first-child{display:block;text-align:left;font-size:1rem;margin-bottom:6px}
+  .table-wrap td:first-child::before{display:none}
+  .table-wrap td:first-child .row-why{max-width:none}
+  .table-wrap td[data-label="Conditions"]{flex-direction:column;align-items:stretch;text-align:left}
+  .table-wrap td[data-label="Conditions"]::before{margin-bottom:4px}
+  .table-wrap .mini-bar{max-width:120px;margin-left:auto}
+}
 .mini-bar{height:7px;border-radius:4px;background:rgba(14,116,144,.12);margin-top:5px;overflow:hidden}
 .mini-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sea-glass),var(--coral),var(--sun));transition:width 1s var(--ease-out)}
 .foot{text-align:center;padding:28px 20px 36px;font-size:.82rem;color:var(--muted);line-height:1.55;max-width:42rem;margin:0 auto}
@@ -317,7 +341,7 @@ tr:hover td{background:rgba(240,249,255,.85)}
 
 .music-host{position:fixed;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1}
 .music-toggle{
-  position:fixed;bottom:22px;right:18px;z-index:50;
+  position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));right:14px;z-index:50;
   display:flex;align-items:center;gap:8px;padding:12px 17px;
   border-radius:999px;border:1px solid var(--line);
   background:var(--card);backdrop-filter:var(--glass);box-shadow:var(--shadow-md);
@@ -341,9 +365,12 @@ tr:hover td{background:rgba(240,249,255,.85)}
 @media(max-width:520px){
   .now-card{grid-template-columns:1fr;text-align:center}
   .now-icon{text-align:center}
-  th:nth-child(4),td:nth-child(4){display:none}
   .tomorrow-head .big-icon{font-size:2.4rem}
   .now-temp{font-size:3rem}
+  .music-toggle{padding:12px 14px;max-width:calc(100vw - 28px)}
+  .music-toggle #musicLabel{display:none}
+  .met-oneliner,.foot-legal{font-size:.88rem}
+  .walk-windows{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 body.stable-ui .alert-chip,
 body.stable-ui .max-walk-hero,
@@ -521,7 +548,7 @@ body.stable-ui tr{opacity:1;transform:none}
     return ({dry_sunny:"☀️",heat_wave:"🌡️",heat_dome:"🔥",extreme_heat:"🥵"})[type]||"📊";
   }
 
-  function renderAlerts(alerts){
+  function renderAlerts(alerts,todayYmd){
     var bar=$("alertsBar");
     if(!alerts||!alerts.length){bar.hidden=true;bar.innerHTML="";return}
     bar.hidden=false;
@@ -532,8 +559,10 @@ body.stable-ui tr{opacity:1;transform:none}
     var seenDateType={};
     var todayYmd=window.__bettystownLast&&window.__bettystownLast.today&&window.__bettystownLast.today.date;
     var filtered=sorted.filter(function(a){
+      if(a.date&&a.date!=="now"&&todayYmd&&a.date<todayYmd) return false;
       var k=(a.date||"")+":"+a.type;
       if(a.type==="walk_ok"&&seenDateType[a.date+"rain_timing"]) return false;
+      if(a.type==="rain_timing"&&a.title==="Overnight rain"&&a.leadDays!=null&&a.leadDays>2) return false;
       if(a.type==="walk_watch"&&a.date===todayYmd){
         var mw=window.__bettystownLast&&window.__bettystownLast.maxWalkScore;
         var td=mw&&mw.days&&mw.days.find(function(d){return d.relative==="today"});
@@ -718,7 +747,7 @@ body.stable-ui tr{opacity:1;transform:none}
     renderLegal(data.legal);
     renderMaxWalk(data);
     renderMet(data);
-    renderAlerts(data.alerts);
+    renderAlerts(data.alerts,data.today&&data.today.date);
 
     var c=data.current||{};
     var todayInfo=data.today||{};
@@ -775,13 +804,13 @@ body.stable-ui tr{opacity:1;transform:none}
         ?("Walk hrs: "+esc(d.rainBands.daytime.text))
         :(Math.round(d.rainProb||0)+"% · "+((d.rainMm||0).toFixed(1))+"mm");
       tr.innerHTML=
-        '<td>'+dayCell+'</td>'+
-        '<td>'+esc(d.icon)+' '+esc(d.summary)+
+        '<td data-label="Day">'+dayCell+(d.dateLong?'<div class="row-why">'+esc(d.dateLong)+'</div>':'')+'</td>'+
+        '<td data-label="Conditions">'+esc(d.icon)+' '+esc(d.summary)+
           (why?'<div class="row-why">'+esc(why)+'</div>':'')+'</td>'+
-        '<td>'+formatTempC(d.tempMax)+' / '+formatTempC(d.tempMin)+'</td>'+
-        '<td>'+rainCell+'</td>'+
-        '<td>'+Math.round(d.windMax||0)+' km/h</td>'+
-        '<td><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
+        '<td data-label="Temp">'+formatTempC(d.tempMax)+' / '+formatTempC(d.tempMin)+'</td>'+
+        '<td data-label="Walk-time rain">'+rainCell+'</td>'+
+        '<td data-label="Wind">'+Math.round(d.windMax||0)+' km/h</td>'+
+        '<td data-label="Walk score"><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
       body.appendChild(tr);
     });
     if(hasPainted||document.body.classList.contains("stable-ui")){

@@ -224,17 +224,30 @@ export function runBettystownWeatherTests() {
   );
   s.assert("far wind grey not red storm", farWind.some((a) => a.tier === "grey") && !farWind.some((a) => a.tier === "red" && a.type === "high_wind"));
 
-  s.assert("storm alert", buildWeatherAlerts([{
-    date: "2026-08-01",
-    label: "Mon",
-    weatherCode: 95,
-    tempMax: 18,
-    tempMin: 12,
-    rainMm: 2,
-    rainProb: 50,
-    windMax: 20,
-    uv: 3,
-  }]).some((a) => a.type === "storm"));
+  const pastDayAlerts = buildWeatherAlerts(
+    [{ date: "2026-09-20", dateShort: "Sat 20 Sep", label: "Sat 20 Sep", rainMm: 10, rainProb: 80, tempMax: 16, tempMin: 10, windMax: 20, windGust: 25, weatherCode: 63, uv: 2 }],
+    null,
+    { hourlyRows: [], now: "2026-09-23T12:00:00Z" },
+  );
+  s.assert("past day alerts skipped", pastDayAlerts.length === 0);
+
+  s.assert("storm alert", buildWeatherAlerts(
+    [{
+      date: "2026-09-25",
+      dateShort: "Fri 25 Sep",
+      label: "Fri 25 Sep",
+      weatherCode: 95,
+      tempMax: 18,
+      tempMin: 12,
+      rainMm: 2,
+      rainProb: 50,
+      windMax: 20,
+      windGust: 20,
+      uv: 3,
+    }],
+    null,
+    { hourlyRows: [], now: "2026-09-23T12:00:00Z" },
+  ).some((a) => a.type === "storm"));
 
   s.assert("forecast url open-meteo", forecastUrl().includes("api.open-meteo.com"));
   s.assert("forecast url lat", forecastUrl().includes(String(BETTYSTOWN.latitude)));
@@ -284,6 +297,7 @@ export function runBettystownWeatherTests() {
   s.assert("html esc helper", html.includes("function esc("));
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
   s.assert("html fetch in flight guard", html.includes("fetchInFlight"));
+  s.assert("html mobile table labels", html.includes("data-label=\"Walk score\""));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));
