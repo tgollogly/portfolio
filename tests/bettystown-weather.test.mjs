@@ -316,10 +316,10 @@ export function runBettystownWeatherTests() {
   s.assert("today hourly shape", hourlyOut.hours.some((h) => h.hour === 14 && h.walkClass === "good"));
   s.assert("html today hourly ui", html.includes("todayHourlyRow") && html.includes("hour-chip"));
   s.assert("html radar live poll", html.includes("pollRadarLive"));
-  s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-icon"));
+  s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-marker"));
   s.assert("html pin not in scaled frame", html.includes("radar-pin-layer"));
   const pin = bettystownRadarPin();
-  s.assert("pin on ireland east coast", pin.leftPct >= 50 && pin.leftPct <= 62 && pin.topPct >= 36 && pin.topPct <= 48);
+  s.assert("pin on ireland east coast", pin.leftPct >= 64 && pin.leftPct <= 72 && pin.topPct >= 36 && pin.topPct <= 46);
   const computed = latLonToRadarPinPct(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
   s.assert("computed pin not on uk side", computed.leftPct < 70);
   s.assert("radar age minutes", radarFrameAgeMinutes("web17_radar15_202609231330.png", new Date("2026-09-23T12:45:00Z")) === 15);

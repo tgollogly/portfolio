@@ -244,30 +244,37 @@ h1{
 }
 .radar-vignette{
   pointer-events:none;position:absolute;inset:0;z-index:2;
-  background:radial-gradient(ellipse 55% 45% at 55.5% 42%,transparent 35%,rgba(8,47,73,.35) 100%);
+  background:radial-gradient(ellipse 55% 45% at 68.2% 40.5%,transparent 35%,rgba(8,47,73,.35) 100%);
 }
 .radar-coast{pointer-events:none;position:absolute;inset:0;z-index:2;opacity:.4}
 .radar-pin{
-  position:absolute;left:64%;top:36%;
-  transform:translate(-50%,-92%);
-  display:flex;flex-direction:column;align-items:center;gap:1px;z-index:4;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.45));
-  animation:radarPinPulse 2.4s ease-in-out infinite;
+  position:absolute;left:68.2%;top:40.5%;
+  transform:translate(-50%,-100%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;z-index:4;
   pointer-events:none;
+  animation:radarPinPulse 2.4s ease-in-out infinite;
 }
-.radar-pin .pin-icon{
-  font-size:.95rem;line-height:1;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));
+.pin-marker{
+  position:relative;width:12px;height:15px;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));
 }
-.radar-pin small{
-  font-size:.44rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;
-  color:#fff;background:rgba(15,118,110,.88);padding:1px 5px;border-radius:999px;white-space:nowrap;
-  border:1px solid rgba(255,255,255,.3);
+.pin-marker::before{
+  content:"";position:absolute;left:50%;top:0;width:10px;height:10px;margin-left:-5px;
+  background:#dc2626;border:2px solid #fff;border-radius:50%;
+}
+.pin-marker::after{
+  content:"";position:absolute;left:50%;top:8px;width:2px;height:7px;margin-left:-1px;
+  background:#b91c1c;border-radius:1px;
+}
+.pin-label{
+  font-size:10px;line-height:1.1;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  color:#fff;background:rgba(15,118,110,.9);padding:2px 5px;border-radius:6px;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.35);max-width:none;
 }
 .radar-pin-ring{
-  position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;
-  border:2px solid rgba(255,255,255,.9);border-radius:50%;
-  box-shadow:0 0 0 3px rgba(20,184,166,.4);animation:radarRingPulse 2.4s ease-in-out infinite;
+  position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;
+  border:2px solid rgba(255,255,255,.95);border-radius:50%;
+  box-shadow:0 0 0 2px rgba(20,184,166,.45);animation:radarRingPulse 2.4s ease-in-out infinite;
 }
 .radar-controls{
   display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;
@@ -298,7 +305,7 @@ h1{
 .radar-panel.radar-loading .radar-stage img{opacity:.35;filter:blur(1px)}
 .radar-panel.radar-loading .radar-time::after{content:" · loading…"}
 .radar-fallback{font-size:.88rem;color:#92400e;background:rgba(254,243,199,.75);padding:10px 12px;border-radius:12px;margin-top:10px}
-@keyframes radarPinPulse{0%,100%{transform:translate(-50%,-92%) scale(1)}50%{transform:translate(-50%,-96%) scale(1.06)}}
+@keyframes radarPinPulse{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-104%) scale(1.05)}}
 @keyframes radarRingPulse{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
 .stale-banner{font-size:.85rem;color:#92400e;background:rgba(254,243,199,.85);padding:10px 14px;border-radius:12px;margin-top:12px}
 .alert-chip .alert-icon{font-size:1.1rem;flex-shrink:0}
@@ -570,8 +577,8 @@ body.stable-ui tr{opacity:1;transform:none}
             <div class="radar-pin-layer">
               <div class="radar-pin-ring" id="radarPinRing" aria-hidden="true"></div>
               <div class="radar-pin" id="radarPin" aria-label="Bettystown on radar">
-                <span class="pin-icon" aria-hidden="true">📍</span>
-                <small>Bettystown</small>
+                <div class="pin-marker" aria-hidden="true"></div>
+                <span class="pin-label">Bettystown</span>
               </div>
             </div>
           </div>
@@ -582,7 +589,7 @@ body.stable-ui tr{opacity:1;transform:none}
           <span><i class="c2"></i> Steady</span>
           <span><i class="c3"></i> Heavy</span>
         </div>
-        <p class="radar-hint">Rain moving toward the 📍 may reach Bettystown beach soon.</p>
+        <p class="radar-hint">Rain moving toward the red pin may reach Bettystown beach soon.</p>
         <p class="radar-time" id="radarTime">—</p>
         <p class="radar-fallback" id="radarFallback" hidden></p>
         <p class="radar-foot" id="radarAttribution">Radar © Met Éireann</p>
@@ -1128,7 +1135,7 @@ body.stable-ui tr{opacity:1;transform:none}
     if(livePoll&&latestFile&&latestFile===lastRadarFile) return;
     lastRadarFile=latestFile||null;
     radarFrames=data.frames;
-    var pinPct={left:64,top:36};
+    var pinPct={left:68.2,top:40.5};
     if(data.pin){
       pinPct.left=data.pin.leftPct??64;
       pinPct.top=data.pin.topPct??36;
@@ -1137,7 +1144,7 @@ body.stable-ui tr{opacity:1;transform:none}
     var ring=$("radarPinRing");
     var frame=$("radarMapFrame");
     if(frame){
-      var zoom=data.pin&&data.pin.zoom?data.pin.zoom:1.85;
+      var zoom=data.pin&&data.pin.zoom?data.pin.zoom:1.72;
       frame.style.transform="scale("+zoom+")";
       frame.style.transformOrigin=pinPct.left+"% "+pinPct.top+"%";
     }
