@@ -167,6 +167,14 @@ export function runBettystownWeatherTests() {
   s.assert("has forecast", body.forecast.length === 2);
   s.assert("has bestDays", Array.isArray(body.bestDays));
   s.assert("validation pass", validateForecastResponse(body).ok === true);
+  s.assert("buildForecastResponse does not throw", (() => {
+    buildForecastResponse(samplePayload, {
+      fetchedAt: 1,
+      now: "2026-09-16T15:00:00Z",
+      hourlyRows: merged,
+    });
+    return true;
+  })());
   s.assert("response has tomorrow", body.tomorrow != null || body.forecast.length <= 1);
   s.assert("response has today meta", body.today != null || body.forecast.length === 0);
   s.assert("forecast rows have dateLong", body.forecast.every((d) => d.dateLong && d.dateShort));

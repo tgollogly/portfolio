@@ -815,6 +815,13 @@ body.stable-ui tr{opacity:1;transform:none}
   }
 
   function showError(msg, cached){
+    if(hasPainted&&window.__bettystownLast){
+      $("error").hidden=true;
+      var staleEl=$("staleBanner");
+      staleEl.hidden=false;
+      staleEl.textContent="Could not update just now — still showing your last forecast. Will try again quietly.";
+      return;
+    }
     $("status").textContent="Could not reach forecast API";
     var el=$("error");
     el.hidden=false;
