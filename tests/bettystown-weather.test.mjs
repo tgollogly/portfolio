@@ -34,6 +34,7 @@ import {
   parseRadarFramesFromHtml,
   formatRadarFrameIrishLabel,
   buildBettystownRadarResponse,
+  bettystownRadarImagePath,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -312,6 +313,9 @@ export function runBettystownWeatherTests() {
   s.assert("radar parse frames", parseRadarFramesFromHtml(sampleRadarHtml).length === 2);
   s.assert("radar irish label", formatRadarFrameIrishLabel("web17_radar15_202609231230.png")?.includes("Irish time"));
   s.assert("radar api shape", buildBettystownRadarResponse(["web17_radar15_202609231200.png"], "https://example.com").frames[0].imageUrl.includes("bettystown-radar-image"));
+  s.assert("radar relative path", bettystownRadarImagePath("web17_radar15_202609231200.png") === "/api/bettystown-radar-image?f=web17_radar15_202609231200.png");
+  s.assert("html forecast row colors", html.includes("forecast-row") && html.includes("score-pill"));
+  s.assert("html radar not hidden by default", !html.includes('id="rainRadarPanel" hidden'));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));

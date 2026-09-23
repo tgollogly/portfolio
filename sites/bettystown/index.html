@@ -243,6 +243,9 @@ h1{
 .radar-legend .c3{background:#facc15}.radar-legend .c4{background:#f97316}.radar-legend .c5{background:#dc2626}
 .radar-foot{font-size:.76rem;color:var(--faint);margin-top:8px}
 .radar-foot a{color:var(--ocean);text-decoration:none;border-bottom:1px solid rgba(14,116,144,.25)}
+.radar-panel.radar-loading .radar-stage img{opacity:.35;filter:blur(1px)}
+.radar-panel.radar-loading .radar-time::after{content:" · loading…"}
+.radar-fallback{font-size:.88rem;color:#92400e;background:rgba(254,243,199,.75);padding:10px 12px;border-radius:12px;margin-top:10px}
 @keyframes radarPinPulse{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-108%) scale(1.04)}}
 .stale-banner{font-size:.85rem;color:#92400e;background:rgba(254,243,199,.85);padding:10px 14px;border-radius:12px;margin-top:12px}
 .alert-chip .alert-icon{font-size:1.1rem;flex-shrink:0}
@@ -371,6 +374,13 @@ tr{transition:background .25s,transform .25s;opacity:0;transform:translateY(6px)
 tr.revealed{opacity:1;transform:none;transition:opacity .45s var(--ease-out),transform .45s var(--ease-out),background .25s}
 tr:hover td{background:rgba(240,249,255,.85)}
 .row-why{font-size:.78rem;color:var(--muted);margin-top:4px;max-width:22em;line-height:1.45}
+.forecast-row.excellent td:first-child{border-left:4px solid var(--excellent)}
+.forecast-row.good td:first-child{border-left:4px solid var(--good)}
+.forecast-row.okay td:first-child{border-left:4px solid var(--okay)}
+.forecast-row.poor td:first-child{border-left:4px solid var(--poor)}
+.forecast-row.forecast-far{opacity:.92}
+.forecast-row.forecast-far td[data-label="Walk score"] .score-pill{opacity:.88}
+.forecast-row .score-pill{margin-top:0;font-size:.72rem;padding:4px 9px}
 .forecast-cards{display:none}
 @media(max-width:680px){
   .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap tr,.table-wrap td{display:block;width:100%}
@@ -506,7 +516,7 @@ body.stable-ui tr{opacity:1;transform:none}
 
   <section class="tomorrow-card" id="tomorrowCard" hidden></section>
 
-  <section class="radar-panel" id="rainRadarPanel" hidden aria-labelledby="radarTitle">
+  <section class="radar-panel radar-loading" id="rainRadarPanel" aria-labelledby="radarTitle">
     <div class="radar-inner">
       <div class="radar-head">
         <div>
@@ -534,6 +544,7 @@ body.stable-ui tr{opacity:1;transform:none}
         <input type="range" class="radar-slider" id="radarSlider" min="0" max="0" value="0" aria-label="Scrub radar time"/>
         <span class="radar-time" id="radarTime">—</span>
       </div>
+      <p class="radar-fallback" id="radarFallback" hidden></p>
       <p class="radar-foot" id="radarAttribution">Radar © Met Éireann</p>
     </div>
   </section>
@@ -545,6 +556,7 @@ body.stable-ui tr{opacity:1;transform:none}
   <div class="best-grid" id="bestDays"></div>
 
   <h2 class="section-title"><span>📅</span> 14-day outlook</h2>
+  <p class="section-hint">Colour strip = walk score — teal lovely, gold good, blue maybe, pink stay in. Long-range days may shift.</p>
   <div class="table-wrap">
     <table>
       <thead>
@@ -848,6 +860,7 @@ body.stable-ui tr{opacity:1;transform:none}
 
     window.__bettystownLast=data;
     renderLegal(data.legal);
+    if(data.radar) renderRadar(data.radar);
     renderMaxWalk(data);
     renderMet(data);
     renderAlerts(data.alerts,data.today&&data.today.date);
@@ -898,9 +911,11 @@ body.stable-ui tr{opacity:1;transform:none}
 
     var body=$("forecastBody");
     body.innerHTML="";
-    (data.forecast||[]).forEach(function(d){
+    (data.forecast||[]).forEach(function(d,idx){
       var why=d.explanation?(d.explanation.negatives[0]||d.explanation.positives[0]||d.explanation.headline):"";
       var tr=document.createElement("tr");
+      var tier=safeTier(d.walkTier,"okay");
+      tr.className="forecast-row "+tier+(idx>4?" forecast-far":"");
       var dayCell='<strong>'+esc(d.dateShort||d.label)+'</strong>';
       if(d.relative==="today") dayCell+=' <span class="day-badge-inline">today</span>';
       var rainCell=d.rainBands
@@ -913,7 +928,7 @@ body.stable-ui tr{opacity:1;transform:none}
         '<td data-label="Temp">'+formatTempC(d.tempMax)+' / '+formatTempC(d.tempMin)+'</td>'+
         '<td data-label="Walk-time rain">'+rainCell+'</td>'+
         '<td data-label="Wind">'+Math.round(d.windMax||0)+' km/h</td>'+
-        '<td data-label="Walk score"><strong>'+d.walkScore+'</strong><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
+        '<td data-label="Walk score"><span class="score-pill '+tier+'">'+d.walkScore+' · '+tierLabel(tier)+'</span><div class="mini-bar"><i style="width:'+d.walkScore+'%"></i></div></td>';
       body.appendChild(tr);
     });
     if(hasPainted||document.body.classList.contains("stable-ui")){
@@ -1000,8 +1015,16 @@ body.stable-ui tr{opacity:1;transform:none}
   function renderRadar(data){
     var panel=$("rainRadarPanel");
     if(!panel) return;
-    if(!data||!data.ok||!data.frames||!data.frames.length){ panel.hidden=true; return; }
-    panel.hidden=false;
+    panel.classList.remove("radar-loading");
+    var fallback=$("radarFallback");
+    if(!data||!data.ok||!data.frames||!data.frames.length){
+      if(fallback){
+        fallback.hidden=false;
+        fallback.textContent="Radar could not load just now — tap Full radar on Met.ie below, or refresh in a minute.";
+      }
+      return;
+    }
+    if(fallback) fallback.hidden=true;
     radarFrames=data.frames;
     var pin=$("radarPin");
     if(data.pin&&pin){

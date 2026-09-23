@@ -1115,8 +1115,9 @@ async function handlePursuitMemoryPost(request, env) {
   return json({ ok: true, memory });
 }
 
-async function handleBettystownWeatherGet(env) {
-  const data = await getBettystownForecast(env);
+async function handleBettystownWeatherGet(request, env) {
+  const origin = new URL(request.url).origin;
+  const data = await getBettystownForecast(env, fetch, { origin });
   if (!data.ok) return json(data, 503);
   return jsonGet(data);
 }
@@ -1339,7 +1340,7 @@ export default {
     }
     if (path === "/api/bettystown-weather") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handleBettystownWeatherGet(env);
+      if (request.method === "GET") return handleBettystownWeatherGet(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/bettystown-health") {
