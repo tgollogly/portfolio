@@ -319,7 +319,9 @@ export function runBettystownWeatherTests() {
   s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-icon"));
   s.assert("html pin not in scaled frame", html.includes("radar-pin-layer"));
   const pin = bettystownRadarPin();
-  s.assert("pin from coords", pin.leftPct > 80 && pin.topPct > 40 && pin.topPct < 55);
+  s.assert("pin on ireland east coast", pin.leftPct >= 50 && pin.leftPct <= 62 && pin.topPct >= 36 && pin.topPct <= 48);
+  const computed = latLonToRadarPinPct(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
+  s.assert("computed pin not on uk side", computed.leftPct < 70);
   s.assert("radar age minutes", radarFrameAgeMinutes("web17_radar15_202609231330.png", new Date("2026-09-23T12:45:00Z")) === 15);
   s.assert("html radar latest time", html.includes("updateRadarTimeLabel"));
   s.assert("html radar time prominent", html.includes("radar-time") && html.includes("1.35rem"));
