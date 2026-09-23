@@ -177,6 +177,73 @@ h1{
 }
 .btn-action.primary{background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));color:#fff;border:none}
 .btn-action:hover{transform:translateY(-2px)}
+.radar-panel{
+  margin:28px 0 8px;padding:3px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(20,184,166,.55),rgba(14,116,144,.35),rgba(251,191,36,.45));
+  box-shadow:0 18px 44px rgba(14,116,144,.14);
+  animation:riseIn .7s var(--ease-out) both;
+}
+.radar-inner{
+  background:linear-gradient(165deg,rgba(240,249,255,.98),rgba(255,251,235,.92));
+  border-radius:20px;padding:18px 16px 16px;border:1px solid rgba(255,255,255,.7);
+}
+.radar-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.radar-head h2{
+  font-family:var(--display);font-size:1.45rem;font-weight:400;font-style:italic;color:var(--ocean-deep);
+  margin:0;line-height:1.2;
+}
+.radar-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sea-glass);margin:0 0 4px}
+.radar-hint{font-size:.86rem;color:var(--muted);margin:12px 0 0;line-height:1.45}
+.radar-stage{
+  position:relative;border-radius:16px;overflow:hidden;
+  border:2px solid rgba(14,116,144,.18);
+  background:linear-gradient(180deg,#0c4a6e 0%,#164e63 40%,#0f766e 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.radar-stage img{display:block;width:100%;height:auto;vertical-align:middle;opacity:.96}
+.radar-vignette{
+  pointer-events:none;position:absolute;inset:0;
+  background:radial-gradient(ellipse 85% 70% at 63% 37%,transparent 0%,rgba(8,47,73,.25) 100%);
+}
+.radar-coast{
+  pointer-events:none;position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 58%,rgba(20,184,166,.08) 62%,transparent 66%);
+}
+.radar-pin{
+  position:absolute;transform:translate(-50%,-100%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;z-index:3;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));
+  animation:radarPinPulse 2.4s ease-in-out infinite;
+}
+.radar-pin span{
+  font-size:1.35rem;line-height:1;background:rgba(255,255,255,.92);
+  border-radius:999px;padding:4px 6px;border:2px solid var(--ocean);
+}
+.radar-pin small{
+  font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:#fff;background:rgba(15,118,110,.88);padding:3px 8px;border-radius:999px;white-space:nowrap;
+}
+.radar-controls{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;
+}
+.radar-controls button{
+  min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);font-family:inherit;font-size:.88rem;font-weight:600;color:var(--ocean-deep);cursor:pointer;
+}
+.radar-controls button.primary{
+  background:linear-gradient(135deg,var(--sea-glass),var(--ocean));color:#fff;border:none;
+}
+.radar-slider{flex:1 1 140px;min-width:120px;accent-color:var(--ocean)}
+.radar-time{font-size:.82rem;color:var(--ocean);font-weight:600;flex:1 1 100%}
+.radar-legend{
+  display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:.78rem;color:var(--muted);
+}
+.radar-legend i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:4px;vertical-align:-2px}
+.radar-legend .c1{background:#93c5fd}.radar-legend .c2{background:#3b82f6}
+.radar-legend .c3{background:#facc15}.radar-legend .c4{background:#f97316}.radar-legend .c5{background:#dc2626}
+.radar-foot{font-size:.76rem;color:var(--faint);margin-top:8px}
+.radar-foot a{color:var(--ocean);text-decoration:none;border-bottom:1px solid rgba(14,116,144,.25)}
+@keyframes radarPinPulse{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-108%) scale(1.04)}}
 .stale-banner{font-size:.85rem;color:#92400e;background:rgba(254,243,199,.85);padding:10px 14px;border-radius:12px;margin-top:12px}
 .alert-chip .alert-icon{font-size:1.1rem;flex-shrink:0}
 .alert-chip strong{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;font-weight:700;opacity:.9}
@@ -377,7 +444,8 @@ body.stable-ui .max-walk-hero,
 body.stable-ui .day-card,
 body.stable-ui .pattern-card,
 body.stable-ui .tomorrow-card,
-body.stable-ui .now-card{animation:none!important}
+body.stable-ui .now-card,
+body.stable-ui .radar-panel{animation:none!important}
 body.stable-ui tr{opacity:1;transform:none}
 
 @media(prefers-reduced-motion:reduce){
@@ -415,7 +483,8 @@ body.stable-ui tr{opacity:1;transform:none}
     </div>
     <p class="walk-detail" id="maxWalkDetail" hidden></p>
     <div class="action-row">
-      <a class="btn-action primary" id="rainRadarBtn" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener">Raining now? · Met Éireann &amp; radar</a>
+      <a class="btn-action primary" id="rainRadarBtn" href="#rainRadarPanel">Is it raining? · See live radar</a>
+      <a class="btn-action" href="https://www.met.ie/weather-forecast/bettystown-meath" target="_blank" rel="noopener noreferrer">Met.ie · Bettystown</a>
     </div>
   </section>
 </header>
@@ -436,6 +505,39 @@ body.stable-ui tr{opacity:1;transform:none}
   </section>
 
   <section class="tomorrow-card" id="tomorrowCard" hidden></section>
+
+  <section class="radar-panel" id="rainRadarPanel" hidden aria-labelledby="radarTitle">
+    <div class="radar-inner">
+      <div class="radar-head">
+        <div>
+          <p class="radar-kicker">Live over Ireland · last 6 hours</p>
+          <h2 id="radarTitle"><span aria-hidden="true">🌧️</span> Rain radar for Max’s walk</h2>
+        </div>
+        <a class="btn-action" href="https://www.met.ie/latest-reports/recent-rainfall-radar/12-hour-rainfall-radar" target="_blank" rel="noopener noreferrer">Full radar on Met.ie</a>
+      </div>
+      <div class="radar-stage" id="radarStage">
+        <img id="radarImg" width="640" height="512" alt="Met Éireann rainfall radar over Ireland" loading="lazy" decoding="async"/>
+        <div class="radar-coast" aria-hidden="true"></div>
+        <div class="radar-vignette" aria-hidden="true"></div>
+        <div class="radar-pin" id="radarPin" aria-hidden="true"><span>🐕</span><small>Bettystown</small></div>
+      </div>
+      <div class="radar-legend" aria-label="Radar colours">
+        <span><i class="c1"></i> Light</span>
+        <span><i class="c2"></i> Steady</span>
+        <span><i class="c3"></i> Heavy</span>
+        <span><i class="c4"></i> Very heavy</span>
+        <span><i class="c5"></i> Intense</span>
+      </div>
+      <p class="radar-hint">Blue and yellow blobs moving toward the 🐕 pin mean rain may reach Bettystown soon. Green walk times at the top are still your main guide.</p>
+      <div class="radar-controls">
+        <button type="button" class="primary" id="radarPlayBtn" aria-pressed="false">Play rain loop</button>
+        <input type="range" class="radar-slider" id="radarSlider" min="0" max="0" value="0" aria-label="Scrub radar time"/>
+        <span class="radar-time" id="radarTime">—</span>
+      </div>
+      <p class="radar-foot" id="radarAttribution">Radar © Met Éireann</p>
+    </div>
+  </section>
+
   <div class="patterns" id="patternsRow" hidden></div>
 
   <h2 class="section-title"><span>⭐</span> Nicest days for a beach walk</h2>
@@ -468,7 +570,7 @@ body.stable-ui tr{opacity:1;transform:none}
     <p><strong>Data attribution</strong></p>
     <ul id="legalSources">
       <li><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> — hourly/daily weather models (<a href="https://open-meteo.com/en/license" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)</li>
-      <li><a href="https://www.met.ie/" target="_blank" rel="noopener noreferrer">Met Éireann</a> — regional forecast text (Leinster/National open data). Not affiliated with Met Éireann.</li>
+      <li><a href="https://www.met.ie/" target="_blank" rel="noopener noreferrer">Met Éireann</a> — regional forecast text &amp; rainfall radar imagery. Not affiliated with Met Éireann.</li>
     </ul>
     <p class="foot-copy" id="legalCopyright">© Thomas Gollogly. All rights reserved.</p>
   </div>
@@ -487,6 +589,7 @@ body.stable-ui tr{opacity:1;transform:none}
 <script>
 (function(){
   var API="/api/bettystown-weather";
+  var RADAR_API="/api/bettystown-radar";
   var CACHE_KEY="bettystown_weather_v2";
   var REFRESH_MS=45*60*1000;
   var TZ="Europe/Dublin";
@@ -859,6 +962,81 @@ body.stable-ui tr{opacity:1;transform:none}
     if(cached) render(cached);
   }
 
+  var radarFrames=[];
+  var radarIndex=0;
+  var radarTimer=null;
+  var radarPlaying=false;
+  var prefersReducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function stopRadarLoop(){
+    if(radarTimer){ clearInterval(radarTimer); radarTimer=null; }
+    radarPlaying=false;
+    var btn=$("radarPlayBtn");
+    if(btn){ btn.setAttribute("aria-pressed","false"); btn.textContent="Play rain loop"; }
+  }
+
+  function showRadarFrame(i){
+    if(!radarFrames.length) return;
+    radarIndex=((i%radarFrames.length)+radarFrames.length)%radarFrames.length;
+    var fr=radarFrames[radarIndex];
+    var img=$("radarImg");
+    if(img&&fr.imageUrl) img.src=fr.imageUrl;
+    if(img) img.alt="Met Éireann rainfall radar — "+(fr.label||"Ireland");
+    var timeEl=$("radarTime");
+    if(timeEl) timeEl.textContent=fr.label||"—";
+    var slider=$("radarSlider");
+    if(slider) slider.value=String(radarIndex);
+  }
+
+  function startRadarLoop(){
+    if(prefersReducedMotion||radarFrames.length<2) return;
+    stopRadarLoop();
+    radarPlaying=true;
+    var btn=$("radarPlayBtn");
+    if(btn){ btn.setAttribute("aria-pressed","true"); btn.textContent="Pause loop"; }
+    radarTimer=setInterval(function(){ showRadarFrame(radarIndex+1); }, 750);
+  }
+
+  function renderRadar(data){
+    var panel=$("rainRadarPanel");
+    if(!panel) return;
+    if(!data||!data.ok||!data.frames||!data.frames.length){ panel.hidden=true; return; }
+    panel.hidden=false;
+    radarFrames=data.frames;
+    var pin=$("radarPin");
+    if(data.pin&&pin){
+      pin.style.left=data.pin.leftPct+"%";
+      pin.style.top=data.pin.topPct+"%";
+    }
+    var attr=$("radarAttribution");
+    if(attr){
+      attr.innerHTML='Radar © <a href="'+esc(data.sourceUrl)+'" target="_blank" rel="noopener noreferrer">Met Éireann</a> · '+esc(data.attribution||"")+
+        (data.stale?" · Showing last good loop.":"");
+    }
+    var slider=$("radarSlider");
+    if(slider){
+      slider.max=String(Math.max(0, radarFrames.length-1));
+      slider.oninput=function(){ stopRadarLoop(); showRadarFrame(Number(slider.value)); };
+    }
+    showRadarFrame(radarFrames.length-1);
+    if(!prefersReducedMotion) startRadarLoop();
+  }
+
+  function fetchRadar(){
+    return fetch(RADAR_API,{headers:{Accept:"application/json"}})
+      .then(function(r){ if(!r.ok) throw new Error("radar "+r.status); return r.json(); })
+      .then(renderRadar)
+      .catch(function(){});
+  }
+
+  var radarPlayBtn=$("radarPlayBtn");
+  if(radarPlayBtn){
+    radarPlayBtn.addEventListener("click",function(){
+      if(radarPlaying) stopRadarLoop();
+      else startRadarLoop();
+    });
+  }
+
   function loadCached(){
     try{
       var raw=localStorage.getItem(CACHE_KEY)||localStorage.getItem("bettystown_weather_v1");
@@ -913,7 +1091,9 @@ body.stable-ui tr{opacity:1;transform:none}
   var bootCached=loadCached();
   if(bootCached) render(bootCached);
   fetchWeather().then(revealRows).catch(function(){setTimeout(revealRows,400)});
+  fetchRadar();
   setInterval(fetchWeather, REFRESH_MS);
+  setInterval(fetchRadar, 15*60*1000);
   document.addEventListener("visibilitychange",function(){
     if(document.visibilityState==="visible"&&!fetchInFlight){
       var age=window.__bettystownLast&&window.__bettystownLast.fetchedAt?(Date.now()-window.__bettystownLast.fetchedAt):99999999;

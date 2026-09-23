@@ -30,6 +30,10 @@ import {
   scoreWalkDay,
   validateForecastResponse,
   wmoInfo,
+  sanitizeRadarFilename,
+  parseRadarFramesFromHtml,
+  formatRadarFrameIrishLabel,
+  buildBettystownRadarResponse,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -298,6 +302,16 @@ export function runBettystownWeatherTests() {
   s.assert("html anti-flicker stable-ui", html.includes("stable-ui") && html.includes("lastFingerprint"));
   s.assert("html fetch in flight guard", html.includes("fetchInFlight"));
   s.assert("html mobile table labels", html.includes("data-label=\"Walk score\""));
+  s.assert("html embedded radar panel", html.includes("rainRadarPanel") && html.includes("radarImg"));
+  s.assert("html radar api", html.includes("/api/bettystown-radar"));
+  s.assert("server radar routes", server.includes("/api/bettystown-radar") && server.includes("bettystown-radar-image"));
+
+  s.assert("radar filename whitelist", sanitizeRadarFilename("web17_radar15_202609231200.png") === "web17_radar15_202609231200.png");
+  s.assert("radar filename reject", sanitizeRadarFilename("../evil.png") === null);
+  const sampleRadarHtml = '["web17_radar15_202609230100.png","web17_radar15_202609230115.png"]';
+  s.assert("radar parse frames", parseRadarFramesFromHtml(sampleRadarHtml).length === 2);
+  s.assert("radar irish label", formatRadarFrameIrishLabel("web17_radar15_202609231230.png")?.includes("Irish time"));
+  s.assert("radar api shape", buildBettystownRadarResponse(["web17_radar15_202609231200.png"], "https://example.com").frames[0].imageUrl.includes("bettystown-radar-image"));
   s.assert("now-temp no ios clip bug", !/\.now-temp\{[^}]*background-clip:text/.test(html));
   s.assert("now-temp tabular nums", html.includes("font-variant-numeric:tabular-nums"));
   s.assert("html celsius formatter", html.includes("formatTempC") && html.includes('+"°C"'));

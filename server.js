@@ -41,6 +41,8 @@ import {
 import {
   buildBettystownManifest,
   getBettystownForecast,
+  getBettystownRadar,
+  proxyBettystownRadarImage,
   runBettystownHealthCheck,
 } from "./lib/bettystown-weather.js";
 import {
@@ -1124,6 +1126,31 @@ async function handleBettystownHealthGet(env) {
   return jsonGet(health, health.ok ? 200 : 503);
 }
 
+async function handleBettystownRadarGet(request, env) {
+  const origin = new URL(request.url).origin;
+  const data = await getBettystownRadar(env, origin);
+  if (!data.ok) return json(data, 503);
+  return jsonGet(data);
+}
+
+async function handleBettystownRadarImageGet(request) {
+  const f = new URL(request.url).searchParams.get("f");
+  const proxied = await proxyBettystownRadarImage(f);
+  if (!proxied.ok) {
+    return new Response(proxied.status === 404 ? "Not found" : "Bad request", {
+      status: proxied.status || 400,
+      headers: corsGet(),
+    });
+  }
+  return new Response(proxied.body, {
+    headers: {
+      ...corsGet(),
+      "Content-Type": proxied.contentType,
+      "Cache-Control": proxied.cacheControl,
+    },
+  });
+}
+
 async function handleNewryFuelPricesGet(env) {
   const data = await serveFuelPrices(env);
   if (!data.ok) return json(data, 503);
@@ -1318,6 +1345,16 @@ export default {
     if (path === "/api/bettystown-health") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
       if (request.method === "GET") return handleBettystownHealthGet(env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/bettystown-radar") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleBettystownRadarGet(request, env);
+      return new Response("GET only", { status: 405, headers: corsGet() });
+    }
+    if (path === "/api/bettystown-radar-image") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
+      if (request.method === "GET") return handleBettystownRadarImageGet(request);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/newry-fuel/prices") {
