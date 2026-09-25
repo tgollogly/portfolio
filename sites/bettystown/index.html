@@ -107,6 +107,11 @@ h1{
 .panel{max-width:980px;margin:0 auto;padding:0 16px calc(88px + env(safe-area-inset-bottom,0px))}
 .status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--faint);margin:16px 0 0}
 .status .live{color:var(--sea-glass);font-weight:600}
+.status .stale-status{color:#b45309;font-weight:600}
+.retry:focus-visible,.music-toggle:focus-visible{outline:2px solid var(--ocean);outline-offset:3px}
+.hero-now{margin-top:18px}
+.hero-now.now-card{margin-top:18px}
+.forecast-loading td{text-align:center;color:var(--faint);padding:24px 16px;font-size:.92rem}
 .loader{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--ocean);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}
 .err{background:rgba(254,226,226,.88);backdrop-filter:var(--glass);border:1px solid #fecaca;color:#be123c;border-radius:18px;padding:16px 20px;margin:16px 0}
 .retry{margin-top:10px;background:linear-gradient(135deg,var(--ocean),var(--ocean-deep));color:#fff;border:none;border-radius:12px;padding:10px 18px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .25s var(--ease-out)}
@@ -301,7 +306,7 @@ h1{
 }
 .radar-legend i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:4px;vertical-align:-2px}
 .radar-legend .c1{background:#93c5fd}.radar-legend .c2{background:#3b82f6}
-.radar-legend .c3{background:#facc15}.radar-legend .c4{background:#f97316}.radar-legend .c5{background:#dc2626}
+.radar-legend .c3{background:#facc15}
 .radar-foot{font-size:.76rem;color:var(--faint);margin-top:8px}
 .radar-foot a{color:var(--ocean);text-decoration:none;border-bottom:1px solid rgba(14,116,144,.25)}
 .radar-panel.radar-loading .radar-stage img{opacity:.35;filter:blur(1px)}
@@ -549,8 +554,22 @@ body.stable-ui tr{opacity:1;transform:none}
   <div class="badge"><span class="dot"></span> Bettystown · County Meath</div>
   <h1><span class="title-main">Mom's Bettystown</span><span class="title-accent">Weather</span></h1>
   <p class="subtitle">When to walk <span class="paw">🐕 Max</span> on Bettystown Beach — plain English, Irish times, no weather jargon.</p>
-  <div class="status" id="status"><span class="loader"></span> Loading fresh forecast…</div>
-  <div id="staleBanner" class="stale-banner" hidden></div>
+  <div class="status" id="status" aria-live="polite"><span class="loader"></span> Loading fresh forecast…</div>
+  <div id="staleBanner" class="stale-banner" hidden aria-live="assertive"></div>
+
+  <section class="now-card hero-now" id="nowCard" hidden>
+    <div>
+      <div class="now-kicker">Right now</div>
+      <div class="now-date" id="nowDate">—</div>
+      <div class="now-temp" id="nowTemp">—°C</div>
+      <div class="now-meta" id="nowMeta">Fetching…</div>
+    </div>
+    <div class="now-icon" id="nowIcon">🌤️</div>
+  </section>
+
+  <div class="alerts-bar" id="alertsBar" hidden aria-live="polite"></div>
+  <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
+
   <section class="max-walk-hero" id="maxWalkHero" hidden aria-labelledby="maxWalkTitle">
     <h2 id="maxWalkTitle"><span aria-hidden="true">🐕</span> When to walk Max</h2>
     <p class="max-walk-summary" id="maxWalkSummary">Pick a coloured time below — green is best for Max.</p>
@@ -561,7 +580,6 @@ body.stable-ui tr{opacity:1;transform:none}
       <span><i class="l-wet"></i> Pink — wet likely</span>
       <span class="hint" style="width:100%;margin-top:4px">All times Irish (Dublin) · 8am–8pm walk hours</span>
     </div>
-    <p class="walk-detail" id="maxWalkDetail" hidden></p>
     <section class="hourly-today" id="todayHourlySection" hidden aria-labelledby="todayHourlyTitle">
       <h3 id="todayHourlyTitle"><span aria-hidden="true">🕐</span> Today, hour by hour</h3>
       <p class="hourly-sub" id="todayHourlySub">Irish time · scroll sideways for every hour</p>
@@ -588,7 +606,7 @@ body.stable-ui tr{opacity:1;transform:none}
               </div>
             </div>
           </div>
-          <div class="radar-vignette" aria-hidden="true"></div>
+          <div class="radar-vignette" id="radarVignette" aria-hidden="true"></div>
         </div>
         <div class="radar-legend" aria-label="Radar colours">
           <span><i class="c1"></i> Light</span>
@@ -605,19 +623,7 @@ body.stable-ui tr{opacity:1;transform:none}
 </header>
 
 <main class="panel">
-  <div id="error" class="err" hidden></div>
-  <blockquote class="met-oneliner" id="metOneLiner" hidden></blockquote>
-  <div class="alerts-bar" id="alertsBar" hidden></div>
-
-  <section class="now-card" id="nowCard" hidden>
-    <div>
-      <div class="now-kicker">Right now · live</div>
-      <div class="now-date" id="nowDate">—</div>
-      <div class="now-temp" id="nowTemp">—°C</div>
-      <div class="now-meta" id="nowMeta">Fetching…</div>
-    </div>
-    <div class="now-icon" id="nowIcon">🌤️</div>
-  </section>
+  <div id="error" class="err" hidden role="alert"></div>
 
   <section class="tomorrow-card" id="tomorrowCard" hidden></section>
 
@@ -641,16 +647,16 @@ body.stable-ui tr{opacity:1;transform:none}
           <th>Walk score</th>
         </tr>
       </thead>
-      <tbody id="forecastBody"></tbody>
+      <tbody id="forecastBody"><tr class="forecast-loading"><td colspan="6">Loading 14-day outlook…</td></tr></tbody>
     </table>
   </div>
 </main>
 
 <footer class="foot">
-  <p><span id="updatedAt">—</span> · Refreshes every 45 minutes · <span id="metIssued"></span></p>
+  <p><span id="updatedAt">—</span> · Refreshes every 45 minutes</p>
   <div class="foot-legal" id="legalBlock" aria-labelledby="legalHeading">
     <h3 id="legalHeading">Disclaimer &amp; data sources</h3>
-    <p id="legalDisclaimer">For personal planning only — not an official Met Éireann forecast, weather warning, or veterinary advice. Walk scores are automated hints; use your own judgment and check official sources before travel.</p>
+    <p id="legalDisclaimer">For personal planning only — not an official Met Éireann forecast, weather warning, or veterinary advice. Walk scores and alerts are automated hints; always use your own judgment and check official sources before travel.</p>
     <p><strong>Data attribution</strong></p>
     <ul id="legalSources">
       <li>Open-Meteo — hourly/daily weather models (CC BY 4.0)</li>
@@ -728,7 +734,10 @@ body.stable-ui tr{opacity:1;transform:none}
         '<div class="h-walk">'+esc(walkLabelPlain(h.walkLabel))+'</div></article>';
     }).join("");
     var nowChip=row.querySelector(".hour-chip.now");
-    if(nowChip&&nowChip.scrollIntoView) nowChip.scrollIntoView({inline:"center",block:"nearest",behavior:hasPainted?"auto":"smooth"});
+    if(nowChip&&row){
+      var target=nowChip.offsetLeft-(row.clientWidth-nowChip.offsetWidth)/2;
+      row.scrollTo({left:Math.max(0,target),behavior:hasPainted?"auto":"smooth"});
+    }
   }
 
   function dayHeading(d){
@@ -760,6 +769,13 @@ body.stable-ui tr{opacity:1;transform:none}
     return Number(formatIrelandDate(Date.now(),{hour:"numeric",hour12:false}));
   }
 
+  function alertConfidenceLine(a){
+    var c=a.confidence;
+    if(!c) return "";
+    if(/%|nowcast|^\~?\d/.test(String(c))) return "";
+    return c;
+  }
+
   function renderAlerts(alerts,todayYmd){
     var bar=$("alertsBar");
     if(!alerts||!alerts.length){bar.hidden=true;bar.innerHTML="";return}
@@ -769,12 +785,16 @@ body.stable-ui tr{opacity:1;transform:none}
       return (tierRank[alertTierClass(a)]??4)-(tierRank[alertTierClass(b)]??4);
     });
     var seenDateType={};
+    var rainTimingDates={};
+    sorted.forEach(function(a){
+      if(a.type==="rain_timing"&&a.date) rainTimingDates[a.date]=true;
+    });
     todayYmd=todayYmd||(window.__bettystownLast&&window.__bettystownLast.today&&window.__bettystownLast.today.date);
     var filtered=sorted.filter(function(a){
       if(a.date&&a.date!=="now"&&todayYmd&&a.date<todayYmd) return false;
       if(a.type==="rain_timing"&&a.date===todayYmd&&a.title==="Overnight rain"&&irishHourNow()>=8) return false;
       var k=(a.date||"")+":"+a.type;
-      if(a.type==="walk_ok"&&seenDateType[a.date+"rain_timing"]) return false;
+      if(a.type==="walk_ok"&&rainTimingDates[a.date]) return false;
       if(a.type==="rain_timing"&&a.title==="Overnight rain"&&a.leadDays!=null&&a.leadDays>2) return false;
       if(a.type==="walk_watch"&&a.date===todayYmd){
         var mw=window.__bettystownLast&&window.__bettystownLast.maxWalkScore;
@@ -786,7 +806,8 @@ body.stable-ui tr{opacity:1;transform:none}
       return true;
     });
     bar.innerHTML=filtered.slice(0,5).map(function(a,i){
-      var conf=a.confidence?('<div class="hint" style="margin-top:6px">'+esc(a.confidence)+'</div>'):"";
+      var confPlain=alertConfidenceLine(a);
+      var conf=confPlain?('<div class="hint" style="margin-top:6px">'+esc(confPlain)+'</div>'):"";
       var lead=a.leadDays>=6?('<div class="hint">'+esc(a.label||"")+' · long-range</div>'):"";
       return '<div class="alert-chip '+esc(alertTierClass(a))+'" style="animation-delay:'+(i*0.05)+'s">'+
         '<span class="alert-icon">'+alertIcon(a.type)+'</span>'+
@@ -813,7 +834,6 @@ body.stable-ui tr{opacity:1;transform:none}
     host.innerHTML="";
     if(!mw||!mw.days||!mw.days.length){
       $("maxWalkSummary").textContent="Walk windows loading…";
-      $("maxWalkDetail").textContent="";
       return;
     }
     var todayDay=mw.days.find(function(d){return d.relative==="today"});
@@ -857,7 +877,6 @@ body.stable-ui tr{opacity:1;transform:none}
     if(!parts&&met.oneLiner) parts='<p class="met-part">'+esc(met.oneLiner)+'</p>';
     el.innerHTML='<p class="met-kicker">Met Éireann forecast (Leinster)</p>'+parts+
       '<cite>'+(issued?("Issued "+issued+" · "+TIME_LABEL):"")+'</cite>';
-    $("metIssued").textContent="";
   }
 
   function renderTomorrow(t){
@@ -1055,14 +1074,16 @@ body.stable-ui tr{opacity:1;transform:none}
     hasPainted=true;
     document.body.classList.add("stable-ui");
 
-    var stale=data.stale?" (cached backup)":"";
-    $("status").innerHTML='<span class="live">● Live</span> · Updated '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' · '+TIME_LABEL+stale;
+    var statusBadge=data.stale
+      ?'<span class="stale-status">◆ Saved forecast</span>'
+      :'<span class="live">● Live</span>';
+    $("status").innerHTML=statusBadge+' · Updated '+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit"})+' · '+TIME_LABEL;
     $("updatedAt").textContent="Updated "+formatIrelandDate(data.fetchedAt,{hour:"2-digit",minute:"2-digit",weekday:"short",day:"numeric",month:"short"})+" ("+TIME_LABEL+")";
     var staleEl=$("staleBanner");
     if(data.stale||data.staleHint){
       staleEl.hidden=false;
-      staleEl.textContent=data.staleHint||"Forecast may be stale — pull to refresh or tap Try again.";
-    }else{staleEl.hidden=true}
+      staleEl.textContent=data.staleHint||"Forecast may be stale — refresh the page or tap Try again.";
+    }else{staleEl.hidden=true;staleEl.textContent=""}
     try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:data}))}catch(e){}
   }
 
@@ -1213,6 +1234,10 @@ body.stable-ui tr{opacity:1;transform:none}
     if(ring){
       ring.style.left=pinPct.left+"%";
       ring.style.top=pinPct.top+"%";
+    }
+    var vignette=$("radarVignette");
+    if(vignette){
+      vignette.style.background="radial-gradient(ellipse 55% 45% at "+pinPct.left+"% "+pinPct.top+"%,transparent 35%,rgba(8,47,73,.35) 100%)";
     }
     var attr=$("radarAttribution");
     if(attr) attr.textContent="Radar © Met Éireann · "+(data.attribution||"")+(data.stale?" · last good loop":"");
