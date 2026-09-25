@@ -200,6 +200,8 @@ h1{
 }
 .radar-kicker{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sea-glass);margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .radar-live-dot{color:#059669;font-weight:700}
+.radar-delayed-dot{color:#b45309;font-weight:700}
+.radar-kicker.is-delayed{color:#92400e}
 .hourly-today{margin:20px 0 0}
 .hourly-today h3{font-family:var(--display);font-size:1.25rem;font-weight:400;font-style:italic;color:var(--ocean-deep);margin:0 0 8px}
 .hourly-today .hourly-sub{font-size:.82rem;color:var(--muted);margin:0 0 12px}
@@ -567,7 +569,11 @@ body.stable-ui tr{opacity:1;transform:none}
     </section>
     <section class="radar-panel radar-loading" id="rainRadarPanel" aria-labelledby="radarTitle">
       <div class="radar-inner">
-        <p class="radar-kicker"><span class="radar-live-dot" id="radarLiveBadge">● Live</span> Rain radar · refreshes about every minute</p>
+        <p class="radar-kicker" id="radarKicker">
+          <span class="radar-live-dot" id="radarLiveBadge">● Live</span>
+          <span class="radar-delayed-dot" id="radarDelayedBadge" hidden>◆ Radar delayed</span>
+          <span id="radarKickerText">Rain radar · refreshes about every minute</span>
+        </p>
         <h3 id="radarTitle"><span aria-hidden="true">🌧️</span> Is it raining toward Bettystown?</h3>
         <div class="radar-stage" id="radarStage">
           <div class="radar-zoom">
@@ -1080,8 +1086,39 @@ body.stable-ui tr{opacity:1;transform:none}
   var radarIndex=0;
   var radarTimer=null;
   var lastRadarFile=null;
+  var lastRadarFrameAtMs=null;
   var RADAR_LIVE_MS=90*1000;
+  var RADAR_LIVE_THRESHOLD_MIN=5;
+  var radarMinuteTimer=null;
   var prefersReducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function radarAgeMinutesNow(){
+    if(!lastRadarFrameAtMs) return null;
+    return Math.max(0, Math.floor((Date.now()-lastRadarFrameAtMs)/60000));
+  }
+
+  function radarAgeSuffix(ageMin){
+    if(ageMin==null) return "";
+    if(ageMin<RADAR_LIVE_THRESHOLD_MIN) return "updated "+ageMin+" min ago";
+    if(ageMin<=120) return "Displaying latest available · "+ageMin+" min old";
+    return "Displaying latest available from Met Éireann";
+  }
+
+  function applyRadarFreshnessUI(ageMin){
+    var live=$("radarLiveBadge");
+    var delayed=$("radarDelayedBadge");
+    var kicker=$("radarKicker");
+    var kickerText=$("radarKickerText");
+    var fresh=ageMin!=null&&ageMin<RADAR_LIVE_THRESHOLD_MIN;
+    if(live) live.hidden=!fresh;
+    if(delayed) delayed.hidden=fresh;
+    if(kicker) kicker.classList.toggle("is-delayed",!fresh&&ageMin!=null);
+    if(kickerText){
+      kickerText.textContent=fresh
+        ? "Rain radar · refreshes about every minute"
+        : "Showing latest picture from Met Éireann (not live)";
+    }
+  }
 
   function updateRadarTimeLabel(extra){
     if(!radarFrames.length) return;
@@ -1091,6 +1128,21 @@ body.stable-ui tr{opacity:1;transform:none}
     var line=latest.label||"—";
     if(extra) line+=" · "+extra;
     timeEl.textContent=line;
+  }
+
+  function refreshRadarAgeDisplay(){
+    var age=radarAgeMinutesNow();
+    applyRadarFreshnessUI(age);
+    updateRadarTimeLabel(radarAgeSuffix(age));
+  }
+
+  function scheduleRadarMinuteTick(){
+    if(radarMinuteTimer) clearTimeout(radarMinuteTimer);
+    var msToNextMinute=60000-(Date.now()%60000)+50;
+    radarMinuteTimer=setTimeout(function(){
+      refreshRadarAgeDisplay();
+      scheduleRadarMinuteTick();
+    }, msToNextMinute);
   }
 
   function showRadarFrame(i){
@@ -1126,14 +1178,20 @@ body.stable-ui tr{opacity:1;transform:none}
         fallback.hidden=false;
         fallback.textContent="Radar could not load just now — refresh in a minute.";
       }
-      if(liveBadge) liveBadge.textContent="○ Offline";
+      applyRadarFreshnessUI(null);
+      if(liveBadge){ liveBadge.hidden=true; }
+      var delayed=$("radarDelayedBadge");
+      if(delayed){ delayed.hidden=false; delayed.textContent="○ Radar offline"; }
       return;
     }
     if(fallback) fallback.hidden=true;
-    if(liveBadge) liveBadge.textContent="● Live";
     var latestFile=data.latest&&data.latest.file;
-    if(livePoll&&latestFile&&latestFile===lastRadarFile) return;
+    if(livePoll&&latestFile&&latestFile===lastRadarFile){
+      refreshRadarAgeDisplay();
+      return;
+    }
     lastRadarFile=latestFile||null;
+    lastRadarFrameAtMs=(data.latest&&data.latest.frameAtMs)||lastRadarFrameAtMs;
     radarFrames=data.frames;
     var pinPct={left:68.2,top:40.5};
     if(data.pin){
@@ -1158,14 +1216,10 @@ body.stable-ui tr{opacity:1;transform:none}
     }
     var attr=$("radarAttribution");
     if(attr) attr.textContent="Radar © Met Éireann · "+(data.attribution||"")+(data.stale?" · last good loop":"");
-    var ageNote="";
-    if(data.latestAgeMinutes!=null){
-      ageNote=data.latestAgeMinutes<=20
-        ?("updated ~"+data.latestAgeMinutes+" min ago")
-        :("Met Éireann feed ~"+data.latestAgeMinutes+" min behind now");
-    }
+    if(data.latest&&data.latest.frameAtMs) lastRadarFrameAtMs=data.latest.frameAtMs;
     showRadarFrame(radarFrames.length-1);
-    updateRadarTimeLabel(ageNote);
+    refreshRadarAgeDisplay();
+    scheduleRadarMinuteTick();
     if(!livePoll) startRadarLoop();
   }
 

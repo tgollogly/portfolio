@@ -41,6 +41,12 @@ import {
   latLonToRadarPinPct,
   bettystownRadarPin,
   radarFrameAgeMinutes,
+  radarFrameAsDate,
+  dateAtIrishWallClock,
+  resolveTerrestrialRadarPin,
+  isRadarFeedLive,
+  formatRadarAgeMinutes,
+  RADAR_LIVE_THRESHOLD_MIN,
 } from "../lib/bettystown-weather.js";
 import { createSuite } from "./harness.mjs";
 
@@ -54,7 +60,7 @@ export function runBettystownWeatherTests() {
   s.assert("legal open-meteo license", legal.dataSources.some((d) => d.name === "Open-Meteo" && d.license.includes("CC BY")));
   s.assert("legal disclaimer personal", legal.disclaimer.includes("personal"));
 
-  s.assert("coords bettystown pin", BETTYSTOWN.latitude === 53.604 && BETTYSTOWN.longitude === -6.246);
+  s.assert("coords bettystown pin", BETTYSTOWN.latitude === 53.698 && BETTYSTOWN.longitude === -6.248);
   s.assert("timezone dublin", BETTYSTOWN.timezone === "Europe/Dublin");
   s.assert("wmo clear", wmoInfo(0).icon === "☀️");
   s.assert("wmo unknown fallback", wmoInfo(999).label === "Unknown");
@@ -319,10 +325,17 @@ export function runBettystownWeatherTests() {
   s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-marker"));
   s.assert("html pin not in scaled frame", html.includes("radar-pin-layer"));
   const pin = bettystownRadarPin();
-  s.assert("pin on ireland east coast", pin.leftPct >= 64 && pin.leftPct <= 72 && pin.topPct >= 36 && pin.topPct <= 46);
-  const computed = latLonToRadarPinPct(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
-  s.assert("computed pin not on uk side", computed.leftPct < 70);
-  s.assert("radar age minutes", radarFrameAgeMinutes("web17_radar15_202609231330.png", new Date("2026-09-23T12:45:00Z")) === 15);
+  s.assert("pin on ireland east coast land", pin.leftPct >= 58 && pin.leftPct <= 67 && pin.topPct >= 36 && pin.topPct <= 46);
+  s.assert("pin sanity on land", pin.onLand === true);
+  const resolved = resolveTerrestrialRadarPin(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
+  s.assert("resolve keeps off ocean", resolved.leftPct <= 67);
+  const frame = "web17_radar15_202609231330.png";
+  const nowIrish = dateAtIrishWallClock("2026-09-23", 13, 53);
+  s.assert("radar age floor 23 min", radarFrameAgeMinutes(frame, nowIrish) === 23);
+  s.assert("radar frame as date", radarFrameAsDate(frame) instanceof Date);
+  s.assert("radar live threshold", isRadarFeedLive(4) && !isRadarFeedLive(RADAR_LIVE_THRESHOLD_MIN));
+  s.assert("radar age copy", formatRadarAgeMinutes(23).includes("23 min"));
+  s.assert("html radar delayed badge", html.includes("radarDelayedBadge"));
   s.assert("html radar latest time", html.includes("updateRadarTimeLabel"));
   s.assert("html radar time prominent", html.includes("radar-time") && html.includes("1.35rem"));
   s.assert("html esc helper", html.includes("function esc("));
