@@ -323,14 +323,16 @@ export function runBettystownWeatherTests() {
   s.assert("html today hourly ui", html.includes("todayHourlyRow") && html.includes("hour-chip"));
   s.assert("html radar live poll", html.includes("pollRadarLive"));
   s.assert("html radar zoom frame", html.includes("radar-map-frame") && html.includes("pin-marker"));
+  s.assert("html radar full ireland frame", html.includes("aspect-ratio:850/680"));
   s.assert("html pin not in scaled frame", html.includes("radar-pin-layer"));
   const pin = bettystownRadarPin();
   s.assert("pin on ireland east coast land", pin.leftPct >= 58 && pin.leftPct <= 67 && pin.topPct >= 36 && pin.topPct <= 46);
   s.assert("pin sanity on land", pin.onLand === true);
   s.assert(
-    "bettystown pin beach calibration",
-    pin.leftPct >= 64.5 && pin.leftPct <= 66.2 && pin.topPct >= 41.5 && pin.topPct <= 42.5,
+    "bettystown pin osm calibration",
+    pin.leftPct >= 62.5 && pin.leftPct <= 63.5 && pin.topPct >= 39.8 && pin.topPct <= 40.8,
   );
+  s.assert("radar full ireland zoom", pin.zoom === 1);
   const resolved = resolveTerrestrialRadarPin(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
   s.assert("resolve keeps off ocean", resolved.leftPct <= 67);
   const frame = "web17_radar15_202609231330.png";
