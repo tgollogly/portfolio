@@ -327,6 +327,10 @@ export function runBettystownWeatherTests() {
   const pin = bettystownRadarPin();
   s.assert("pin on ireland east coast land", pin.leftPct >= 58 && pin.leftPct <= 67 && pin.topPct >= 36 && pin.topPct <= 46);
   s.assert("pin sanity on land", pin.onLand === true);
+  s.assert(
+    "bettystown pin beach calibration",
+    pin.leftPct >= 64.5 && pin.leftPct <= 66.2 && pin.topPct >= 41.5 && pin.topPct <= 42.5,
+  );
   const resolved = resolveTerrestrialRadarPin(BETTYSTOWN.latitude, BETTYSTOWN.longitude);
   s.assert("resolve keeps off ocean", resolved.leftPct <= 67);
   const frame = "web17_radar15_202609231330.png";
