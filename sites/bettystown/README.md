@@ -9,6 +9,14 @@ Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 | **https://tgollogly.dev/bettystown/** | **Send this link to Mom** (works now) |
 | https://bettystown.tgollogly.dev/ | Subdomain (after Cloudflare domain setup) |
 
+### Temporary storm facade
+
+When `BETTYSTOWN_STORM_FACADE_ENABLED` is `true` in `server.js`, visitors only see the torrential-rain status page (no full forecast; APIs return storm-shaped data). Owner bypass (sets `bt_owner` cookie for 30 days):
+
+`/bettystown/?bt_owner=YOUR_SECRET`
+
+Set `BETTYSTOWN_OWNER_SECRET` in Cloudflare, or use the fallback constant in `server.js`. Set `BETTYSTOWN_STORM_FACADE_ENABLED` to `false` to restore public access.
+
 **Link preview:** uses `https://tgollogly.dev/assets/og/bettystown-weather.png` (public, no login).
 
 **iPhone Home Screen:** open in Safari → Share → **Add to Home Screen** — uses `apple-touch-icon.png` and standalone mode.

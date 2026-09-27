@@ -46,6 +46,10 @@ import {
   runBettystownHealthCheck,
 } from "./lib/bettystown-weather.js";
 import {
+  buildBettystownStormFacadeRadar,
+  buildBettystownStormFacadeWeather,
+} from "./lib/bettystown-storm-facade.js";
+import {
   buildFuelResponse,
   serveFuelPrices,
   buildNewryFuelManifest,
@@ -183,6 +187,15 @@ const NEWRY_FUEL_HOST = "newry.tgollogly.dev";
 const BETTYSTOWN_PREFIX = "/sites/bettystown";
 const NEWRY_FUEL_PREFIX = "/sites/newry-fuel";
 const BETTYSTOWN_INDEX = `${BETTYSTOWN_PREFIX}/index.html`;
+const BETTYSTOWN_STORM_LOCK = `${BETTYSTOWN_PREFIX}/storm-lock.html`;
+
+// ===== TEMPORARY BETTYSTOWN STORM FACADE =====
+// Public visitors see torrential-rain status only. Owner bypass: /bettystown/?bt_owner=SECRET
+// (sets bt_owner cookie). Set BETTYSTOWN_OWNER_SECRET in Cloudflare, or use the fallback below.
+const BETTYSTOWN_STORM_FACADE_ENABLED = true;
+const BETTYSTOWN_OWNER_COOKIE = "bt_owner";
+const BETTYSTOWN_OWNER_MAX_AGE_SEC = 30 * 24 * 3600;
+const BETTYSTOWN_OWNER_PREVIEW_FALLBACK = "bt-storm-preview-cf1e";
 const BETTYSTOWN_ASSETS = new Map([
   ["/apple-touch-icon.png", `${BETTYSTOWN_PREFIX}/apple-touch-icon.png`],
   ["/favicon-32.png", `${BETTYSTOWN_PREFIX}/favicon-32.png`],
@@ -228,7 +241,78 @@ function isNewryFuelHost(hostname) {
   return hostname === NEWRY_FUEL_HOST;
 }
 
+async function bettystownOwnerSecret(env) {
+  const fromEnv = await getSecret(env, "BETTYSTOWN_OWNER_SECRET");
+  return fromEnv || BETTYSTOWN_OWNER_PREVIEW_FALLBACK;
+}
+
+async function makeBettystownOwnerCookie(env) {
+  const secret = await bettystownOwnerSecret(env);
+  if (!secret) return null;
+  const exp = Math.floor(Date.now() / 1000) + BETTYSTOWN_OWNER_MAX_AGE_SEC;
+  const sig = await hmacSign(secret, `bt-owner:${exp}`);
+  return `${exp}.${sig}`;
+}
+
+async function hasBettystownOwnerAccess(request, env) {
+  if (!BETTYSTOWN_STORM_FACADE_ENABLED) return true;
+  const secret = await bettystownOwnerSecret(env);
+  if (!secret) return false;
+  const raw = getCookie(request, BETTYSTOWN_OWNER_COOKIE);
+  if (!raw) return false;
+  const dot = raw.lastIndexOf(".");
+  if (dot < 1) return false;
+  const exp = Number(raw.slice(0, dot));
+  const sig = raw.slice(dot + 1);
+  if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return false;
+  const expected = await hmacSign(secret, `bt-owner:${exp}`);
+  return sig === expected;
+}
+
+async function bettystownFacadeActive(request, env) {
+  if (!BETTYSTOWN_STORM_FACADE_ENABLED) return false;
+  return !(await hasBettystownOwnerAccess(request, env));
+}
+
+async function tryBettystownOwnerGrant(request, env, url) {
+  if (!BETTYSTOWN_STORM_FACADE_ENABLED) return null;
+  const secret = await bettystownOwnerSecret(env);
+  const token = url.searchParams.get("bt_owner");
+  if (!token || token !== secret) return null;
+  const cookieVal = await makeBettystownOwnerCookie(env);
+  if (!cookieVal) return null;
+  url.searchParams.delete("bt_owner");
+  const dest = url.pathname + (url.search ? `?${url.searchParams}` : "") + url.hash;
+  const headers = {
+    Location: dest || "/bettystown/",
+    "Set-Cookie": `${BETTYSTOWN_OWNER_COOKIE}=${cookieVal}; Path=/; Max-Age=${BETTYSTOWN_OWNER_MAX_AGE_SEC}; HttpOnly; Secure; SameSite=Lax`,
+  };
+  return new Response(null, { status: 302, headers });
+}
+
+function bettystownFacadeAssetAllowed(assetPath) {
+  return (
+    assetPath === BETTYSTOWN_STORM_LOCK ||
+    assetPath.endsWith("/favicon-32.png") ||
+    assetPath.endsWith("/apple-touch-icon.png")
+  );
+}
+
+async function serveBettystownStormLock(request, env) {
+  const asset = await env.ASSETS.fetch(new URL(BETTYSTOWN_STORM_LOCK, request.url));
+  if (!asset.ok) return asset;
+  const headers = new Headers({
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  setRobotsHeaders(headers);
+  return new Response(asset.body, { status: 200, headers });
+}
+
 async function serveBettystownAsset(request, env, assetPath) {
+  if (await bettystownFacadeActive(request, env) && !bettystownFacadeAssetAllowed(assetPath)) {
+    return new Response("Unavailable", { status: 404, headers: { "Cache-Control": "no-store" } });
+  }
   const asset = await env.ASSETS.fetch(new URL(assetPath, request.url));
   if (!asset.ok) return asset;
   const headers = new Headers(asset.headers);
@@ -300,6 +384,9 @@ async function serveBettystownIndex(request, env) {
 
 async function serveBettystownWeather(request, env, assetPath) {
   const path = assetPath || BETTYSTOWN_INDEX;
+  if (await bettystownFacadeActive(request, env)) {
+    return serveBettystownStormLock(request, env);
+  }
   if (path === BETTYSTOWN_INDEX || path.endsWith("/index.html")) {
     return serveBettystownIndex(request, env);
   }
@@ -1116,6 +1203,9 @@ async function handlePursuitMemoryPost(request, env) {
 }
 
 async function handleBettystownWeatherGet(request, env) {
+  if (await bettystownFacadeActive(request, env)) {
+    return jsonGet(buildBettystownStormFacadeWeather());
+  }
   const origin = new URL(request.url).origin;
   const data = await getBettystownForecast(env, fetch, { origin });
   if (!data.ok) return json(data, 503);
@@ -1128,13 +1218,19 @@ async function handleBettystownHealthGet(env) {
 }
 
 async function handleBettystownRadarGet(request, env) {
+  if (await bettystownFacadeActive(request, env)) {
+    return jsonGet(buildBettystownStormFacadeRadar());
+  }
   const origin = new URL(request.url).origin;
   const data = await getBettystownRadar(env, origin);
   if (!data.ok) return json(data, 503);
   return jsonGet(data);
 }
 
-async function handleBettystownRadarImageGet(request) {
+async function handleBettystownRadarImageGet(request, env) {
+  if (await bettystownFacadeActive(request, env)) {
+    return new Response("Unavailable", { status: 404, headers: corsGet() });
+  }
   const f = new URL(request.url).searchParams.get("f");
   const proxied = await proxyBettystownRadarImage(f);
   if (!proxied.ok) {
@@ -1219,6 +1315,14 @@ export default {
     const path = url.pathname;
 
     if (path === "/robots.txt") return serveRobotsTxt();
+
+    if (
+      BETTYSTOWN_STORM_FACADE_ENABLED &&
+      (isBettystownHost(url.hostname) || isBettystownPath(path))
+    ) {
+      const ownerGrant = await tryBettystownOwnerGrant(request, env, url);
+      if (ownerGrant) return ownerGrant;
+    }
 
     if (isBettystownHost(url.hostname)) {
       if (path === "/" || path === "/index.html") return serveBettystownWeather(request, env);
@@ -1355,7 +1459,7 @@ export default {
     }
     if (path === "/api/bettystown-radar-image") {
       if (request.method === "OPTIONS") return new Response(null, { headers: corsGet() });
-      if (request.method === "GET") return handleBettystownRadarImageGet(request);
+      if (request.method === "GET") return handleBettystownRadarImageGet(request, env);
       return new Response("GET only", { status: 405, headers: corsGet() });
     }
     if (path === "/api/newry-fuel/prices") {
