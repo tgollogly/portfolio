@@ -25,3 +25,6 @@ PURSUIT_REFRESH_SECRET=random_long_string_at_least_32_chars
 
 # Bearer token for POST /api/newry-fuel/alert and GET /api/newry-fuel/debug
 # NEWRY_FUEL_ALERT_SECRET=random_long_string_at_least_32_chars
+
+# Bettystown owner bypass while BETTYSTOWN_STORM_FACADE_ENABLED is true in server.js
+# BETTYSTOWN_OWNER_SECRET=random_long_string_at_least_32_chars

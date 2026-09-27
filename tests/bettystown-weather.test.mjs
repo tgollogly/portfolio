@@ -48,6 +48,11 @@ import {
   formatRadarAgeMinutes,
   RADAR_LIVE_THRESHOLD_MIN,
 } from "../lib/bettystown-weather.js";
+import {
+  buildBettystownStormFacadeRadar,
+  buildBettystownStormFacadeWeather,
+  BETTYSTOWN_STORM_FACADE_HEADLINE,
+} from "../lib/bettystown-storm-facade.js";
 import { createSuite } from "./harness.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -392,6 +397,16 @@ export function runBettystownWeatherTests() {
   s.assert("ci tests only no gh deploy", ci.includes("test:") && !/\n  deploy:/.test(ci));
   const btReadme = readFileSync(join(root, "sites/bettystown/README.md"), "utf8");
   s.assert("readme workers builds deploy", btReadme.includes("Workers Builds"));
+  s.assert("readme storm facade", btReadme.includes("BETTYSTOWN_STORM_FACADE_ENABLED"));
+
+  const facade = buildBettystownStormFacadeWeather();
+  s.assert("storm facade ok", facade.ok && facade.facade);
+  s.assert("storm facade headline", BETTYSTOWN_STORM_FACADE_HEADLINE.includes("Torrential"));
+  const facadeVal = validateForecastResponse(facade);
+  s.assert("storm facade validates", facadeVal.ok, facadeVal.issues?.join(", "));
+  s.assert("storm facade radar off", !buildBettystownStormFacadeRadar().ok);
+  s.assert("server storm facade flag", server.includes("BETTYSTOWN_STORM_FACADE_ENABLED"));
+  s.assert("storm lock html", readFileSync(join(root, "sites/bettystown/storm-lock.html"), "utf8").includes("Torrential"));
 
   return s.summary();
 }
