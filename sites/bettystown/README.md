@@ -11,7 +11,7 @@ Warm, low-rain beach-walk planner for **Mom & Max** at Bettystown, County Meath.
 
 ### Temporary storm facade
 
-When `BETTYSTOWN_STORM_FACADE_ENABLED` is `true` in `server.js`, visitors only see the torrential-rain status page (no full forecast; APIs return storm-shaped data). Owner bypass (sets `bt_owner` cookie for 30 days):
+When `BETTYSTOWN_STORM_FACADE_ENABLED` is `true` in `server.js`, visitors only see a full-screen looping storm video (with sound when the browser allows autoplay). APIs return storm-shaped data. Owner bypass (sets `bt_owner` cookie for 30 days):
 
 `/bettystown/?bt_owner=YOUR_SECRET`
 

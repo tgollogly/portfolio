@@ -203,6 +203,7 @@ const BETTYSTOWN_ASSETS = new Map([
   ["/manifest.webmanifest", `${BETTYSTOWN_PREFIX}/manifest.webmanifest`],
   ["/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
   ["/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
+  ["/video/storm-loop.mp4", `${BETTYSTOWN_PREFIX}/video/storm-loop.mp4`],
 ]);
 const BETTYSTOWN_PATH_ASSETS = new Map([
   ["/bettystown/apple-touch-icon.png", `${BETTYSTOWN_PREFIX}/apple-touch-icon.png`],
@@ -210,6 +211,7 @@ const BETTYSTOWN_PATH_ASSETS = new Map([
   ["/bettystown/icons/icon-192.png", `${BETTYSTOWN_PREFIX}/icons/icon-192.png`],
   ["/bettystown/icons/icon-512.png", `${BETTYSTOWN_PREFIX}/icons/icon-512.png`],
   ["/bettystown/audio/three-little-birds.mp3", `${BETTYSTOWN_PREFIX}/audio/three-little-birds.mp3`],
+  ["/bettystown/video/storm-loop.mp4", `${BETTYSTOWN_PREFIX}/video/storm-loop.mp4`],
 ]);
 const NEWRY_FUEL_INDEX = `${NEWRY_FUEL_PREFIX}/index.html`;
 const NEWRY_FUEL_ASSETS = new Map([
@@ -294,7 +296,8 @@ function bettystownFacadeAssetAllowed(assetPath) {
   return (
     assetPath === BETTYSTOWN_STORM_LOCK ||
     assetPath.endsWith("/favicon-32.png") ||
-    assetPath.endsWith("/apple-touch-icon.png")
+    assetPath.endsWith("/apple-touch-icon.png") ||
+    assetPath.endsWith("/video/storm-loop.mp4")
   );
 }
 
@@ -320,10 +323,12 @@ async function serveBettystownAsset(request, env, assetPath) {
   const isManifest = assetPath.endsWith(".webmanifest");
   const isPng = assetPath.endsWith(".png");
   const isMp3 = assetPath.endsWith(".mp3");
+  const isMp4 = assetPath.endsWith(".mp4");
   if (isHtml) headers.set("Content-Type", "text/html; charset=utf-8");
   else if (isManifest) headers.set("Content-Type", "application/manifest+json; charset=utf-8");
   else if (isPng) headers.set("Content-Type", "image/png");
   else if (isMp3) headers.set("Content-Type", "audio/mpeg");
+  else if (isMp4) headers.set("Content-Type", "video/mp4");
   headers.set("Cache-Control", isHtml ? "public, max-age=300" : "public, max-age=86400");
   if (isHtml) setRobotsHeaders(headers);
   return new Response(asset.body, { status: asset.status, headers });

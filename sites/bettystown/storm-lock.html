@@ -2,103 +2,88 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex"/>
 <meta name="googlebot" content="noindex,nofollow"/>
 <meta name="color-scheme" content="dark"/>
-<title>Bettystown — torrential rain</title>
-<meta name="description" content="Torrential rain and thunderstorms at Bettystown — beach walks paused."/>
+<title>Bettystown — storm</title>
+<meta name="description" content="Torrential rain and thunderstorms at Bettystown."/>
 <link rel="icon" type="image/png" sizes="32x32" href="/bettystown/favicon-32.png"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --ink:#e8f4fc;--muted:#94a8bc;--accent:#38bdf8;--danger:#f87171;
-  --sans:"Outfit",system-ui,sans-serif;--display:"Instrument Serif",Georgia,serif;
-}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;height:100%}
-body{
-  font-family:var(--sans);color:var(--ink);line-height:1.55;
-  background:linear-gradient(180deg,#0c1929 0%,#1a2f45 45%,#0f172a 100%);
-  overflow:hidden;
+html,body{margin:0;height:100%;background:#000}
+body{overflow:hidden;touch-action:manipulation}
+.stage{
+  position:fixed;inset:0;width:100%;height:100%;
+  height:100dvh;min-height:-webkit-fill-available;
+  background:#0a0f18;
 }
-.rain{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55}
-.rain i{
-  position:absolute;width:2px;height:18px;background:linear-gradient(transparent,rgba(148,197,253,.85));
-  animation:fall linear infinite;
+#storm{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;
+  background:#0a0f18;
 }
-@keyframes fall{
-  0%{transform:translateY(-20vh) translateX(0)}
-  100%{transform:translateY(110vh) translateX(-12px)}
+.vignette{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.45) 100%);
 }
-.flash{position:fixed;inset:0;background:rgba(255,255,255,.12);opacity:0;pointer-events:none;z-index:1;animation:lightning 7s infinite}
-@keyframes lightning{
-  0%,92%,100%{opacity:0}
-  93%{opacity:1}
-  94%{opacity:.05}
-  95%{opacity:.85}
+.label{
+  position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  padding:10px 16px;border-radius:999px;
+  font:600 12px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(255,255,255,.88);
+  background:rgba(0,0,0,.42);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12);
+  pointer-events:none;white-space:nowrap;
 }
-.shell{position:relative;z-index:2;min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px 18px}
-.card{
-  max-width:520px;width:100%;
-  background:rgba(15,23,42,.72);backdrop-filter:blur(20px);
-  border:1px solid rgba(56,189,248,.22);border-radius:24px;
-  padding:32px 28px 28px;box-shadow:0 24px 60px rgba(0,0,0,.45);
-  text-align:center;
+.unmute{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(0,0,0,.55);border:none;cursor:pointer;
+  font:600 1.05rem system-ui,sans-serif;color:#fff;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
 }
-.icon{font-size:4.2rem;line-height:1;margin:0 0 12px;filter:drop-shadow(0 8px 24px rgba(56,189,248,.35))}
-h1{
-  font-family:var(--display);font-size:clamp(1.85rem,5vw,2.5rem);font-weight:400;
-  margin:0 0 8px;font-style:italic;
-}
-.kicker{
-  font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--accent);margin:0 0 18px;
-}
-.reason{
-  font-size:1.05rem;color:var(--muted);margin:0 0 22px;text-align:left;
-  background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);
-  border-radius:14px;padding:14px 16px;
-}
-.reason strong{color:#fecaca;font-weight:600}
-.walk{
-  font-size:1rem;margin:0;color:var(--ink);
-}
-.paw{color:#fb923c;font-weight:600}
-.fine{font-size:.78rem;color:var(--muted);margin:22px 0 0}
+.unmute.show{opacity:1;pointer-events:auto}
+.unmute:focus-visible{outline:2px solid #38bdf8;outline-offset:4px}
 </style>
 </head>
 <body>
-<div class="flash" aria-hidden="true"></div>
-<div class="rain" id="rain" aria-hidden="true"></div>
-<main class="shell">
-  <article class="card">
-    <div class="icon" aria-hidden="true">⛈️</div>
-    <p class="kicker">Bettystown · County Meath</p>
-    <h1>Torrential rain &amp; thunderstorms</h1>
-    <p class="reason">
-      <strong>Why the beach planner is paused:</strong>
-      Status checks show torrential rain, thunderstorms, and flooding risk along the Meath coast — not safe for beach walks right now.
-    </p>
-    <p class="walk">Stay cosy indoors with <span class="paw">🐕 Max</span>. We'll open the full forecast again when things calm down.</p>
-    <p class="fine">Mom's Bettystown Weather · temporary storm status</p>
-  </article>
-</main>
+<div class="stage">
+  <video id="storm" autoplay loop playsinline preload="auto" poster="">
+    <source src="video/storm-loop.mp4" type="video/mp4"/>
+  </video>
+  <div class="vignette" aria-hidden="true"></div>
+  <p class="label" aria-hidden="true">Bettystown · torrential rain</p>
+  <button type="button" class="unmute" id="unmute" hidden>Tap for storm sound</button>
+</div>
 <script>
 (function(){
-  var host=document.getElementById("rain");
-  if(!host) return;
-  var n=window.matchMedia("(prefers-reduced-motion: reduce)").matches?40:120;
-  for(var i=0;i<n;i++){
-    var d=document.createElement("i");
-    d.style.left=(Math.random()*100)+"%";
-    d.style.animationDuration=(0.45+Math.random()*0.55)+"s";
-    d.style.animationDelay=(Math.random()*2)+"s";
-    d.style.opacity=0.35+Math.random()*0.5;
-    host.appendChild(d);
+  var v=document.getElementById("storm");
+  var btn=document.getElementById("unmute");
+  if(!v) return;
+  v.volume=1;
+  function tryPlay(){
+    v.muted=false;
+    var p=v.play();
+    if(p&&p.then){
+      p.then(function(){ if(btn) btn.hidden=true; }).catch(function(){
+        v.muted=true;
+        v.play().catch(function(){});
+        if(btn){ btn.hidden=false; btn.classList.add("show"); }
+      });
+    }
   }
+  if(btn){
+    btn.addEventListener("click",function(){
+      v.muted=false;
+      v.play().then(function(){ btn.classList.remove("show"); btn.hidden=true; }).catch(function(){});
+    });
+  }
+  v.addEventListener("loadeddata",tryPlay,{once:true});
+  tryPlay();
+  document.addEventListener("visibilitychange",function(){
+    if(!document.hidden) tryPlay();
+  });
 })();
 </script>
 </body>

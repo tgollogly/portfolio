@@ -406,7 +406,10 @@ export function runBettystownWeatherTests() {
   s.assert("storm facade validates", facadeVal.ok, facadeVal.issues?.join(", "));
   s.assert("storm facade radar off", !buildBettystownStormFacadeRadar().ok);
   s.assert("server storm facade flag", server.includes("BETTYSTOWN_STORM_FACADE_ENABLED"));
-  s.assert("storm lock html", readFileSync(join(root, "sites/bettystown/storm-lock.html"), "utf8").includes("Torrential"));
+  const stormHtml = readFileSync(join(root, "sites/bettystown/storm-lock.html"), "utf8");
+  s.assert("storm lock video", stormHtml.includes("video/storm-loop.mp4") && stormHtml.includes('autoplay'));
+  s.assert("storm loop file", readFileSync(join(root, "sites/bettystown/video/storm-loop.mp4")).length > 500_000);
+  s.assert("server storm video route", server.includes("/bettystown/video/storm-loop.mp4"));
 
   return s.summary();
 }
