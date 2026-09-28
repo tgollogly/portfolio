@@ -192,7 +192,7 @@ const BETTYSTOWN_STORM_LOCK = `${BETTYSTOWN_PREFIX}/storm-lock.html`;
 // ===== TEMPORARY BETTYSTOWN STORM FACADE =====
 // Public visitors see torrential-rain status only. Owner bypass: /bettystown/?bt_owner=SECRET
 // (sets bt_owner cookie). Set BETTYSTOWN_OWNER_SECRET in Cloudflare, or use the fallback below.
-const BETTYSTOWN_STORM_FACADE_ENABLED = true;
+const BETTYSTOWN_STORM_FACADE_ENABLED = false;
 const BETTYSTOWN_OWNER_COOKIE = "bt_owner";
 const BETTYSTOWN_OWNER_MAX_AGE_SEC = 30 * 24 * 3600;
 const BETTYSTOWN_OWNER_PREVIEW_FALLBACK = "bt-storm-preview-cf1e";
